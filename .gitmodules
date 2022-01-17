@@ -1,3 +1,9 @@
 [submodule "externals/toml11"]
 	path = externals/toml11
 	url = https://github.com/ToruNiina/toml11
+[submodule "externals/metis"]
+	path = externals/metis
+	url = https://github.com/KarypisLab/METIS
+[submodule "externals/gklib"]
+	path = externals/gklib
+	url = https://github.com/KarypisLab/GKlib

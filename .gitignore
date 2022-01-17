@@ -1,0 +1,38 @@
+# ignore build and install folders
+/build*
+/install*
+# clion files
+/.idea
+/clion*
+# ignore doxygen documentation
+/doxygen*
+# python generated files
+*.pyc
+# sublime files
+/*sublime-project
+/*sublime-workspace
+# Mac generated files
+*.DS_Store
+# install dir
+/release*
+/debug*
+# latex documentation
+/docs/*.aux
+/docs/*latexmk
+/docs/*.fls
+/docs/*.log
+/docs/*.out
+/docs/*.toc
+/docs/*.gz
+/docs/*.xml
+/docs/*.bbl
+/docs/*.blg
+/docs/*-blx.bib
+/docs/*markdown*
+# log file from setup script
+/log.out
+# vim tags
+/tags*
+# vim backup files
+*.swp
+*.swo
