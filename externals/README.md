@@ -9,7 +9,8 @@ adding METIS to this as well, let's see how this goes.
 
 Ideally the compilation of submodules should be automated (probably into the
 main CMake pipeline) but for now, I will document the commands I used to
-compile everything.
+compile everything. (feel free to add some -j4 to those make commands if you
+want, especially for HDF5).
  - GKLib (needed by METIS):
     cd gklib
     mkdir build
@@ -20,3 +21,9 @@ compile everything.
     mkdir build
     make config cc=gcc prefix=./build gklib_path=../gklib/build/Linux-x86_64/build
     make install
+ - HDF5 (high-performance data formatting library):
+    cd hdf5
+    mkdir build
+    cmake -DCMAKE_INSTALL_PREFIX=./build -DHDF5_BUILD_CPP_LIB=1 ..
+    make install
+

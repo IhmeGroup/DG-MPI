@@ -7,3 +7,6 @@
 [submodule "externals/gklib"]
 	path = externals/gklib
 	url = https://github.com/KarypisLab/GKlib
+[submodule "externals/hdf5"]
+	path = externals/hdf5
+	url = https://github.com/HDFGroup/hdf5
