@@ -10,3 +10,6 @@
 [submodule "externals/hdf5"]
 	path = externals/hdf5
 	url = https://github.com/HDFGroup/hdf5
+[submodule "externals/googletest"]
+	path = externals/googletest
+	url = https://github.com/google/googletest.git
