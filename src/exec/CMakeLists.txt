@@ -3,7 +3,7 @@
 add_executable(solver main.cpp)
 
 target_link_libraries(solver
-    PRIVATE mesh)
+    PRIVATE mesh utils)
 
 # Only this target links to these libraries
 if (USE_MKL)

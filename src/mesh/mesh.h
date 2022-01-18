@@ -1,7 +1,3 @@
-//
-// Created by kihiro on 1/23/20.
-//
-
 #ifndef DG_MESH_H
 #define DG_MESH_H
 

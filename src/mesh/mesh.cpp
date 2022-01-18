@@ -1,7 +1,3 @@
-//
-// Created by kihiro on 1/23/20.
-//
-
 #include <algorithm>
 #include <iostream>
 #include <map>

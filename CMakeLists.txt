@@ -20,7 +20,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -Wall")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # some variables to help find external libraries
-set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/build" CACHE PATH "METIS root")
+set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/build" CACHE PATH "HDF5 root")
 set(Kokkos_ROOT         CACHE PATH "Kokkos root")
 set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
@@ -50,8 +50,7 @@ if(NOT METIS_LIBRARIES)
     message(FATAL_ERROR "The METIS library could not be found. Please provide -DMETIS_ROOT.")
 endif()
 # HDF5
-find_package(HDF5 REQUIRED COMPONENTS C CXX HINTS "${HDF5_ROOT}/share/cmake")
-include_directories("${HDF5_ROOT}/include")
+find_package(HDF5 REQUIRED COMPONENTS C CXX PATHS "${HDF5_ROOT}/share/cmake")
 
 
 if (USE_KOKKOS)
@@ -134,6 +133,7 @@ endif()
 
 # building blocks
 add_subdirectory(src/mesh)
+add_subdirectory(src/utils)
 
 # executables
 add_subdirectory(src/exec)
