@@ -30,19 +30,19 @@ NOTE: Actually, HDF5 isn't linking right either.
     make config cc=gcc prefix=./install gklib_path=../gklib/build/Linux-x86_64/install
     make install
  - HDF5 (high-performance data formatting library):
-    cd hdf5
-    mkdir build
-    cd build
-    cmake -DCMAKE_INSTALL_PREFIX=./build -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
-    make install
+    `cd hdf5`\
+    `mkdir build`\
+    `cd build`\
+    `cmake -DCMAKE_INSTALL_PREFIX=./build -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..`\
+    `make install`\
  - Kokkos:
-      cd kokkos
-      mkdir build
-      cd build
-      cmake -DCMAKE_INSTALL_PREFIX=${kokkos_install_folder} \
-            -DKokkos_ENABLE_OPENMP=ON
-      make
-      make install
+      `cd kokkos`\
+      `mkdir build`\
+      `cd build`\
+      `cmake -DCMAKE_INSTALL_PREFIX=${kokkos_install_folder} \
+            -DKokkos_ENABLE_OPENMP=ON`\
+      `make`\
+      `make install`\
       NOTE: For macOSX users -> For openMP support I needed to get llvm via homebrew (`brew install llvm`). I also needed to update my `.zshrc_profile` with the following:
       `export PATH="/usr/local/opt/llvm/bin:$PATH"
       export CC=/usr/local/opt/llvm/bin/clang
