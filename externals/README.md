@@ -45,11 +45,11 @@ NOTE: Actually, HDF5 isn't linking right either.
       `make install`\
       NOTE: For macOSX users -> For openMP support I needed to get llvm via homebrew (`brew install llvm`). I also needed to update my `.zshrc_profile` with the following:
       ```
-      export PATH="/usr/local/opt/llvm/bin:$PATH"\
-      export CC=/usr/local/opt/llvm/bin/clang\
-      export CXX=/usr/local/opt/llvm/bin/clang++\
-      export LDFLAGS=-L/usr/local/opt/llvm/lib\
-      export CPPFLAGS=-I/usr/local/opt/llvm/include\
+      export PATH="/usr/local/opt/llvm/bin:$PATH"
+      export CC=/usr/local/opt/llvm/bin/clang
+      export CXX=/usr/local/opt/llvm/bin/clang++
+      export LDFLAGS=-L/usr/local/opt/llvm/lib
+      export CPPFLAGS=-I/usr/local/opt/llvm/include
       ```
       This would be similar for `.bashrc` files
 
