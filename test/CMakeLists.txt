@@ -9,6 +9,7 @@ add_executable(
 # add test_<FILENAME>.cpp files that include tests for various features
 list(APPEND GTEST_SOURCES
     test_hello.cpp
+    test_physics.cpp
 )
 
 target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})
