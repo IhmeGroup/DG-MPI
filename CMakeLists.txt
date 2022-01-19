@@ -23,7 +23,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/build" CACHE PATH "HDF5 root")
 # set(GTEST_ROOT		"${CMAKE_SOURCE_DIR}/externals/googletest/build/install" CACHE PATH "Google Test root")
-# set(Kokkos_ROOT         CACHE PATH "Kokkos root")
+set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
 # set(SLTBENCH_ROOT       CACHE PATH "sltbench root")
 # set(CANTERA_ROOT        CACHE PATH "Cantera root")
@@ -64,12 +64,15 @@ find_package(HDF5 REQUIRED COMPONENTS C CXX PATHS "${HDF5_ROOT}/share/cmake")
 #   Googletest github: https://github.com/google/googletest
 #   Googletest + cmake tutorial: https://google.github.io/googletest/quickstart-cmake.html
 #   CMake Googletest module: https://cmake.org/cmake/help/git-stage/module/GoogleTest.html
-#                             
+#  
+#   Using the version from the following link (using the *.zip file at the bottom of page):
+#   https://github.com/google/googletest/releases/tag/release-1.11.0                             
 # ----------------------------------------------------------------------------------------------- #
 include(FetchContent)
+
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+  URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -79,8 +82,8 @@ FetchContent_MakeAvailable(googletest)
 
 
 # if (USE_KOKKOS)
-    # find_package(Kokkos REQUIRED)
-    # find_package(KokkosKernels REQUIRED)
+find_package(Kokkos REQUIRED)
+# find_package(KokkosKernels REQUIRED)
     # add_compile_definitions(DG_USE_KOKKOS)
 # endif()
 # Note: do not use target_link_libraries(target PUBLIC OpenMP::OpenMP_CXX)
@@ -121,6 +124,7 @@ endif()
 
 # building blocks
 add_subdirectory(src/mesh)
+add_subdirectory(src/physics)
 add_subdirectory(src/utils)
 add_subdirectory(test)
 
@@ -135,11 +139,9 @@ message(STATUS "-----------------------------------------------------------")
 message(STATUS "Build type:          ${CMAKE_BUILD_TYPE}")
 message(STATUS "METIS root:          ${METIS_ROOT}")
 message(STATUS "HDF5 root:           ${HDF5_ROOT}")
-
-# if (USE_KOKKOS)
-    # message(STATUS "Kokkos root:         ${Kokkos_ROOT}")
+message(STATUS "Kokkos root:         ${Kokkos_ROOT}")
     # message(STATUS "Kokkos kernels root: ${KokkosKernels_ROOT}")
-# endif()
+
 # if(BUILD_BENCHMARKS)
     # message(STATUS "sltbench root:       ${SLTBENCH_ROOT}")
 # endif()
