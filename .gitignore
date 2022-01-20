@@ -29,8 +29,8 @@
 /docs/*.blg
 /docs/*-blx.bib
 /docs/*markdown*
-# log file from setup script
-/log.out
+# log files
+log.out
 # vim tags
 /tags*
 # vim backup files
