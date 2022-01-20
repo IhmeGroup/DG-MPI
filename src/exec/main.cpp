@@ -21,5 +21,5 @@ int main(int argc, char *argv[]) {
     const int dim = toml::find<int>(toml_input, "Physics", "dim");
 
     // Create mesh
-    auto mesh = Mesh(toml_fname);
+    auto mesh = Mesh(toml_input);
 }

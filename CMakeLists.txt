@@ -21,7 +21,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
-set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/build" CACHE PATH "HDF5 root")
+set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
 # set(GTEST_ROOT		"${CMAKE_SOURCE_DIR}/externals/googletest/build/install" CACHE PATH "Google Test root")
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
@@ -43,30 +43,31 @@ option(USE_OMP          "Use OpenMP" ON)
 # MKL libraries to link against
 # set(MKL_LIBRARIES mkl_intel_lp64 mkl_sequential mkl_core)
 
-# Hard external requirements
-# METIS
 
-#
+# -- Hard external requirements -- #
+# METIS
 find_library(METIS_LIBRARIES metis HINTS "${METIS_ROOT}/lib")
 if(NOT METIS_LIBRARIES)
     message(FATAL_ERROR "The METIS library could not be found. Please provide -DMETIS_ROOT.")
 endif()
+
 # HDF5
-find_package(HDF5 REQUIRED COMPONENTS C CXX PATHS "${HDF5_ROOT}/share/cmake")
+set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
+set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.so;${HDF5_ROOT}/lib/libhdf5.so")
 
 ##############
 # googletest #
 ##############
 # ----------------------------------------------------------------------------------------------- #
-# For the googletest dependency we use CMakes googletest module. 
+# For the googletest dependency we use CMakes googletest module.
 # For more information see the following links:
-# 
+#
 #   Googletest github: https://github.com/google/googletest
 #   Googletest + cmake tutorial: https://google.github.io/googletest/quickstart-cmake.html
 #   CMake Googletest module: https://cmake.org/cmake/help/git-stage/module/GoogleTest.html
-#  
+#
 #   Using the version from the following link (using the *.zip file at the bottom of page):
-#   https://github.com/google/googletest/releases/tag/release-1.11.0                             
+#   https://github.com/google/googletest/releases/tag/release-1.11.0
 # ----------------------------------------------------------------------------------------------- #
 include(FetchContent)
 

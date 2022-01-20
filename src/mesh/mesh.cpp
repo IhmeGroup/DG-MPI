@@ -3,7 +3,7 @@
 #include <map>
 #include <numeric>
 #include <string>
-// #include "H5Cpp.h"
+#include "H5Cpp.h"
 // #include "hdf5.h"
 #include "metis.h"
 #include "toml11/toml.hpp"
@@ -11,7 +11,6 @@
 #include "mesh/mesh.h"
 
 using namespace std;
-// using namespace H5;
 
 // identifiers from Eric's pre-processing tool
 static const string DSET_DIM("Dimension");
@@ -43,8 +42,8 @@ Mesh::Mesh(const toml::value &input_info) : partitioned(false) {
 }
 
 void Mesh::read_mesh(const string &mesh_file_name) {
-    // try {
-    //     H5File file(mesh_file_name, H5F_ACC_RDONLY);
+    try {
+        H5::H5File file(mesh_file_name, H5F_ACC_RDONLY);
     //     hsize_t dims[2]; // buffer to store an HDF5 dataset dimensions
     //     unsigned rank; // the number of dimensions in a dataset
 
@@ -219,10 +218,10 @@ void Mesh::read_mesh(const string &mesh_file_name) {
     //         nBFG = 0;
     //         nBF = 0;
     //     }
-    // }
+    }
 
-    // // catch failure caused by the H5File operations
-    // catch (FileIException &error) {
+    // catch failure caused by the H5File operations
+    catch (H5::FileIException &error) {
     //     error.printErrorStack();
     // }
     // // catch failure caused by the DataSet operations
@@ -232,7 +231,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
     // // catch failure caused by the DataSpace operations
     // catch (DataSpaceIException &error) {
     //     error.printErrorStack();
-    // }
+    }
 
     // // partition the mesh using METIS
     // partition();

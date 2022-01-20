@@ -38,7 +38,7 @@ NOTE: Actually, HDF5 isn't linking right either.
     cd hdf5
     mkdir build
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX=./build -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
+    cmake -DCMAKE_INSTALL_PREFIX=./install -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
     make install
     ```
  - Kokkos:
@@ -46,9 +46,7 @@ NOTE: Actually, HDF5 isn't linking right either.
       cd kokkos
       mkdir build
       cd build
-      cmake -DCMAKE_INSTALL_PREFIX=./install
-            -DKokkos_ENABLE_OPENMP=ON ..
-      make
+      cmake -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ENABLE_OPENMP=ON ..
       make install
     ```
     NOTE: For macOSX users -> For openMP support I needed to get llvm via homebrew (`brew install llvm`). I also needed to update my `.zshrc_profile` with the following:
