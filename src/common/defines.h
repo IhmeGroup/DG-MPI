@@ -22,7 +22,7 @@ using rtype = float;
 #define FILE_NAME_LEN_MAX 128 //!< maximum length of a file name
 #define VAR_NAME_LEN_MAX 128 //!< maximum length of a variable name
 
-#ifdef DG_USE_KOKKOS
+// #ifdef DG_USE_KOKKOS
 /* It is the responsibility of the file using Kokkos to include the Kokkos headers.
  * Namely, include <Kokkos_Core.hpp> guarded by DG_USE_KOKKOS
  * for the following macros to be defined. */
@@ -31,9 +31,9 @@ using rtype = float;
 #define DG_KOKKOS_FORCEINLINE_FUNCTION KOKKOS_FORCEINLINE_FUNCTION
 #else
 /* If Kokkos is not used, then these macros are empty which ensures backward compatibility. */
-#define DG_KOKKOS_FUNCTION
-#define DG_KOKKOS_INLINE_FUNCTION inline
-#define DG_KOKKOS_FORCEINLINE_FUNCTION inline
-#endif
+// #define DG_KOKKOS_FUNCTION
+// #define DG_KOKKOS_INLINE_FUNCTION inline
+// #define DG_KOKKOS_FORCEINLINE_FUNCTION inline
+// #endif
 
 #endif //DG_DEFINES_H
