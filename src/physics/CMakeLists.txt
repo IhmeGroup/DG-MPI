@@ -1,5 +1,4 @@
 add_library(physics STATIC
-	euler/Date.cpp
 	euler/euler.cpp
 )
 

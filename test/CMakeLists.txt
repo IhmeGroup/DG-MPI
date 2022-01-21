@@ -17,9 +17,12 @@ target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})
 # add any directories that contain needed functions
 target_link_libraries(test_gtest_all
     PRIVATE
-        # mesh physics numerics equations
+        # mesh 
+        physics 
         gtest_main
 )
+
+target_link_libraries(test_gtest_all PUBLIC Kokkos::kokkoscore)
 
 include(GoogleTest)
 gtest_discover_tests(test_gtest_all)
