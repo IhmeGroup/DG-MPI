@@ -21,11 +21,10 @@ endif()
 # Notes:
 # it is important (I think this is the minimal requirement) that all Kokkos libraries are built as static
 # otherwise they will bring with them at link time the system omp library (see note about omp flags)
-if(USE_KOKKOS)
-    target_link_libraries(solver PRIVATE Kokkos::kokkoscore)
-    # prevent from linking to system's OpenMP implementation
-    target_link_options(solver PRIVATE "-Wl,--as-needed")
-endif()
+target_link_libraries(solver PRIVATE Kokkos::kokkoscore)
+# prevent from linking to system's OpenMP implementation
+# target_link_options(solver PRIVATE "-Wl,--as-needed")
+
 
 # Notes:
 # 1) if omp symbols are missing, ask Sean to add them to realm's omp implementation

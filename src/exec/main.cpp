@@ -3,11 +3,15 @@
 #include "toml11/toml.hpp"
 #include "mesh/mesh.h"
 #include "utils/utils.h"
+#include <Kokkos_Core.hpp>
 
 using namespace std;
 
 
 int main(int argc, char *argv[]) {
+
+    // Initialize Kokkos (This will need to be after MPI_Init)
+    Kokkos::initialize(argc, argv);
 
     // Default input file name
     string toml_fname = "input.toml";
