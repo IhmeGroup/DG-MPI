@@ -1,6 +1,8 @@
-# ignore build and install folders
+# build and install folders
 /build*
 /install*
+# downloaded dependencies
+/externals/metis
 # clion files
 /.idea
 /clion*
