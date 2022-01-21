@@ -223,19 +223,19 @@ void Mesh::read_mesh(const string &mesh_file_name) {
 
     // catch failure caused by the H5File operations
     catch (H5::FileIException &error) {
-    //     error.printErrorStack();
-    // }
-    // // catch failure caused by the DataSet operations
-    // catch (DataSetIException &error) {
-    //     error.printErrorStack();
-    // }
-    // // catch failure caused by the DataSpace operations
-    // catch (DataSpaceIException &error) {
-    //     error.printErrorStack();
+        error.printErrorStack();
+    }
+    // catch failure caused by the DataSet operations
+    catch (H5::DataSetIException &error) {
+        error.printErrorStack();
+    }
+    // catch failure caused by the DataSpace operations
+    catch (H5::DataSpaceIException &error) {
+        error.printErrorStack();
     }
 
-    // // partition the mesh using METIS
-    // partition();
+    // partition the mesh using METIS
+    partition();
 }
 
 void Mesh::partition_manually() {

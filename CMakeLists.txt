@@ -22,7 +22,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
-# set(GTEST_ROOT		"${CMAKE_SOURCE_DIR}/externals/googletest/build/install" CACHE PATH "Google Test root")
+# set(GTEST_ROOT        "${CMAKE_SOURCE_DIR}/externals/googletest/build/install" CACHE PATH "Google Test root")
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
 # set(SLTBENCH_ROOT       CACHE PATH "sltbench root")
@@ -46,7 +46,8 @@ option(USE_OMP          "Use OpenMP" ON)
 
 # -- Hard external requirements -- #
 # METIS
-find_library(METIS_LIBRARIES metis HINTS "${METIS_ROOT}/lib")
+set(METIS_INCLUDE_DIRS "${METIS_ROOT}/include")
+set(METIS_LIBRARIES "${METIS_ROOT}/lib/libmetis.a")
 if(NOT METIS_LIBRARIES)
     message(FATAL_ERROR "The METIS library could not be found. Please provide -DMETIS_ROOT.")
 endif()
@@ -54,6 +55,9 @@ endif()
 # HDF5
 set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
 set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.so;${HDF5_ROOT}/lib/libhdf5.so")
+if(NOT HDF5_LIBRARIES)
+    message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")
+endif()
 
 ##############
 # googletest #
@@ -69,11 +73,11 @@ set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.so;${HDF5_ROOT}/lib/libhdf5.so"
 #   Using the version from the following link (using the *.zip file at the bottom of page):
 #   https://github.com/google/googletest/releases/tag/release-1.11.0
 # ----------------------------------------------------------------------------------------------- #
-include(FetchContent)
 
+include(FetchContent)
 FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

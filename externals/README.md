@@ -14,24 +14,11 @@ main CMake pipeline) but for now, I will document the commands I used to
 compile everything. (feel free to add some -j4 to those make commands if you
 want, especially for HDF5).
 
-NOTE: The GKLib/METIS part does not seem to be linking. For now, download METIS
-separately and set the METIS_ROOT and METIS_LIBRARIES manually in ccmake.
-
-NOTE: Actually, HDF5 isn't linking right either.
-
  - TOML11 (markup language for reading input files): no compilation needed,
    since this is header-only.
- - GKLib (needed by METIS):
+ - METIS (graph partitioning library): This is automated with a Bash script.
     ```
-    cd gklib
-    make config cc=gcc prefix=./install
-    make install
-    ```
- - METIS (graph partitioning library):
-    ```
-    cd metis
-    make config cc=gcc prefix=./install gklib_path=../gklib/build/Linux-x86_64/install
-    make install
+    ./download_dependencies.sh
     ```
  - HDF5 (high-performance data formatting library):
     ```
@@ -58,4 +45,3 @@ NOTE: Actually, HDF5 isn't linking right either.
     export CPPFLAGS=-I/usr/local/opt/llvm/include
     ```
     This would be similar for `.bashrc` files
-
