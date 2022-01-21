@@ -29,7 +29,6 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
-# set(GTEST_ROOT        "${CMAKE_SOURCE_DIR}/externals/googletest/build/install" CACHE PATH "Google Test root")
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
 # set(SLTBENCH_ROOT       CACHE PATH "sltbench root")
