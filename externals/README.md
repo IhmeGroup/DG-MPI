@@ -45,3 +45,11 @@ want, especially for HDF5).
     export CPPFLAGS=-I/usr/local/opt/llvm/include
     ```
     This would be similar for `.bashrc` files
+ - Kokkos-kernels:
+    ```
+      cd kokkos-kernels
+      mkdir build
+      cd build
+      cmake -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ROOT=../../kokkos/build/install ..
+      make install
+    ```
