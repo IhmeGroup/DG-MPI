@@ -19,18 +19,23 @@
 namespace Physics {
 
 template <unsigned dim>
-class EulerBase : public PhysicsBase {
+class Euler : public PhysicsBase {
   public:
     static constexpr unsigned NS = dim + 2;
-
+    rtype gamma;
+    rtype R;
   public:
+    void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
+
     DG_KOKKOS_FUNCTION static void conv_flux_physical(
         Kokkos::View<const rtype*> U,
         const rtype P,
         Kokkos::View<rtype**> F);
 
+
     // static void conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F);
 };
+
   // public:
   //   DG_KOKKOS_INLINE_FUNCTION static void vol_fluxes(
   //       const EquationInput &input,

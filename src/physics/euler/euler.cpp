@@ -1,16 +1,17 @@
 #include "physics/euler/euler.h"
 
-
 namespace Physics {
 
-// template <>
-// EulerBase::EulerBase<2>(){}
-// EulerBase::EulerBase(){}
-// EulerBase::EulerBase(){}
+template<unsigned dim> inline
+void Euler<dim>::set_physical_params(rtype GasConstant, 
+    rtype SpecificHeatRatio){
+    
+    R = GasConstant;
+    gamma = SpecificHeatRatio;
+}
 
-// template <unsigned dim>
 template<> DG_KOKKOS_FUNCTION
-void EulerBase<2>::conv_flux_physical(
+void Euler<2>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
     const rtype P,
     Kokkos::View<rtype**> F){
@@ -29,6 +30,37 @@ void EulerBase<2>::conv_flux_physical(
     F(1, 1) = ru * rv * r1;
     F(2, 1) = rv * rv * r1 + P;
     F(3, 1) = (rE + P) * rv * r1;
+}
+
+template<> DG_KOKKOS_FUNCTION
+void Euler<3>::conv_flux_physical(
+    Kokkos::View<const rtype*> U,
+    const rtype P,
+    Kokkos::View<rtype**> F){
+
+    const rtype r1 = 1. / U(0);
+    const rtype ru = U(1);
+    const rtype rv = U(2);
+    const rtype rw = U(3);
+    const rtype rE = U(4);
+
+    F(0, 0) = ru;
+    F(1, 0) = ru * ru * r1 + P;
+    F(2, 0) = ru * rv * r1;
+    F(3, 0) = ru * rw * r1;
+    F(4, 0) = (rE + P) * ru * r1;
+
+    F(0, 1) = rv;
+    F(1, 1) = rv * ru * r1;
+    F(2, 1) = rv * rv * r1 + P;
+    F(3, 1) = rv * rw * r1;
+    F(4, 1) = (rE + P) * rv * r1;
+
+    F(0, 2) = rw;
+    F(1, 2) = rw * ru * r1;
+    F(2, 2) = rw * rv * r1;
+    F(3, 2) = rw * rw * r1 + P;
+    F(4, 2) = (rE + P) * rw * r1;
 }
 
 
