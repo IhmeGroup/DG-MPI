@@ -16,7 +16,7 @@ download_file () {
 }
 
 # Number of threads to use for compiling
-nthreads=getconf _NPROCESSORS_ONLN
+nthreads=$(getconf _NPROCESSORS_ONLN)
 
 # -- METIS -- #
 # Download
@@ -33,4 +33,4 @@ rm $name
 # Compile
 cd metis
 make config cc=gcc prefix=../install
-make install -j$nthreads
+make install -j"${nthreads}"
