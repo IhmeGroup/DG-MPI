@@ -8,6 +8,13 @@ project(DG VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Set dynamic library name depending on operating system
+if(APPLE)
+    set(so "dylib")
+else()
+    set(so "so")
+endif()
+
 # profile build time
 # set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
@@ -54,7 +61,7 @@ endif()
 
 # HDF5
 set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
-set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.so;${HDF5_ROOT}/lib/libhdf5.so")
+set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.${so};${HDF5_ROOT}/lib/libhdf5.${so}")
 if(NOT HDF5_LIBRARIES)
     message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")
 endif()
