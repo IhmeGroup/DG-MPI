@@ -14,22 +14,23 @@
 // #include "equations/num_fluxes.h"
 // #include "physics/ideal_gas.h"
 
-// #include <Kokkos_Core.hpp>
+#include <Kokkos_Core.hpp>
 
 namespace Physics {
 
 template <unsigned dim>
 class EulerBase : public PhysicsBase {
   public:
-    static void conv_flux_physical(
-        const unsigned str_dim_F,
-        const rtype *U,
-        const rtype P,
-        rtype *F);
-    // static void conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F);
-  public:
     static constexpr unsigned NS = dim + 2;
 
+  public:
+    DG_KOKKOS_FUNCTION static void conv_flux_physical(
+        Kokkos::View<const rtype*> U,
+        const rtype P,
+        Kokkos::View<rtype**> F);
+
+    // static void conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F);
+};
   // public:
   //   DG_KOKKOS_INLINE_FUNCTION static void vol_fluxes(
   //       const EquationInput &input,
@@ -39,13 +40,13 @@ class EulerBase : public PhysicsBase {
   //       rtype *F,
   //       rtype *gF);
   // protected:
-  //   DG_KOKKOS_INLINE_FUNCTION static void Fc(
+    // DG_KOKKOS_INLINE_FUNCTION static void Fc(
   //       const Physics::IdealGasParams &params,
   //       const rtype *U,
   //       rtype *gF);
 
-  public:
-    explicit EulerBase();
+  // public:
+    // explicit EulerBase();
 //   public:
 //     virtual void analytic_state(
 //         const EquationInput &input,
@@ -193,10 +194,11 @@ class EulerBase : public PhysicsBase {
 //         const rtype *UR,
 //         const rtype *N,
 //         rtype *Fchat);
-};
+// };
 
 } // namespace Physics
 
-#include "physics/euler/euler_impl.h"
+// NOTE: Keep just in case we go back to *_impl.h version
+// #include "physics/euler/euler_impl.h"
 
 #endif //DG_EULER_H

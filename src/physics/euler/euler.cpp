@@ -1,59 +1,91 @@
+#include "physics/euler/euler.h"
+
+
 namespace Physics {
 
-template<> inline
+// template <>
+// EulerBase::EulerBase<2>(){}
+// EulerBase::EulerBase(){}
+// EulerBase::EulerBase(){}
+
+// template <unsigned dim>
+template<> DG_KOKKOS_FUNCTION
 void EulerBase<2>::conv_flux_physical(
-    const unsigned str_dim_F,
-    const rtype *U,
+    Kokkos::View<const rtype*> U,
     const rtype P,
-    rtype *F) {
+    Kokkos::View<rtype**> F){
 
-    const rtype r1 = 1. / U[0];
-    const rtype ru = U[1];
-    const rtype rv = U[2];
-    const rtype rE = U[3];
+    const rtype r1 = 1. / U(0);
+    const rtype ru = U(1);
+    const rtype rv = U(2);
+    const rtype rE = U(3);
 
-    F[0 * str_dim_F + 0] = ru;
-    F[0 * str_dim_F + 1] = ru * ru * r1 + P;
-    F[0 * str_dim_F + 2] = ru * rv * r1;
-    F[0 * str_dim_F + 3] = (rE + P) * ru * r1;
+    F(0, 0) = ru;
+    F(1, 0) = ru * ru * r1 + P;
+    F(2, 0) = ru * rv * r1;
+    F(3, 0) = (rE + P) * ru * r1;
 
-    F[1 * str_dim_F + 0] = rv;
-    F[1 * str_dim_F + 1] = ru * rv * r1;
-    F[1 * str_dim_F + 2] = rv * rv * r1 + P;
-    F[1 * str_dim_F + 3] = (rE + P) * rv * r1;
+    F(0, 1) = rv;
+    F(1, 1) = ru * rv * r1;
+    F(2, 1) = rv * rv * r1 + P;
+    F(3, 1) = (rE + P) * rv * r1;
 }
 
-template<> inline
-void EulerBase<3>::conv_flux_physical(
-    const unsigned str_dim_F,
-    const rtype *U,
-    const rtype P,
-    rtype *F) {
 
-    const rtype r1 = 1. / U[0];
-    const rtype ru = U[1];
-    const rtype rv = U[2];
-    const rtype rw = U[3];
-    const rtype rE = U[4];
+// template<> inline
+// void EulerBase::EulerBase<2>::conv_flux_physical(
+//     const unsigned str_dim_F,
+//     const rtype *U,
+//     const rtype P,
+//     rtype *F) {
 
-    F[0 * str_dim_F + 0] = ru;
-    F[0 * str_dim_F + 1] = ru * ru * r1 + P;
-    F[0 * str_dim_F + 2] = ru * rv * r1;
-    F[0 * str_dim_F + 3] = ru * rw * r1;
-    F[0 * str_dim_F + 4] = (rE + P) * ru * r1;
+//     const rtype r1 = 1. / U[0];
+//     const rtype ru = U[1];
+//     const rtype rv = U[2];
+//     const rtype rE = U[3];
 
-    F[1 * str_dim_F + 0] = rv;
-    F[1 * str_dim_F + 1] = rv * ru * r1;
-    F[1 * str_dim_F + 2] = rv * rv * r1 + P;
-    F[1 * str_dim_F + 3] = rv * rw * r1;
-    F[1 * str_dim_F + 4] = (rE + P) * rv * r1;
+//     F[0 * str_dim_F + 0] = ru;
+//     F[0 * str_dim_F + 1] = ru * ru * r1 + P;
+//     F[0 * str_dim_F + 2] = ru * rv * r1;
+//     F[0 * str_dim_F + 3] = (rE + P) * ru * r1;
 
-    F[2 * str_dim_F + 0] = rw;
-    F[2 * str_dim_F + 1] = rw * ru * r1;
-    F[2 * str_dim_F + 2] = rw * rv * r1;
-    F[2 * str_dim_F + 3] = rw * rw * r1 + P;
-    F[2 * str_dim_F + 4] = (rE + P) * rw * r1;
-}
+//     F[1 * str_dim_F + 0] = rv;
+//     F[1 * str_dim_F + 1] = ru * rv * r1;
+//     F[1 * str_dim_F + 2] = rv * rv * r1 + P;
+//     F[1 * str_dim_F + 3] = (rE + P) * rv * r1;
+// }
+
+// template<> inline
+// void EulerBase::EulerBase<3>::conv_flux_physical(
+//     const unsigned str_dim_F,
+//     const rtype *U,
+//     const rtype P,
+//     rtype *F) {
+
+//     const rtype r1 = 1. / U[0];
+//     const rtype ru = U[1];
+//     const rtype rv = U[2];
+//     const rtype rw = U[3];
+//     const rtype rE = U[4];
+
+//     F[0 * str_dim_F + 0] = ru;
+//     F[0 * str_dim_F + 1] = ru * ru * r1 + P;
+//     F[0 * str_dim_F + 2] = ru * rv * r1;
+//     F[0 * str_dim_F + 3] = ru * rw * r1;
+//     F[0 * str_dim_F + 4] = (rE + P) * ru * r1;
+
+//     F[1 * str_dim_F + 0] = rv;
+//     F[1 * str_dim_F + 1] = rv * ru * r1;
+//     F[1 * str_dim_F + 2] = rv * rv * r1 + P;
+//     F[1 * str_dim_F + 3] = rv * rw * r1;
+//     F[1 * str_dim_F + 4] = (rE + P) * rv * r1;
+
+//     F[2 * str_dim_F + 0] = rw;
+//     F[2 * str_dim_F + 1] = rw * ru * r1;
+//     F[2 * str_dim_F + 2] = rw * rv * r1;
+//     F[2 * str_dim_F + 3] = rw * rw * r1 + P;
+//     F[2 * str_dim_F + 4] = (rE + P) * rw * r1;
+// }
 
 // template<> inline
 // void EulerBase<2>::conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F) {
@@ -162,10 +194,10 @@ void EulerBase<3>::conv_flux_physical(
 // //--------------------------------------------------------------------------------------------------
 // //--------------------------------------------------------------------------------------------------
 
-template<unsigned dim>
-EulerBase<dim>::EulerBase() {
-    int ns = 4; //HACK
-}
+// template<unsigned dim>
+// EulerBase<dim>::EulerBase() {
+//     int ns = 4; //HACK
+// }
 
 // template<> inline
 // void EulerBase<2>::analytic_state(
