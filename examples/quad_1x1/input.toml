@@ -9,7 +9,8 @@ npartitions = 1
 
 [Numerics]
 order = 2
-basis = "Legendre2D"
+basis = "Banana2D"
+#"Legendre2D"
 
 [Stepper]
 start = 0.0

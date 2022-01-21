@@ -38,7 +38,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical2D) {
 
     Kokkos::View<rtype[4][2]> F("F");
     Physics::Euler<2>::conv_flux_physical(U, P, F);
-  
+
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 2; j++){
             EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
@@ -83,7 +83,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
 
     Kokkos::View<rtype[4][3]> F("F");
     Physics::Euler<3>::conv_flux_physical(U, P, F);
-  
+
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 3; j++){
             EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
@@ -91,6 +91,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     }
 }
 
+/*
 TEST(PhysicsTestSuite, SetConstantPropertiesEuler) {
     const rtype gamref = 1.6;
     const rtype Rref = 300.0;
@@ -114,3 +115,4 @@ TEST(PhysicsTestSuite, SetDefaultConstantPropertiesEuler) {
     EXPECT_NEAR(gamref, physics.gamma, DOUBLE_TOL);
     EXPECT_NEAR(Rref, physics.R, DOUBLE_TOL);
 }
+*/

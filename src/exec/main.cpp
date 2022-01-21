@@ -4,8 +4,10 @@
 #include "mesh/mesh.h"
 #include "utils/utils.h"
 #include <Kokkos_Core.hpp>
+#include "numerics/numerics_data.h"
+#include "io/io_params.h"
 
-using namespace std;
+using std::cout, std::endl, std::string;
 
 
 int main(int argc, char *argv[]) {
@@ -23,7 +25,15 @@ int main(int argc, char *argv[]) {
     // TODO think of something to reduce this (Kihiro 2021/03/04)
     auto toml_input = toml::parse(toml_fname);
     const int dim = toml::find<int>(toml_input, "Physics", "dim");
+    //cout << toml_input.report() << endl;
+
+    // TODO: This is just for testing
+    auto numerics_params = Numerics::NumericsParams(toml_input, 3);
+    auto solfile_params = SolutionFileParams(toml_input);
+
 
     // Create mesh
     auto mesh = Mesh(toml_input);
+    cout << mesh.report() << endl;
+
 }

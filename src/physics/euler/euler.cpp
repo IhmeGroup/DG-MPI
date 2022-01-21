@@ -3,9 +3,9 @@
 namespace Physics {
 
 template<unsigned dim> inline
-void Euler<dim>::set_physical_params(rtype GasConstant, 
+void Euler<dim>::set_physical_params(rtype GasConstant,
     rtype SpecificHeatRatio){
-    
+
     R = GasConstant;
     gamma = SpecificHeatRatio;
 }

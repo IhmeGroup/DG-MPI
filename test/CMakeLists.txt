@@ -17,8 +17,8 @@ target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})
 # add any directories that contain needed functions
 target_link_libraries(test_gtest_all
     PRIVATE
-        # mesh 
-        physics 
+        # mesh
+        physics
         gtest_main
 )
 
