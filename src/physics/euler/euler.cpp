@@ -892,4 +892,7 @@ void Euler<3>::conv_flux_physical(
 //     conv_num_flux_Roe<3>(UL, UR, PL, PR, gam, N, F);
 // }
 
+template class Euler<2>;
+template class Euler<3>;
+
 } // namespace Physics

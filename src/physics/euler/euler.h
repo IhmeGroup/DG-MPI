@@ -204,6 +204,6 @@ class Euler : public PhysicsBase {
 } // namespace Physics
 
 // NOTE: Keep just in case we go back to *_impl.h version
-// #include "physics/euler/euler_impl.h"
+// #include "physics/euler/euler.cpp"
 
 #endif //DG_EULER_H
