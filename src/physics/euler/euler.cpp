@@ -9,7 +9,7 @@ template<int dim> int Euler<dim>::get_NS(){
 template<int dim> inline
 void Euler<dim>::set_physical_params(rtype GasConstant, 
     rtype SpecificHeatRatio){
-    
+
     R = GasConstant;
     gamma = SpecificHeatRatio;
 }
