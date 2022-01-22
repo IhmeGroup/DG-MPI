@@ -12,12 +12,15 @@
 // #include "equations/equation_data.h"
 // #include "physics/physics_data.h"
 // #include "math/ode.h"
+#include <Kokkos_Core.hpp>
+#include <KokkosBlas2_gemv.hpp>
 
 namespace Physics {
 
 /*! \brief Base equation class
  *
  */
+template <int dim> 
 class PhysicsBase {
   public:
     /*! \brief Virtual destructor
@@ -26,7 +29,17 @@ class PhysicsBase {
      * a pointer to this base class.
      */
     virtual ~PhysicsBase() = default;
+    
+    virtual int get_NS();
 
+    DG_KOKKOS_FUNCTION void get_conv_flux_projected(
+      Kokkos::View<const rtype*> Uq, 
+      Kokkos::View<const rtype*> normals,
+      Kokkos::View<rtype*> Fproj); 
+
+    DG_KOKKOS_FUNCTION virtual void conv_flux_physical(
+      Kokkos::View<const rtype*> U,
+      Kokkos::View<rtype**> F);
     /*! \brief Compute an analytic state at one point / state
      *
      * @param input

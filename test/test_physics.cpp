@@ -18,6 +18,9 @@ TEST(PhysicsTestSuite, ConvFluxPhysical2D) {
     const rtype gam = 1.4;
     const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
 
+    Physics::Euler<2> physics;
+    physics.set_physical_params();
+
     Kokkos::initialize();
 
     Kokkos::View<rtype[4]> U("U");
@@ -37,7 +40,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical2D) {
     Fref(3, 1) = (rhoE + P) * v;
 
     Kokkos::View<rtype[4][2]> F("F");
-    Physics::Euler<2>::conv_flux_physical(U, P, F);
+    physics.conv_flux_physical(U, F);
   
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 2; j++){
@@ -54,6 +57,9 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     const rtype w = -4.5;
     const rtype gam = 1.4;
     const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
+
+    Physics::Euler<3> physics;
+    physics.set_physical_params();
 
     Kokkos::initialize();
 
@@ -82,13 +88,56 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     Fref(4, 2) = (rhoE + P) * w;
 
     Kokkos::View<rtype[4][3]> F("F");
-    Physics::Euler<3>::conv_flux_physical(U, P, F);
+    physics.conv_flux_physical(U, F);
   
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 3; j++){
             EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
         }
     }
+}
+
+TEST(PhysicsTestSuite, ConvFluxPhysicalProjected2D) {
+    const rtype P = 101325.;
+    const rtype rho = 1.1;
+    const rtype u = 2.5;
+    const rtype v = 3.5;
+    const rtype gam = 1.4;
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
+
+    Physics::Euler<2> physics;
+    physics.set_physical_params();
+
+    Kokkos::initialize();
+
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
+
+    // Kokkos::View<rtype[4][2]> Fref("Fref");
+    // Fref(0, 0) = rho * u;
+    // Fref(1, 0) = rho * u * u + P;
+    // Fref(2, 0) = rho * u * v;
+    // Fref(3, 0) = (rhoE + P) * u;
+    // Fref(0, 1) = rho * v;
+    // Fref(1, 1) = rho * u * v;
+    // Fref(2, 1) = rho * v * v + P;
+    // Fref(3, 1) = (rhoE + P) * v;
+
+    Kokkos::View<rtype[4]> F("F");
+    Kokkos::View<rtype[2]> normals("normals");
+    normals(0)=-1.;
+    normals(1)=1.;
+
+    physics.get_conv_flux_projected(U, normals, F);
+  
+    // for (unsigned i = 0; i < 4; i++) {
+    //     for (unsigned j = 0; j < 2; j++){
+    //         EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
+    //     }
+    // }
 }
 
 TEST(PhysicsTestSuite, SetConstantPropertiesEuler) {
@@ -113,4 +162,51 @@ TEST(PhysicsTestSuite, SetDefaultConstantPropertiesEuler) {
 
     EXPECT_NEAR(gamref, physics.gamma, DOUBLE_TOL);
     EXPECT_NEAR(Rref, physics.R, DOUBLE_TOL);
+}
+
+TEST(PhysicsTestSuite, GetPressure2D) {
+    const rtype P = 101325.;
+    const rtype rho = 1.1;
+    const rtype u = 2.5;
+    const rtype v = 3.5;
+    const rtype gam = 1.4;
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
+
+
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = rhoE;
+
+    Physics::Euler<2> physics;
+    physics.set_physical_params();
+
+    rtype Pcalc = physics.get_pressure(U);
+
+    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
+}
+
+TEST(PhysicsTestSuite, GetPressure3D) {
+    const rtype P = 101325.;
+    const rtype rho = 1.1;
+    const rtype u = 2.5;
+    const rtype v = 3.5;
+    const rtype w = -4.5;
+    const rtype gam = 1.4;
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v + w * w);
+
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = rho * w;
+    U(4) = rhoE;
+
+    Physics::Euler<3> physics;
+    physics.set_physical_params();
+
+    rtype Pcalc = physics.get_pressure(U);
+
+    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
 }

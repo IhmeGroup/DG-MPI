@@ -2,7 +2,11 @@
 
 namespace Physics {
 
-template<unsigned dim> inline
+template<int dim> int Euler<dim>::get_NS(){
+    return dim + 2;
+}
+
+template<int dim> inline
 void Euler<dim>::set_physical_params(rtype GasConstant, 
     rtype SpecificHeatRatio){
     
@@ -10,12 +14,20 @@ void Euler<dim>::set_physical_params(rtype GasConstant,
     gamma = SpecificHeatRatio;
 }
 
+template<int dim> DG_KOKKOS_FUNCTION
+rtype Euler<dim>::get_pressure(Kokkos::View<const rtype*> U) {
+    // unpack
+    auto mom = Kokkos::subview(U, Kokkos::make_pair(1, dim + 1));
+    const rtype rKE = KokkosBlas::dot(mom, mom) / U(0);
+    return (gamma - 1.) * (U(dim + 1) - 0.5 * rKE);
+}
+
 template<> DG_KOKKOS_FUNCTION
 void Euler<2>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
-    const rtype P,
     Kokkos::View<rtype**> F){
 
+    const rtype P = get_pressure(U);
     const rtype r1 = 1. / U(0);
     const rtype ru = U(1);
     const rtype rv = U(2);
@@ -35,9 +47,9 @@ void Euler<2>::conv_flux_physical(
 template<> DG_KOKKOS_FUNCTION
 void Euler<3>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
-    const rtype P,
     Kokkos::View<rtype**> F){
 
+    const rtype P = get_pressure(U);
     const rtype r1 = 1. / U(0);
     const rtype ru = U(1);
     const rtype rv = U(2);
@@ -63,61 +75,6 @@ void Euler<3>::conv_flux_physical(
     F(4, 2) = (rE + P) * rw * r1;
 }
 
-
-// template<> inline
-// void EulerBase::EulerBase<2>::conv_flux_physical(
-//     const unsigned str_dim_F,
-//     const rtype *U,
-//     const rtype P,
-//     rtype *F) {
-
-//     const rtype r1 = 1. / U[0];
-//     const rtype ru = U[1];
-//     const rtype rv = U[2];
-//     const rtype rE = U[3];
-
-//     F[0 * str_dim_F + 0] = ru;
-//     F[0 * str_dim_F + 1] = ru * ru * r1 + P;
-//     F[0 * str_dim_F + 2] = ru * rv * r1;
-//     F[0 * str_dim_F + 3] = (rE + P) * ru * r1;
-
-//     F[1 * str_dim_F + 0] = rv;
-//     F[1 * str_dim_F + 1] = ru * rv * r1;
-//     F[1 * str_dim_F + 2] = rv * rv * r1 + P;
-//     F[1 * str_dim_F + 3] = (rE + P) * rv * r1;
-// }
-
-// template<> inline
-// void EulerBase::EulerBase<3>::conv_flux_physical(
-//     const unsigned str_dim_F,
-//     const rtype *U,
-//     const rtype P,
-//     rtype *F) {
-
-//     const rtype r1 = 1. / U[0];
-//     const rtype ru = U[1];
-//     const rtype rv = U[2];
-//     const rtype rw = U[3];
-//     const rtype rE = U[4];
-
-//     F[0 * str_dim_F + 0] = ru;
-//     F[0 * str_dim_F + 1] = ru * ru * r1 + P;
-//     F[0 * str_dim_F + 2] = ru * rv * r1;
-//     F[0 * str_dim_F + 3] = ru * rw * r1;
-//     F[0 * str_dim_F + 4] = (rE + P) * ru * r1;
-
-//     F[1 * str_dim_F + 0] = rv;
-//     F[1 * str_dim_F + 1] = rv * ru * r1;
-//     F[1 * str_dim_F + 2] = rv * rv * r1 + P;
-//     F[1 * str_dim_F + 3] = rv * rw * r1;
-//     F[1 * str_dim_F + 4] = (rE + P) * rv * r1;
-
-//     F[2 * str_dim_F + 0] = rw;
-//     F[2 * str_dim_F + 1] = rw * ru * r1;
-//     F[2 * str_dim_F + 2] = rw * rv * r1;
-//     F[2 * str_dim_F + 3] = rw * rw * r1 + P;
-//     F[2 * str_dim_F + 4] = (rE + P) * rw * r1;
-// }
 
 // template<> inline
 // void EulerBase<2>::conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F) {
@@ -226,10 +183,6 @@ void Euler<3>::conv_flux_physical(
 // //--------------------------------------------------------------------------------------------------
 // //--------------------------------------------------------------------------------------------------
 
-// template<unsigned dim>
-// EulerBase<dim>::EulerBase() {
-//     int ns = 4; //HACK
-// }
 
 // template<> inline
 // void EulerBase<2>::analytic_state(

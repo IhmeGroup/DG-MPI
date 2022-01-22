@@ -1,3 +1,4 @@
+
 //
 // Created by kihiro on 1/14/20.
 //
@@ -15,21 +16,23 @@
 // #include "physics/ideal_gas.h"
 
 #include <Kokkos_Core.hpp>
+#include <KokkosBlas1_dot.hpp>
 
 namespace Physics {
 
-template <unsigned dim>
-class Euler : public PhysicsBase {
+template <int dim>
+class Euler : public PhysicsBase<dim> {
   public:
-    static constexpr unsigned NS = dim + 2;
+    int get_NS();
     rtype gamma;
     rtype R;
   public:
     void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
 
-    DG_KOKKOS_FUNCTION static void conv_flux_physical(
+    DG_KOKKOS_FUNCTION rtype get_pressure(Kokkos::View<const rtype*> U);
+
+    DG_KOKKOS_FUNCTION void conv_flux_physical(
         Kokkos::View<const rtype*> U,
-        const rtype P,
         Kokkos::View<rtype**> F);
 
 
