@@ -10,7 +10,6 @@
 
 using std::string, std::vector;
 
-
 // This template returns the string-valued name of an enum value. The template
 // parameter should be set to the enum type.
 // Example:
@@ -25,6 +24,8 @@ string enum_to_string(T enum_value);
 template <class T>
 T enum_from_string(string str);
 
+// This template is used to point towards the correct array containing the enum
+// string names.
 template <class T>
 vector<string> get_enum_to_string_array();
 
@@ -54,7 +55,6 @@ const vector<string> basis_type_to_string_array = {
     "Legendre3D",
     "TriangleLagrange"
 };
-string basis_type_to_string(BasisType type);
 
 enum QuadratureType {
     GaussLegendre,
@@ -73,11 +73,20 @@ enum NodeType {
     Equidistant, // equidistant nodes in reference space
     Interior // equidistant nodes but in the interior of the reference element, only useful for uniform quad/hex meshes
 };
+const vector<string> node_type_to_string_array = {
+    "Equidistant",
+    "Interior"
+};
 
 enum NormType {
     DomainIntegral,
     L1,
     L2
+};
+const vector<string> norm_type_to_string_array = {
+    "DomainIntegral",
+    "L1",
+    "L2"
 };
 
 enum ShapeType {
@@ -85,6 +94,12 @@ enum ShapeType {
     Quadrilateral,
     Hexahedron,
     Triangle
+};
+const vector<string> shape_type_to_string_array = {
+    "Line",
+    "Quadrilateral",
+    "Hexahedron",
+    "Triangle"
 };
 
 enum DGSchemeType {
@@ -95,10 +110,22 @@ enum DGSchemeType {
     ColocatedGLL,
     None
 };
+const vector<string> dgscheme_type_to_string_array = {
+    "DG",
+    "SumFact",
+    "LegendreStruct",
+    "ColocatedGL",
+    "ColocatedGLL",
+    "None"
+};
 
 enum InitType {
     L2Projection,
     Interpolation
+};
+const vector<string> init_type_to_string_array = {
+    "L2Projection",
+    "Interpolation"
 };
 
 namespace EnumMap {
