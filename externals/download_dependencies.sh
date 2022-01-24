@@ -48,5 +48,6 @@ tar -xvzf $name -C mpich --strip-components 1
 rm $name
 
 # Compile
-./configure --prefix=$(pwd)/install
+cd mpich
+./configure --prefix=$(pwd)/install --disable-fortran
 make install -j"${nthreads}"
