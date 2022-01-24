@@ -34,3 +34,19 @@ rm $name
 cd metis
 make config cc=gcc prefix=../install
 make install -j"${nthreads}"
+
+# -- MPICH -- #
+# Download
+name=mpich-4.0.tar.gz
+url=https://www.mpich.org/static/downloads/4.0/mpich-4.0.tar.gz
+hash_key=083c1bc494cd315c7606a8d9479c0db49d25c6c88853141348883a3177780e16b549d2bfb36a381929e46b3b073638180f825fdedf3f78bf419b22d8f04cf219
+download_file $name $url $hash_key
+
+# Unzip
+mkdir mpich
+tar -xvzf $name -C mpich --strip-components 1
+rm $name
+
+# Compile
+./configure --prefix=$(pwd)/install
+make install -j"${nthreads}"

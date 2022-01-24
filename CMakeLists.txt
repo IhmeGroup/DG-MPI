@@ -29,6 +29,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
+set(MPI_ROOT            "${CMAKE_SOURCE_DIR}/externals/mpich/install" CACHE PATH "MPI root")
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
@@ -65,6 +66,10 @@ set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.${so};${HDF5_ROOT}/lib/libhdf5.
 if(NOT HDF5_LIBRARIES)
     message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")
 endif()
+
+# MPI
+include_directories("${MPI_ROOT}/include")
+link_directories("${MPI_ROOT}/lib/libmpich.${so}")
 
 ##############
 # googletest #
