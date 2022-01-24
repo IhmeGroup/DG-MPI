@@ -4,7 +4,7 @@ checkpoint_interval = 100
 # restart_interval = 1
 
 [Mesh]
-file = "quad_1x1.h5"
+file = "quad_2x2.h5"
 npartitions = 1
 
 [Numerics]
