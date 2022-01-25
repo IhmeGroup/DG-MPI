@@ -23,7 +23,15 @@ namespace Physics {
 template <int dim>
 class Euler : public PhysicsBase<dim> {
   public:
+    /*
+    Get the number of state variables
+
+    Outputs:
+    --------
+        number of state variables
+    */
     int get_NS();
+
     rtype gamma;
     rtype R;
   public:
