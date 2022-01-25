@@ -34,6 +34,7 @@ rm $name
 cd metis
 make config cc=gcc prefix=../install
 make install -j"${nthreads}"
+cd ..
 
 # -- MPICH -- #
 # Download
@@ -51,3 +52,4 @@ rm $name
 cd mpich
 ./configure --prefix=$(pwd)/install --disable-fortran
 make install -j"${nthreads}"
+cd ..
