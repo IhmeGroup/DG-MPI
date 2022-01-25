@@ -2,8 +2,8 @@
 #include "physics/base/data.h"
 #include "physics/base/functions.h"
 
-namespace BaseFcnType {
 
+namespace BaseFcnType {
 
 template<unsigned dim>
 Uniform::Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state){
@@ -15,7 +15,15 @@ Uniform::Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state){
 }
 
 template<unsigned dim>
-void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t){};
-
-
+void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t, 
+    Kokkos::View<rtype*> Uq){
+    
+    int NS = physics.get_NS();
+    for (int is = 0; is < NS; is++){
+        Uq(is) = physics->state[is];
+    }
 }
+
+
+
+} // end namespace BaseFcnType

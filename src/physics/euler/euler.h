@@ -1,8 +1,3 @@
-
-//
-// Created by kihiro on 1/14/20.
-//
-
 #ifndef DG_EULER_H
 #define DG_EULER_H
 
@@ -20,24 +15,44 @@
 
 namespace Physics {
 
+/*
+  This class corresponds to the compressible Euler equations for a
+  calorically perfect gas. It inherits attributes and methods from the
+  PhysicsBase class. See PhysicsBase for detailed comments of attributes
+  and methods.
+
+  Additional methods and attributes are commented below.
+*/
 template <int dim>
 class Euler : public PhysicsBase<dim> {
   public:
-    /*
-    Get the number of state variables
-
-    Outputs:
-    --------
-        number of state variables
-    */
     int get_NS();
-
     rtype gamma;
     rtype R;
   public:
+    /*
+    Set Euler physical parameters
+
+    Inputs:
+    -------
+      GasConstant: mass-specific gas constant
+      SpecificHeatRatio: ratio of specific heats
+    */
     void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
 
+    /*
+    Get pressure
+
+    Inputs:
+    -------
+      U: solution state [ns]
+    
+    Outputs:
+    --------
+      pressure
+    */
     DG_KOKKOS_FUNCTION rtype get_pressure(Kokkos::View<const rtype*> U);
+
 
     DG_KOKKOS_FUNCTION void conv_flux_physical(
         Kokkos::View<const rtype*> U,

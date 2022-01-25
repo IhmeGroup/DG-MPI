@@ -1,7 +1,3 @@
-//
-// Created by kihiro on 1/22/20.
-//
-
 #ifndef DG_PHYSICS_BASE_H
 #define DG_PHYSICS_BASE_H
 
@@ -23,25 +19,63 @@ namespace Physics {
 template <int dim> 
 class PhysicsBase {
   public:
-    /*! \brief Virtual destructor
-     *
-     * This destructor is needed so that the derived class destructors are called when releasing
-     * a pointer to this base class.
-     */
+    /* 
+    Virtual destructor
+     
+    This destructor is needed so that the derived class destructors are called when releasing
+    a pointer to this base class.
+    */
     virtual ~PhysicsBase() = default;
     
+    rtype state; // input state array for initial conditions
+
+    /*
+    Get the number of state variables
+
+    Outputs:
+    --------
+        number of state variables
+    */
     virtual int get_NS();
+    
+    /*
+    Compute projected flux
 
-    rtype state;
+    This method computes the convective analytical flux projected in a
+    given direction.
 
+    Inputs:
+    -------
+      Uq: values of the state variables (typically at the quadrature
+        points) [ns]
+      normals: directions in which to project flux [ndims]
+
+    Outputs:
+    --------
+      Fproj: projected flux values [ns]
+    */
     DG_KOKKOS_FUNCTION void get_conv_flux_projected(
       Kokkos::View<const rtype*> Uq, 
       Kokkos::View<const rtype*> normals,
       Kokkos::View<rtype*> Fproj); 
+    
+    /*
+    Compute convective physical flux function
 
+    Inputs:
+    -------
+      U: values of the state variables (typically at the quadrature points) [ns]
+    
+    Outputs:
+    --------
+      F: flux values [ns, ndims]
+    */
     DG_KOKKOS_FUNCTION virtual void conv_flux_physical(
       Kokkos::View<const rtype*> U,
       Kokkos::View<rtype**> F);
+
+
+
     /*! \brief Compute an analytic state at one point / state
      *
      * @param input

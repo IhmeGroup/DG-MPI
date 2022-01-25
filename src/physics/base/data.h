@@ -6,12 +6,19 @@
 #define DG_PHYSICS_DATA_H
 
 #include "common/defines.h"
+#include "common/my_exceptions.h"
 #include "physics/base/base.h"
 
 class FcnBase {
     public:
         virtual ~FcnBase() = default;
 
+        /*
+        Get state function for the base class
+
+        This operatures as a virtual function for get_state. If get_state is not defined
+        in each class that inherits FcnBase, it prints an error.
+        */
         template<unsigned dim>
         void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t);
 };

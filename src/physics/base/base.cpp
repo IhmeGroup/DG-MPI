@@ -24,7 +24,8 @@ template<int dim> DG_KOKKOS_FUNCTION
 void PhysicsBase<dim>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
     Kokkos::View<rtype**> F){
-	std::cout<<"Not Implemented"<<std::endl;
+	throw NotImplementedException("PhysicsBase does not implement "
+                                      "conv_flux_physical -> implement in child class");
 }
 
 
