@@ -8,7 +8,7 @@
 #include <string>
 #include "common/defines.h"
 #include "common/my_exceptions.h"
-#include "physics/base/data.h"
+
 // #include "equations/equation_data.h"
 // #include "physics/physics_data.h"
 // #include "math/ode.h"
@@ -31,6 +31,8 @@ class PhysicsBase {
     virtual ~PhysicsBase() = default;
     
     virtual int get_NS();
+
+    rtype state;
 
     DG_KOKKOS_FUNCTION void get_conv_flux_projected(
       Kokkos::View<const rtype*> Uq, 

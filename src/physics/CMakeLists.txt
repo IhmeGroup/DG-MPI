@@ -1,6 +1,8 @@
 add_library(physics STATIC
 	euler/euler.cpp
 	base/base.cpp
+	base/data.cpp
+	base/functions.cpp
 )
 
 target_include_directories(physics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/euler")

@@ -6,18 +6,27 @@
 #define DG_PHYSICS_DATA_H
 
 #include "common/defines.h"
+#include "physics/base/base.h"
 
-enum class AnalyticType {
-    Uniform,
-    None,
+class FcnBase {
+    public:
+        virtual ~FcnBase() = default;
+
+        template<unsigned dim>
+        void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t);
 };
 
-inline AnalyticType get_analytic_type(const std::string &name) {
-    if (name == "Uniform") {
-        return AnalyticType::Uniform;
-    }
-    return AnalyticType::None;
-}
+// enum class AnalyticType {
+//     Uniform,
+//     None,
+// };
+
+// inline AnalyticType get_analytic_type(const std::string &name) {
+//     if (name == "Uniform") {
+//         return AnalyticType::Uniform;
+//     }
+//     return AnalyticType::None;
+// }
 
 // enum class SourceType {
 //     ManufacturedNS,
@@ -33,45 +42,45 @@ inline AnalyticType get_analytic_type(const std::string &name) {
 //         return SourceType::Channel;
 //     }
 //     return SourceType::None;
+// // }
+
+// enum class PhysicsType {
+//     Euler,
+//     None,
+// };
+
+// inline PhysicsType get_physics_type(
+//     const std::string &name)
+//     // const std::string &inv_flux_name,
+//     // const std::string &visc_flux_name) 
+// {
+
+//     if (name == "Euler") {
+//         // if (inv_flux_name == "HLLC") {
+//         return PhysicsType::Euler;
+//         // }
+//         // if (inv_flux_name == "Roe") {
+//             // return EquationType::EulerRoe;
+//         // }
+//     }
+//     // if (name == "NavierStokes") {
+//     //     if (inv_flux_name == "HLLC") {
+//     //         if (visc_flux_name == "IP") {
+//     //             return EquationType::NavierStokesHLLC;
+//     //         }
+//     //     }
+//     //     if (inv_flux_name == "Roe") {
+//     //         return EquationType::NavierStokesRoe;
+//     //     }
+//     // }
+//     // if (name == "EulerMultiSpecies") {
+//     //     return EquationType::EulerMultiSpecies;
+//     // }
+//     // if (name == "NavierStokesMultiSpecies") {
+//     //     return EquationType::NavierStokesMultiSpecies;
+//     // }
+//     return PhysicsType::None;
 // }
-
-enum class PhysicsType {
-    Euler,
-    None,
-};
-
-inline PhysicsType get_physics_type(
-    const std::string &name)
-    // const std::string &inv_flux_name,
-    // const std::string &visc_flux_name) 
-{
-
-    if (name == "Euler") {
-        // if (inv_flux_name == "HLLC") {
-        return PhysicsType::Euler;
-        // }
-        // if (inv_flux_name == "Roe") {
-            // return EquationType::EulerRoe;
-        // }
-    }
-    // if (name == "NavierStokes") {
-    //     if (inv_flux_name == "HLLC") {
-    //         if (visc_flux_name == "IP") {
-    //             return EquationType::NavierStokesHLLC;
-    //         }
-    //     }
-    //     if (inv_flux_name == "Roe") {
-    //         return EquationType::NavierStokesRoe;
-    //     }
-    // }
-    // if (name == "EulerMultiSpecies") {
-    //     return EquationType::EulerMultiSpecies;
-    // }
-    // if (name == "NavierStokesMultiSpecies") {
-    //     return EquationType::NavierStokesMultiSpecies;
-    // }
-    return PhysicsType::None;
-}
 
 // enum class BoundaryType {
 //     WeakRiemannSlipWall,
