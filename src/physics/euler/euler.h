@@ -87,17 +87,6 @@ class Euler : public PhysicsBase<dim> {
         */
         DG_KOKKOS_FUNCTION rtype get_pressure(Kokkos::View<const rtype*> U);
 
-        /* 
-        Get max wave speed
-
-        Inputs:
-        -------
-            U: solution state [ns]
-
-        Outputs:
-        --------
-            max wave speed
-        */
         DG_KOKKOS_FUNCTION rtype get_maxwavespeed(Kokkos::View<const rtype*> U);
 
 
