@@ -5,7 +5,7 @@
 
 namespace BaseFcnType {
 
-template<unsigned dim>
+template<int dim>
 Uniform::Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state){
 
     int NS = physics.get_NS();
@@ -14,8 +14,8 @@ Uniform::Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state){
     }
 }
 
-template<unsigned dim>
-void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t, 
+template<int dim> DG_KOKKOS_FUNCTION
+void Uniform::get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t, 
     Kokkos::View<rtype*> Uq){
     
     int NS = physics.get_NS();
@@ -24,6 +24,19 @@ void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *
     }
 }
 
-
-
 } // end namespace BaseFcnType
+
+
+namespace BaseConvNumFluxType {
+
+template<int dim> DG_KOKKOS_FUNCTION
+void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics, 
+            Kokkos::View<rtype*> UqL,
+            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> normals,
+            Kokkos::View<rtype*> Fq){
+
+    //NEEDS TO BE IMPLEMENTED
+};
+
+} // end namespace BaseConvNumFluxType
