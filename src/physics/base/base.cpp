@@ -29,6 +29,17 @@ void PhysicsBase<dim>::conv_flux_physical(
 }
 
 
+template<int dim> DG_KOKKOS_FUNCTION 
+rtype PhysicsBase<dim>::compute_variable(std::string str, 
+      Kokkos::View<const rtype*> Uq){
+
+	var = PhysicsBase<dim>::get_physical_variable(str);
+	// var = enum_from_string<PhysicsVariables>(str.c_str());
+
+	// NEED TO UPDATE THIS FUNCTION TO GET SPECIFIC VAR FUNCTIONS
+	return 0.0;
+}
+
 template class PhysicsBase<2>;
 template class PhysicsBase<3>;
 } // end namespace Physics
