@@ -1,8 +1,10 @@
 
 #include <cstdlib>
+#include <math.h>
 #include "common/defines.h"
 #include "gtest/gtest.h"
 #include "physics/euler/euler.h"
+#include "physics/base/functions.h"
 // #include "equations/navier_stokes.h"
 // #include "equations/navier_stokes_multispecies.h"
 
@@ -399,6 +401,57 @@ TEST(PhysicsTestSuite, GetPressure3D) {
     EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
 }
 
+/* 
+Test max wave speed calc for zero velocity field
+*/
+TEST(PhysicsTestSuite, GetMaxWaveSpeed3DZeroVelocity) {
+    const rtype P = 1.;
+    const rtype rho = 1.;
+    const rtype u = 0.;
+    const rtype v = 0.;
+    const rtype w = 0.;
+    const rtype gam = 1.4;
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v + w * w);
+
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = rho * w;
+    U(4) = rhoE;
+
+    Physics::Euler<3> physics;
+    physics.set_physical_params();
+    rtype acalc = physics.get_maxwavespeed(U);
+
+    EXPECT_NEAR(sqrt(1.4), acalc, DOUBLE_TOL);
+}
+
+/* 
+Test max wave speed calc
+*/
+TEST(PhysicsTestSuite, GetMaxWaveSpeed3D) {
+    const rtype P = 1.;
+    const rtype rho = 1.;
+    const rtype u = 1.;
+    const rtype v = 2.;
+    const rtype w = 2.;
+    const rtype gam = 1.4;
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v + w * w);
+
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = rho * w;
+    U(4) = rhoE;
+
+    Physics::Euler<3> physics;
+    physics.set_physical_params();
+    rtype acalc = physics.get_maxwavespeed(U);
+
+    EXPECT_NEAR(3.0 + sqrt(1.4), acalc, DOUBLE_TOL);
+}
 /*
 Test the selection of additional variables via input strings
 */
@@ -428,5 +481,109 @@ TEST(PhysicsTestSuite, GetPhysicalVariableEnumCheckTest2) {
         EXPECT_NEAR(1.0, 1.0, DOUBLE_TOL); // Force pass
     }else{
         EXPECT_NEAR(0.0, 1.0, DOUBLE_TOL); // Force fail
+    }
+}
+
+
+/*
+Test that ensures that the 2D numerical flux functions are consistent,
+i.e. that F_numerical(U, U, normals) = F(U) dot normals
+*/
+TEST(PhysicsTestSuite, test_numerical_flux_2D_consistency) {
+    
+    // instantiate physics
+    Physics::Euler<2> physics;
+    physics.set_physical_params();
+
+    // instantiate flux function -> evenutally this should be done via 
+    // enums.
+    BaseConvNumFluxType::LaxFriedrichs flux;
+
+    const rtype P = 101325.;
+    const rtype rho = 1.1;
+    const rtype u = 2.5;
+    const rtype v = -3.5;
+    const rtype rhoE = P / (physics.gamma - 1.) + 0.5 * rho * (u * u + v * v);
+    
+    Kokkos::View<rtype[4]> U("U");
+    U(0) = rho;
+    U(1) = rho * u;
+    U(2) = rho * v;
+    U(3) = rhoE;
+
+    // Compute numerical flux
+    Kokkos::View<rtype*> normals("normals", 2);
+    Kokkos::View<rtype*> Fnum("Fnum", 4);
+    Kokkos::View<rtype*> F_expected("F_expected", 4);
+
+    normals(0) = -0.4;
+    normals(1) = 0.7;
+    flux.compute_flux(physics, U, U, normals, Fnum);
+
+    physics.get_conv_flux_projected(U, normals, F_expected);
+
+
+    for (unsigned i = 0; i < 4; i++) {
+        EXPECT_DOUBLE_EQ(Fnum(i), F_expected(i));
+    }
+}
+
+/*
+Test that ensures that the 2D numerical flux functions are conservative,
+i.e. that F_numerical(UL, UR, normals) = -F_numerical(UR, UL, -normals)
+*/
+TEST(PhysicsTestSuite, test_numerical_flux_2D_conservation) {
+    
+    // instantiate physics
+    Physics::Euler<2> physics;
+    physics.set_physical_params();
+
+    // instantiate flux function -> evenutally this should be done via 
+    // enums.
+    BaseConvNumFluxType::LaxFriedrichs flux;
+
+    // Set the left state
+    const rtype P = 101325.;
+    const rtype rho = 1.1;
+    const rtype u = 2.5;
+    const rtype v = -3.5;
+    const rtype rhoE = P / (physics.gamma - 1.) + 0.5 * rho * (u * u + v * v);
+    
+    Kokkos::View<rtype[4]> UqL("U");
+    UqL(0) = rho;
+    UqL(1) = rho * u;
+    UqL(2) = rho * v;
+    UqL(3) = rhoE;
+
+    // Set the right state
+    const rtype PR = 101325. * 2.;
+    const rtype rhoR = 0.7;
+    const rtype uR = -3.5;
+    const rtype vR = -6.0;
+    const rtype rhoER = PR / (physics.gamma - 1.) + 0.5 * rhoR * (uR * uR + vR * vR);
+    
+    Kokkos::View<rtype[4]> UqR("U");
+    UqR(0) = rhoR;
+    UqR(1) = rhoR * uR;
+    UqR(2) = rhoR * vR;
+    UqR(3) = rhoER;
+
+    // Compute numerical flux
+    Kokkos::View<rtype*> normalsL("left normals", 2);
+    Kokkos::View<rtype*> normalsR("right normals", 2);
+    Kokkos::View<rtype*> Fnum("Fnum", 4);
+    Kokkos::View<rtype*> F_expected("F_expected", 4);
+
+    normalsL(0) = -0.4;
+    normalsL(1) = 0.7;
+    normalsR(0) = 0.4;
+    normalsR(1) = -0.7;
+
+    flux.compute_flux(physics, UqL, UqR, normalsL, Fnum);
+    flux.compute_flux(physics, UqR, UqL, normalsR, F_expected);
+
+
+    for (unsigned i = 0; i < 4; i++) {
+        EXPECT_DOUBLE_EQ(Fnum(i), -1.*F_expected(i));
     }
 }
