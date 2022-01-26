@@ -398,3 +398,35 @@ TEST(PhysicsTestSuite, GetPressure3D) {
 
     EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
 }
+
+/*
+Test the selection of additional variables via input strings
+*/
+TEST(PhysicsTestSuite, GetPhysicalVariableEnumCheckTest1) {
+
+    Physics::Euler<2> physics;
+    Physics::Euler<2>::PhysicsVariables var = 
+        physics.get_physical_variable("MaxWaveSpeed");
+
+    if (var == Physics::Euler<2>::PhysicsVariables::MaxWaveSpeed){
+        EXPECT_NEAR(1.0, 1.0, DOUBLE_TOL); // Force pass
+    }else{
+        EXPECT_NEAR(1.0, 0.0, DOUBLE_TOL); // Force fail
+    }
+}
+
+/*
+Test the selection of additional variables via input strings
+*/
+TEST(PhysicsTestSuite, GetPhysicalVariableEnumCheckTest2) {
+
+    Physics::Euler<2> physics;
+    Physics::Euler<2>::PhysicsVariables var = 
+        physics.get_physical_variable("Density");
+
+    if (var == Physics::Euler<2>::PhysicsVariables::Density){
+        EXPECT_NEAR(1.0, 1.0, DOUBLE_TOL); // Force pass
+    }else{
+        EXPECT_NEAR(0.0, 1.0, DOUBLE_TOL); // Force fail
+    }
+}
