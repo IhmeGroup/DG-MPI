@@ -55,20 +55,20 @@ class PhysicsBase {
       Fproj: projected flux values [ns]
     */
     DG_KOKKOS_FUNCTION void get_conv_flux_projected(
-      Kokkos::View<const rtype*> Uq, 
-      Kokkos::View<const rtype*> normals,
-      Kokkos::View<rtype*> Fproj); 
+        Kokkos::View<const rtype*> Uq, 
+        Kokkos::View<const rtype*> normals,
+        Kokkos::View<rtype*> Fproj); 
     
     enum PhysicsVariables {
-      Dummy
+        Dummy
     };
     inline PhysicsVariables get_physical_variable(const std::string var_name) {
         if (var_name == "Dummy") {
             return PhysicsVariables::Dummy;
         }
     }
-
     PhysicsVariables var;
+
     /*
     Compute convective physical flux function
 
@@ -86,7 +86,20 @@ class PhysicsBase {
 
     DG_KOKKOS_FUNCTION rtype compute_variable(std::string str, 
       Kokkos::View<const rtype*> Uq);
+    
+    /* 
+    Get max wave speed
 
+    Inputs:
+    -------
+        U: solution state [ns]
+
+    Outputs:
+    --------
+        max wave speed
+    */
+    virtual DG_KOKKOS_FUNCTION rtype get_maxwavespeed(
+        Kokkos::View<const rtype*> U);
 
     /*! \brief Compute an analytic state at one point / state
      *
