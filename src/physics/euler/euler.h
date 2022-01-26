@@ -40,6 +40,37 @@ class Euler : public PhysicsBase<dim> {
     */
     void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
 
+    enum class PhysicsVariables {
+      Density,
+      XMomentum,
+      YMomentum,
+      ZMomentum,
+      Energy,
+      MaxWaveSpeed
+    };
+
+    inline PhysicsVariables get_physical_variable(const std::string var_name) {
+        if (var_name == "Density") {
+            return PhysicsVariables::Density;
+        }
+        if (var_name == "XMomentum") {
+            return PhysicsVariables::XMomentum;
+        }
+        if (var_name == "YMomentum") {
+            return PhysicsVariables::YMomentum;
+        }
+        if (var_name == "ZMomentum") {
+            return PhysicsVariables::ZMomentum;
+        }
+        if (var_name == "Energy") {
+            return PhysicsVariables::Energy;
+        }
+        if (var_name == "MaxWaveSpeed") {
+            return PhysicsVariables::MaxWaveSpeed;
+        }
+    }
+
+   
     /*
     Get pressure
 
