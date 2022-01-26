@@ -1,7 +1,3 @@
-//
-// Created by kihiro on 7/24/20.
-//
-
 #ifndef DG_PHYSICS_DATA_H
 #define DG_PHYSICS_DATA_H
 
@@ -9,8 +5,14 @@
 #include "common/my_exceptions.h"
 #include "physics/base/base.h"
 
+#include <Kokkos_Core.hpp>
+
+
 class FcnBase {
     public:
+        /*
+        Default constructor
+        */
         virtual ~FcnBase() = default;
 
         /*
@@ -19,8 +21,40 @@ class FcnBase {
         This operatures as a virtual function for get_state. If get_state is not defined
         in each class that inherits FcnBase, it prints an error.
         */
-        template<unsigned dim>
+        template<int dim>
         void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t);
+};
+
+
+class ConvNumFluxBase {
+    public:
+        /*
+        Default constructor
+        */
+        virtual ~ConvNumFluxBase() = default;
+
+        /*
+        This method computes the numerical flux.
+
+        Inputs:
+        -------
+            physics: physics object
+            UqL: left values of the state variables (typically at the
+                quadrature points) [ns]
+            UqR: right values of the state variables (typically at the
+                quadrature points) [ns]
+            normals: directions from left to right [ndims]
+
+        Outputs:
+        --------
+            Fq: numerical flux values [ns]
+        */
+        template<int dim>
+        void compute_flux(Physics::PhysicsBase<dim> &physics, 
+            Kokkos::View<rtype*> UqL,
+            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> normals,
+            Kokkos::View<rtype*> Fq);
 };
 
 // enum class AnalyticType {
