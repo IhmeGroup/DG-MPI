@@ -5,6 +5,10 @@
 #include "physics/base/data.h"
 
 #include <Kokkos_Core.hpp>
+#include "KokkosBlas1_nrm2.hpp"
+#include "KokkosBlas1_axpby.hpp"
+#include "KokkosBlas1_scal.hpp"
+
 
 namespace BaseFcnType {
 
@@ -106,6 +110,5 @@ class LaxFriedrichs: public ConvNumFluxBase {
 };
 
 } // end namespace BaseConvNumFluxType
-
 
 #endif //DG_PHYSICS_BASE_FUNCTIONS_H

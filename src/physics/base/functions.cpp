@@ -2,8 +2,6 @@
 #include "physics/base/data.h"
 #include "physics/base/functions.h"
 
-#include "KokkosBlas1_nrm2.hpp"
-
 
 namespace BaseFcnType {
 
@@ -40,7 +38,7 @@ void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
 
     // unpack
     int NS = physics.get_NS();
-
+    // int dim = 2;
     // Normalize the normal vectors
     Kokkos::View<rtype*> n_hat("n_hat", dim);
     rtype n_mag = KokkosBlas::nrm2(normals);
@@ -50,24 +48,43 @@ void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
 
     // Left flux
     Kokkos::View<rtype*> FqL("FqL", NS);
-    FqL = physics.get_conv_flux_projected(UqL, n_hat);
+    physics.get_conv_flux_projected(UqL, n_hat, FqL);
 
     // Right flux
     Kokkos::View<rtype*> FqR("FqR", NS);
-    FqR = physics.get_conv_flux_projected(UqR, n_hat);
+    physics.get_conv_flux_projected(UqR, n_hat, FqR);
 
-    // Jump condition
+    // Jump condition    
+    // dUq = UqR - UqL -> what the two lines below do
     Kokkos::View<rtype*> dUq("dUq", NS);
-    // dUq = UqR - UqL;
+    Kokkos::deep_copy(dUq, UqR);
+    KokkosBlas::axpy(-1., UqL, dUq);
 
     // Calculate the max wave speed
-    rtype a = physics.compute_variable("MaxWaveSpeed", UqL);
-    rtype aR = physics.compute_variable("MaxWaveSpeed", UqR);
+    rtype a = physics.get_maxwavespeed(UqL);
+    rtype aR = physics.get_maxwavespeed(UqR);
 
+    if (aR > a){
+        a = aR;
+    }
 
-
-
-
+    // Put together -> n_mag * (0.5 *(FqL + FqR) - 0.5 * a * dUq)
+    KokkosBlas::axpby(0.5, FqL, 0.5, FqR);
+    auto Favg = FqR;
+    KokkosBlas::axpby(1., Favg, -0.5 * a, dUq);
+    KokkosBlas::scal(Fq, n_mag, dUq);
 };
+
+template void LaxFriedrichs::compute_flux<2>(Physics::PhysicsBase<2> &physics, 
+            Kokkos::View<rtype*> UqL,
+            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> normals,
+            Kokkos::View<rtype*> Fq);
+
+template void LaxFriedrichs::compute_flux<3>(Physics::PhysicsBase<3> &physics, 
+            Kokkos::View<rtype*> UqL,
+            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> normals,
+            Kokkos::View<rtype*> Fq);
 
 } // end namespace BaseConvNumFluxType
