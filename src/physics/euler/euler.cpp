@@ -22,6 +22,17 @@ rtype Euler<dim>::get_pressure(Kokkos::View<const rtype*> U) {
     return (gamma - 1.) * (U(dim + 1) - 0.5 * rKE);
 }
 
+template<int dim> DG_KOKKOS_FUNCTION
+rtype Euler<dim>::get_maxwavespeed(Kokkos::View<const rtype*> U) {
+    // unpack
+    auto mom = Kokkos::subview(U, Kokkos::make_pair(1, dim + 1));
+    auto rho1 = 1./U(0);
+    
+    return KokkosBlas::nrm2(mom) * rho1 + sqrt(gamma * get_pressure(U) * rho1);
+
+}
+
+
 template<> DG_KOKKOS_FUNCTION
 void Euler<2>::conv_flux_physical(
     Kokkos::View<const rtype*> U,

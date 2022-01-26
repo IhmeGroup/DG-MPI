@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <math.h>
+
 #include "common/defines.h"
 // #include "equations/analytic_expressions.h"
 // #include "math/linear_algebra_hand_written.h"
@@ -12,6 +14,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <KokkosBlas1_dot.hpp>
+#include <KokkosBlas1_nrm2.hpp>
 
 namespace Physics {
 
@@ -25,72 +28,82 @@ namespace Physics {
 */
 template <int dim>
 class Euler : public PhysicsBase<dim> {
-  public:
-    int get_NS();
-    rtype gamma;
-    rtype R;
-  public:
-    /*
-    Set Euler physical parameters
+    public:
+        int get_NS();
+        rtype gamma;
+        rtype R;
+    public:
+        /*
+        Set Euler physical parameters
 
-    Inputs:
-    -------
-      GasConstant: mass-specific gas constant
-      SpecificHeatRatio: ratio of specific heats
-    */
-    void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
+        Inputs:
+        -------
+          GasConstant: mass-specific gas constant
+          SpecificHeatRatio: ratio of specific heats
+        */
+        void set_physical_params(rtype GasConstant=287.0, rtype SpecificHeatRatio=1.4);
 
-    enum class PhysicsVariables {
-      Density,
-      XMomentum,
-      YMomentum,
-      ZMomentum,
-      Energy,
-      MaxWaveSpeed
-    };
+        enum class PhysicsVariables {
+            Density,
+            XMomentum,
+            YMomentum,
+            ZMomentum,
+            Energy,
+            MaxWaveSpeed
+        };
 
-    inline PhysicsVariables get_physical_variable(const std::string var_name) {
-        if (var_name == "Density") {
-            return PhysicsVariables::Density;
+        inline PhysicsVariables get_physical_variable(const std::string var_name) {
+            if (var_name == "Density") {
+                return PhysicsVariables::Density;
+            }
+            if (var_name == "XMomentum") {
+                return PhysicsVariables::XMomentum;
+            }
+            if (var_name == "YMomentum") {
+                return PhysicsVariables::YMomentum;
+            }
+            if (var_name == "ZMomentum") {
+                return PhysicsVariables::ZMomentum;
+            }
+            if (var_name == "Energy") {
+                return PhysicsVariables::Energy;
+            }
+            if (var_name == "MaxWaveSpeed") {
+                return PhysicsVariables::MaxWaveSpeed;
+            }
         }
-        if (var_name == "XMomentum") {
-            return PhysicsVariables::XMomentum;
-        }
-        if (var_name == "YMomentum") {
-            return PhysicsVariables::YMomentum;
-        }
-        if (var_name == "ZMomentum") {
-            return PhysicsVariables::ZMomentum;
-        }
-        if (var_name == "Energy") {
-            return PhysicsVariables::Energy;
-        }
-        if (var_name == "MaxWaveSpeed") {
-            return PhysicsVariables::MaxWaveSpeed;
-        }
-    }
-
-   
-    /*
-    Get pressure
-
-    Inputs:
-    -------
-      U: solution state [ns]
-    
-    Outputs:
-    --------
-      pressure
-    */
-    DG_KOKKOS_FUNCTION rtype get_pressure(Kokkos::View<const rtype*> U);
 
 
-    DG_KOKKOS_FUNCTION void conv_flux_physical(
-        Kokkos::View<const rtype*> U,
-        Kokkos::View<rtype**> F);
+        /*
+        Get pressure
+
+        Inputs:
+        -------
+            U: solution state [ns]
+        
+        Outputs:
+        --------
+            pressure
+        */
+        DG_KOKKOS_FUNCTION rtype get_pressure(Kokkos::View<const rtype*> U);
+
+        /* 
+        Get max wave speed
+
+        Inputs:
+        -------
+            U: solution state [ns]
+
+        Outputs:
+        --------
+            max wave speed
+        */
+        DG_KOKKOS_FUNCTION rtype get_maxwavespeed(Kokkos::View<const rtype*> U);
 
 
-    // static void conv_flux_normal(const rtype *U, const rtype P, const rtype *N, rtype *F);
+        DG_KOKKOS_FUNCTION void conv_flux_physical(
+            Kokkos::View<const rtype*> U,
+            Kokkos::View<rtype**> F);
 };
 
   // public:
