@@ -59,6 +59,16 @@ class PhysicsBase {
       Kokkos::View<const rtype*> normals,
       Kokkos::View<rtype*> Fproj); 
     
+    enum PhysicsVariables {
+      Dummy
+    };
+    inline PhysicsVariables get_physical_variable(const std::string var_name) {
+        if (var_name == "Dummy") {
+            return PhysicsVariables::Dummy;
+        }
+    }
+
+    PhysicsVariables var;
     /*
     Compute convective physical flux function
 
@@ -74,6 +84,8 @@ class PhysicsBase {
       Kokkos::View<const rtype*> U,
       Kokkos::View<rtype**> F);
 
+    DG_KOKKOS_FUNCTION rtype compute_variable(std::string str, 
+      Kokkos::View<const rtype*> Uq);
 
 
     /*! \brief Compute an analytic state at one point / state
