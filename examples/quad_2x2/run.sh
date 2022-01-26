@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# point this variable to the solver binary on your system
-EXEC="../../build/src/exec/solver"
-
-NCPU=0 # number of nodes
+# Run solver with mpiexec and pass the number of nodes as an argument
+EXEC="../../externals/mpich/install/bin/mpiexec -n $1 ../../build/src/exec/solver"
 
 FLAGS="$FLAGS" # put flags here
 

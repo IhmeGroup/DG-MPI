@@ -25,7 +25,8 @@ static const string DSET_NODE_COORD("NodeCoords");
 static const string DSET_ELEM_TO_NODES("Elem2Nodes");
 static const string DSET_IFACE_DATA("IFaceData");
 
-Mesh::Mesh(const toml::value &input_info) : partitioned(false) {
+Mesh::Mesh(const toml::value &input_info, MemoryNetwork& network)
+    : network{network} {
     auto mesh_info = toml::find(input_info, "Mesh");
     string mesh_file_name = toml::find<string>(mesh_info, "file");
     num_partitions = toml::find<int>(mesh_info, "npartitions");

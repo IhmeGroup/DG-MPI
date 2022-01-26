@@ -4,16 +4,16 @@
 #include "mesh/mesh.h"
 #include "utils/utils.h"
 #include <Kokkos_Core.hpp>
-#include <mpi.h>
+#include "memory/memory_network.h"
 #include "numerics/numerics_data.h"
 #include "io/io_params.h"
 
 using std::cout, std::endl, std::string;
 
 
-int main(int argc, char *argv[]) {
-    // Initialize MPI
-    MPI_Init(&argc, &argv);
+int main(int argc, char* argv[]) {
+    // Initialize memory network
+    MemoryNetwork network(argc, argv);
 
     // Initialize Kokkos (This will need to be after MPI_Init)
     Kokkos::initialize(argc, argv);
@@ -35,9 +35,6 @@ int main(int argc, char *argv[]) {
     auto solfile_params = SolutionFileParams(toml_input);
 
     // Create mesh
-    auto mesh = Mesh(toml_input);
+    auto mesh = Mesh(toml_input, network);
     cout << mesh.report() << endl;
-
-    // Finalize MPI
-    MPI_Finalize();
 }

@@ -3,8 +3,7 @@
 add_executable(solver main.cpp)
 
 target_link_libraries(solver
-    PRIVATE mesh numerics io utils
-    PRIVATE mpi)
+    PRIVATE memory mesh numerics io utils)
 
 # Only this target links to these libraries
 if (USE_MKL)

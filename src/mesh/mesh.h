@@ -6,6 +6,7 @@
 #include <vector>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
+#include "memory/memory_network.h"
 
 /*! \brief Mesh class
  *
@@ -19,16 +20,11 @@
  */
 class Mesh {
   public:
-    /*! \brief Default constructor
-     *
-     */
-    Mesh() = default;
-
     /*! \brief Constructor using a TOML input
      *
      * @param input_info
      */
-    explicit Mesh(const toml::value &input_info);
+    explicit Mesh(const toml::value &input_info, MemoryNetwork& network);
 
     /*! \brief Read the HDF5 mesh file directly
      *
@@ -99,6 +95,7 @@ class Mesh {
     std::vector<std::vector<int>> elem_to_IF;
     std::vector<int> nBG_in_elem;
     std::vector<std::vector<int>> elem_to_BF;
+    MemoryNetwork& network;
   public:
     std::vector<int> eptr; // for metis
     std::vector<int> eind; // for metis
@@ -106,7 +103,7 @@ class Mesh {
     std::vector<int> node_partition; // vector of partition ID for each node
 
   private:
-    bool partitioned; //!< boolean indicating whether the mesh is partitioned
+    bool partitioned = false; //!< boolean indicating whether the mesh is partitioned
 };
 
 #endif //DG_MESH_H

@@ -4,7 +4,6 @@
 
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0074 NEW) # use <PackageName>_ROOT over <PackageName>_DIR
-project(DG VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
@@ -36,6 +35,12 @@ set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/inst
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
 # set(SLTBENCH_ROOT       CACHE PATH "sltbench root")
 # set(CANTERA_ROOT        CACHE PATH "Cantera root")
+
+# Use the MPI compilers
+set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
+set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+# Set the project info (done after setting compilers to avoid infinite loop)
+project(DG VERSION 1.0)
 
 # specify default cmake options
 option(USE_DOUBLES      "Use double precision" ON)
@@ -144,9 +149,10 @@ endif()
 
 # building blocks
 add_subdirectory(src/io)
-add_subdirectory(src/physics)
+add_subdirectory(src/memory)
 add_subdirectory(src/mesh)
 add_subdirectory(src/numerics)
+add_subdirectory(src/physics)
 add_subdirectory(src/utils)
 add_subdirectory(test)
 
