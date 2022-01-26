@@ -2,6 +2,8 @@
 #include "physics/base/data.h"
 #include "physics/base/functions.h"
 
+#include "KokkosBlas1_nrm2.hpp"
+
 
 namespace BaseFcnType {
 
@@ -36,7 +38,36 @@ void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
             Kokkos::View<rtype*> normals,
             Kokkos::View<rtype*> Fq){
 
-    //NEEDS TO BE IMPLEMENTED
+    // unpack
+    int NS = physics.get_NS();
+
+    // Normalize the normal vectors
+    Kokkos::View<rtype*> n_hat("n_hat", dim);
+    rtype n_mag = KokkosBlas::nrm2(normals);
+    for (int i = 0; i < dim; i++){
+        n_hat(i) = normals(i)/n_mag;
+    }
+
+    // Left flux
+    Kokkos::View<rtype*> FqL("FqL", NS);
+    FqL = physics.get_conv_flux_projected(UqL, n_hat);
+
+    // Right flux
+    Kokkos::View<rtype*> FqR("FqR", NS);
+    FqR = physics.get_conv_flux_projected(UqR, n_hat);
+
+    // Jump condition
+    Kokkos::View<rtype*> dUq("dUq", NS);
+    // dUq = UqR - UqL;
+
+    // Calculate the max wave speed
+    rtype a = physics.compute_variable("MaxWaveSpeed", UqL);
+    rtype aR = physics.compute_variable("MaxWaveSpeed", UqR);
+
+
+
+
+
 };
 
 } // end namespace BaseConvNumFluxType
