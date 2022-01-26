@@ -430,9 +430,9 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
 }
 
 string NumericsParams::report() const {
-//    stringstream msg;
-//    string prefix = "    -> ";
-//    msg << "NumericsData object reporting:" << endl;
+    stringstream msg;
+    string prefix = "    -> ";
+    msg << "NumericsData object reporting:" << endl;
 //    msg << prefix << "Basis type                        = " << basis._to_string() << endl
 //        << prefix << "Geometric basis type              = " << gbasis._to_string() << endl
 //        << prefix << "Quadrature type                   = " << quad._to_string() << endl
@@ -450,7 +450,7 @@ string NumericsParams::report() const {
 //    if (over_integrate_MM) {
 //        msg << prefix << "Over-integrating the mass matrix" << endl;
 //    }
-//    return msg.str();
+    return msg.str();
 }
 
 } // namespace Numerics

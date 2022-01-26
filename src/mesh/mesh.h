@@ -59,14 +59,14 @@ class Mesh {
   public:
     unsigned dim; //!< number of spatial dimentions
     unsigned order; //!< geometric order
-    int nelem; //!< number of elements, needs to be an int for METIS
-    int nnode; //!< number of nodes, needs to be an int for METIS
+    int num_elems; //!< number of elements, needs to be an int for METIS
+    int num_nodes; //!< number of nodes, needs to be an int for METIS
     unsigned nIF; //!< number of interior faces
     unsigned nBFG; //!< number of boundary face groups (BFG)
     unsigned nBF; //!< total number of boundary faces
     unsigned nnode_per_elem; //!< number of nodes per element
     unsigned nnode_per_face; //!< number of nodes per face
-    int npart = 1; //!< number of partitions requested
+    int num_partitions = 1; //!< number of partitions requested
     std::vector<std::string> BFGnames; //!< name of boundary groups
     std::map<std::string, int> BFG_to_nBF; //!< map from BFG name to number of boundary faces in that group
     /*! \brief Map from BFG name to boundary data
@@ -100,16 +100,10 @@ class Mesh {
     std::vector<int> nBG_in_elem;
     std::vector<std::vector<int>> elem_to_BF;
   public:
-    std::vector<int> eptr; //!< for metis
-    std::vector<int> eind; //!< for metis
-    std::vector<int> elem_part_id; //!< vector of partition ID for each element
-    std::vector<int> node_part_id; //!< vector of partition ID for each node
-  public:
-    // stuff for a second-level partition
-    // not supported at the moment
-    int npart_lvl2 = -1;  //!< number of lvl2 sub-regions
-    std::vector<int> elem_subreg_id1; //!< vector of sub-region ID for each eleemnt for the first level partition
-    std::vector<int> elem_subreg_id2; //!< vector of sub-region ID for each eleemnt for the second level partition
+    std::vector<int> eptr; // for metis
+    std::vector<int> eind; // for metis
+    std::vector<int> elem_partition; // vector of partition ID for each element
+    std::vector<int> node_partition; // vector of partition ID for each node
 
   private:
     bool partitioned; //!< boolean indicating whether the mesh is partitioned

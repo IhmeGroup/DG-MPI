@@ -3,6 +3,7 @@ build*
 /install*
 # downloaded dependencies
 /externals/metis
+/externals/mpich
 # clion files
 /.idea
 /clion*
