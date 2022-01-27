@@ -10,6 +10,8 @@ add_executable(
 list(APPEND GTEST_SOURCES
     test_hello.cpp
     test_physics.cpp
+    numerics/basis/test_basis.cpp
+    numerics/basis/test_tools.cpp
 )
 
 target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})
@@ -19,6 +21,7 @@ target_link_libraries(test_gtest_all
     PRIVATE
         # mesh
         physics
+        numerics
         gtest_main
 )
 
