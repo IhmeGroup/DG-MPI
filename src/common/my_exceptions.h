@@ -53,6 +53,20 @@ class NotImplementedException : public std::exception {
     std::string msg;
 };
 
+/*! \brief Exception for improper values for function
+ * 
+ */
+class ValueErrorException : public std::exception {
+public:
+  ValueErrorException(std::string msg_) : msg(msg_) {}
+
+  const char *what() const throw() {
+      return msg.c_str();
+  }
+private:
+    std::string msg;
+};
+
 /*! \brief Exception for failed system calls
  *
  */
