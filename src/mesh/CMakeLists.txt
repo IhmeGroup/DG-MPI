@@ -4,4 +4,10 @@ target_include_directories(mesh
     PRIVATE ${HDF5_INCLUDE_DIRS})
 target_link_libraries(mesh
     PRIVATE ${METIS_LIBRARIES}
-    PRIVATE ${HDF5_LIBRARIES})
+    PRIVATE ${HDF5_LIBRARIES}
+    PRIVATE Kokkos::kokkoscore)
+
+set_target_properties(mesh
+    PROPERTIES
+        ENABLE_EXPORTS ON
+        COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
