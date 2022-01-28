@@ -1,6 +1,7 @@
 add_library(numerics STATIC
     numerics_data.cpp
     basis/basis.cpp
+    basis/shape.cpp
     basis/tools.cpp
     )
 

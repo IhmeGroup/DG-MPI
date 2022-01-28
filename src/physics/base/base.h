@@ -8,7 +8,7 @@
 // #include "equations/equation_data.h"
 // #include "physics/physics_data.h"
 // #include "math/ode.h"
-#include <Kokkos_Core.hpp>
+
 #include <KokkosBlas2_gemv.hpp>
 
 namespace Physics {
