@@ -26,8 +26,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysical2D) {
     Physics::Euler<2> physics;
     physics.set_physical_params();
 
-    Kokkos::initialize();
-
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
     U(1) = rho * u;
@@ -46,7 +44,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical2D) {
 
     Kokkos::View<rtype[4][2]> F("F");
     physics.conv_flux_physical(U, F);
-  
+
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 2; j++){
             EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
@@ -68,8 +66,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
 
     Physics::Euler<3> physics;
     physics.set_physical_params();
-
-    Kokkos::initialize();
 
     Kokkos::View<rtype[5]> U("U");
     U(0) = rho;
@@ -97,7 +93,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
 
     Kokkos::View<rtype[4][3]> F("F");
     physics.conv_flux_physical(U, F);
-  
+
     for (unsigned i = 0; i < 4; i++) {
         for (unsigned j = 0; j < 3; j++){
             EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
@@ -121,8 +117,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysicalProjected2DOrthogonalTest1) {
 
     Physics::Euler<2> physics;
     physics.set_physical_params();
-
-    Kokkos::initialize();
 
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
@@ -166,8 +160,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysicalProjected2DOrthogonalTest2) {
     Physics::Euler<2> physics;
     physics.set_physical_params();
 
-    Kokkos::initialize();
-
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
     U(1) = rho * u;
@@ -210,8 +202,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysicalProjected3DOrthogonalTest1) {
 
     Physics::Euler<3> physics;
     physics.set_physical_params();
-
-    Kokkos::initialize();
 
     Kokkos::View<rtype[5]> U("U");
     U(0) = rho;
@@ -258,8 +248,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysicalProjected2DParallelTest1) {
     Physics::Euler<2> physics;
     physics.set_physical_params();
 
-    Kokkos::initialize();
-
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
     U(1) = rho * u;
@@ -301,8 +289,6 @@ TEST(PhysicsTestSuite, ConvFluxPhysicalProjected2DParallelTest2) {
 
     Physics::Euler<2> physics;
     physics.set_physical_params();
-
-    Kokkos::initialize();
 
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
@@ -374,7 +360,7 @@ TEST(PhysicsTestSuite, GetPressure2D) {
 
     rtype Pcalc = physics.get_pressure(U);
 
-    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
+    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);
 }
 
 TEST(PhysicsTestSuite, GetPressure3D) {
@@ -398,10 +384,10 @@ TEST(PhysicsTestSuite, GetPressure3D) {
 
     rtype Pcalc = physics.get_pressure(U);
 
-    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);        
+    EXPECT_NEAR(P, Pcalc, DOUBLE_TOL);
 }
 
-/* 
+/*
 Test max wave speed calc for zero velocity field
 */
 TEST(PhysicsTestSuite, GetMaxWaveSpeed3DZeroVelocity) {
@@ -427,7 +413,7 @@ TEST(PhysicsTestSuite, GetMaxWaveSpeed3DZeroVelocity) {
     EXPECT_NEAR(sqrt(1.4), acalc, DOUBLE_TOL);
 }
 
-/* 
+/*
 Test max wave speed calc
 */
 TEST(PhysicsTestSuite, GetMaxWaveSpeed3D) {
@@ -458,7 +444,7 @@ Test the selection of additional variables via input strings
 TEST(PhysicsTestSuite, GetPhysicalVariableEnumCheckTest1) {
 
     Physics::Euler<2> physics;
-    Physics::Euler<2>::PhysicsVariables var = 
+    Physics::Euler<2>::PhysicsVariables var =
         physics.get_physical_variable("MaxWaveSpeed");
 
     if (var == Physics::Euler<2>::PhysicsVariables::MaxWaveSpeed){
@@ -474,7 +460,7 @@ Test the selection of additional variables via input strings
 TEST(PhysicsTestSuite, GetPhysicalVariableEnumCheckTest2) {
 
     Physics::Euler<2> physics;
-    Physics::Euler<2>::PhysicsVariables var = 
+    Physics::Euler<2>::PhysicsVariables var =
         physics.get_physical_variable("Density");
 
     if (var == Physics::Euler<2>::PhysicsVariables::Density){
@@ -490,12 +476,12 @@ Test that ensures that the 2D numerical flux functions are consistent,
 i.e. that F_numerical(U, U, normals) = F(U) dot normals
 */
 TEST(PhysicsTestSuite, test_numerical_flux_2D_consistency) {
-    
+
     // instantiate physics
     Physics::Euler<2> physics;
     physics.set_physical_params();
 
-    // instantiate flux function -> evenutally this should be done via 
+    // instantiate flux function -> evenutally this should be done via
     // enums.
     BaseConvNumFluxType::LaxFriedrichs flux;
 
@@ -504,7 +490,7 @@ TEST(PhysicsTestSuite, test_numerical_flux_2D_consistency) {
     const rtype u = 2.5;
     const rtype v = -3.5;
     const rtype rhoE = P / (physics.gamma - 1.) + 0.5 * rho * (u * u + v * v);
-    
+
     Kokkos::View<rtype[4]> U("U");
     U(0) = rho;
     U(1) = rho * u;
@@ -533,12 +519,12 @@ Test that ensures that the 2D numerical flux functions are conservative,
 i.e. that F_numerical(UL, UR, normals) = -F_numerical(UR, UL, -normals)
 */
 TEST(PhysicsTestSuite, test_numerical_flux_2D_conservation) {
-    
+
     // instantiate physics
     Physics::Euler<2> physics;
     physics.set_physical_params();
 
-    // instantiate flux function -> evenutally this should be done via 
+    // instantiate flux function -> evenutally this should be done via
     // enums.
     BaseConvNumFluxType::LaxFriedrichs flux;
 
@@ -548,7 +534,7 @@ TEST(PhysicsTestSuite, test_numerical_flux_2D_conservation) {
     const rtype u = 2.5;
     const rtype v = -3.5;
     const rtype rhoE = P / (physics.gamma - 1.) + 0.5 * rho * (u * u + v * v);
-    
+
     Kokkos::View<rtype[4]> UqL("U");
     UqL(0) = rho;
     UqL(1) = rho * u;
@@ -561,7 +547,7 @@ TEST(PhysicsTestSuite, test_numerical_flux_2D_conservation) {
     const rtype uR = -3.5;
     const rtype vR = -6.0;
     const rtype rhoER = PR / (physics.gamma - 1.) + 0.5 * rhoR * (uR * uR + vR * vR);
-    
+
     Kokkos::View<rtype[4]> UqR("U");
     UqR(0) = rhoR;
     UqR(1) = rhoR * uR;
