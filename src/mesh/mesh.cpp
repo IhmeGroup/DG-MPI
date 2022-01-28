@@ -336,17 +336,18 @@ void Mesh::partition() {
     num_nodes_part = node_partition_size[network.rank];
 
     // Size views accordingly
-    Kokkos::resize(elem_IDs, num_elems_part);
-    Kokkos::resize(node_IDs, num_nodes_part);
-    Kokkos::resize(elem_to_node_IDs, elem_IDs.extent(0), num_nodes_per_elem);
-    Kokkos::resize(node_coords, node_IDs.extent(0), dim);
+    Kokkos::resize(local_to_global_elem_IDs, num_elems_part);
+    Kokkos::resize(local_to_global_node_IDs, num_nodes_part);
+    Kokkos::resize(elem_to_node_IDs, num_elems_part, num_nodes_per_elem);
+    Kokkos::resize(node_coords, num_nodes_part, dim);
 
     // Store the element IDs and elem_to_node_IDs on each partition
     int counter = 0;
     for (unsigned i = 0; i < num_elems; i++) {
         auto rank = elem_partition[i];
         if (network.rank == rank) {
-            elem_IDs(counter) = i;
+            local_to_global_elem_IDs(counter) = i;
+            global_to_local_elem_IDs.insert(i, counter);
             for (unsigned j = 0; j < num_nodes_per_elem; j++) {
                 elem_to_node_IDs(counter, j) = eind[i * num_nodes_per_elem + j];
             }
@@ -359,7 +360,8 @@ void Mesh::partition() {
     for (unsigned i = 0; i < num_nodes; i++) {
         auto rank = node_partition[i];
         if (network.rank == rank) {
-            node_IDs(counter) = i;
+            local_to_global_node_IDs(counter) = i;
+            global_to_local_node_IDs.insert(i, counter);
             for (unsigned j = 0; j < dim; j++) {
                 node_coords(counter, j) = coord[i][j];
             }
@@ -372,11 +374,11 @@ void Mesh::partition() {
         if (rank == network.rank) {
             cout << "Rank " << network.rank << " has elements:" << endl;
             for (unsigned i = 0; i < num_elems_part; i++) {
-                cout << elem_IDs(i) << endl;
+                cout << local_to_global_elem_IDs(i) << endl;
             }
             cout << "Rank " << network.rank << " has nodes:" << endl;
             for (unsigned i = 0; i < num_nodes_part; i++) {
-                cout << node_IDs(i) << endl;
+                cout << local_to_global_node_IDs(i) << endl;
             }
         }
     }

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <Kokkos_Core.hpp>
+#include <Kokkos_UnorderedMap.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
 #include "memory/memory_network.h"
@@ -105,8 +106,10 @@ class Mesh {
     public:
         int num_elems_part;
         int num_nodes_part;
-        Kokkos::View<int*> node_IDs;
-        Kokkos::View<int*> elem_IDs;
+        Kokkos::View<int*> local_to_global_node_IDs;
+        Kokkos::View<int*> local_to_global_elem_IDs;
+        Kokkos::UnorderedMap<int, int> global_to_local_node_IDs;
+        Kokkos::UnorderedMap<int, int> global_to_local_elem_IDs;
         Kokkos::View<rtype**> node_coords;
         Kokkos::View<int**> elem_to_node_IDs;
 
