@@ -12,6 +12,7 @@
 
 using namespace std;
 using H5::PredType, H5::DataSpace, H5::DataSet;
+using std::cout, std::endl;
 
 // identifiers from Eric's pre-processing tool
 static const string DSET_DIM("Dimension");
@@ -39,7 +40,15 @@ Mesh::Mesh(const toml::value &input_info, MemoryNetwork& network)
         nBFG = 0;
         nBF = 0;
     }
+
+    // Read in the mesh
     read_mesh(mesh_file_name);
+    // partition the mesh using METIS
+    partition();
+    // Print report on the head rank
+    if (network.head_rank) {
+        cout << report() << endl;
+    }
 }
 
 void Mesh::read_mesh(const string &mesh_file_name) {
@@ -75,24 +84,24 @@ void Mesh::read_mesh(const string &mesh_file_name) {
         // number of nodes per element
         dataset = file.openDataSet(DSET_NNODE_PER_ELEM);
         dataspace = dataset.getSpace();
-        dataset.read(&nnode_per_elem, PredType::NATIVE_INT, mspace, dataspace);
+        dataset.read(&num_nodes_per_elem, PredType::NATIVE_INT, mspace, dataspace);
         // number of nodes per faces
         if (H5Lexists(file.getId(), DSET_NNODE_PER_FACE.c_str(), H5P_DEFAULT)) {
             dataset = file.openDataSet(DSET_NNODE_PER_FACE);
             dataspace = dataset.getSpace();
-            dataset.read(&nnode_per_face, PredType::NATIVE_INT, mspace, dataspace);
+            dataset.read(&num_nodes_per_face, PredType::NATIVE_INT, mspace, dataspace);
         }
         else {
             /* This is used for METIS to determine how many nodes an element must shared to be
              * considered as neighbors. */
-            nnode_per_face = 1;
+            num_nodes_per_face = 1;
             cout << "The mesh file does not have a " << DSET_NNODE_PER_FACE << " dataset. "
                  << "Please recreate it to avoid this deprecated usage." << endl;
         }
 
         // resize internal structures
         eptr.resize(num_elems + 1);
-        eind.resize(num_elems * nnode_per_elem); // only valid for one element group
+        eind.resize(num_elems * num_nodes_per_elem); // only valid for one element group
         coord.resize(num_nodes);
         IF_to_elem.resize(nIF);
         nIF_in_elem.resize(num_elems);
@@ -111,7 +120,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
 
         // fetch elemID -> nodeID
         dims[0] = num_elems;
-        dims[1] = nnode_per_elem;
+        dims[1] = num_nodes_per_elem;
         rank = 2;
         mspace = DataSpace(rank, dims);
         dataset = file.openDataSet(DSET_ELEM_TO_NODES);
@@ -165,9 +174,9 @@ void Mesh::read_mesh(const string &mesh_file_name) {
 
         // fill eptr that indicates where data for node i in eind is
         idx_t counter = 0;
-        for (int i = 0; i <  + 1; i++) {
+        for (int i = 0; i < num_elems + 1; i++) {
             eptr[i] = counter;
-            counter += nnode_per_elem;
+            counter += num_nodes_per_elem;
         }
 
         // read boundary faces
@@ -233,9 +242,6 @@ void Mesh::read_mesh(const string &mesh_file_name) {
     catch (H5::DataSpaceIException &error) {
         error.printErrorStack();
     }
-
-    // partition the mesh using METIS
-    partition();
 }
 
 void Mesh::partition_manually() {
@@ -263,7 +269,12 @@ void Mesh::partition_manually() {
 
 void Mesh::partition() {
     idx_t objval;
-    idx_t num_common = nnode_per_face;
+    idx_t num_common = num_nodes_per_face;
+    idx_t ne = num_elems;
+    idx_t nn = num_nodes;
+    // Use default METIS options
+    idx_t options[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(options);
 
     // If there are multiple partitions, then run METIS
     if (num_partitions > 1) {
@@ -272,8 +283,8 @@ void Mesh::partition() {
 
         Inputs:
         -------
-            num_elems - number of elements
-            num_nodes - number of nodes
+            ne - number of elements (must be an int)
+            nn - number of nodes (must be an int)
             eptr - array of length num_elems pointing to index in eind that
                 contains this element's node IDs
             eind - array of size (num_elems, num_nodes_per_elem) storing the
@@ -296,8 +307,8 @@ void Mesh::partition() {
             node_partition - vector of size num_nodes that stores the partition
                 vector for the nodes
         */
-        int ierr = METIS_PartMeshDual(&num_elems, &num_nodes, eptr.data(), eind.data(),
-                NULL, NULL, &num_common, &num_partitions, NULL, NULL, &objval,
+        int ierr = METIS_PartMeshDual(&ne, &nn, eptr.data(), eind.data(),
+                NULL, NULL, &num_common, &num_partitions, NULL, options, &objval,
                 elem_partition.data(), node_partition.data());
         if (ierr != METIS_OK) {
             throw FatalException("Error when partitioning the mesh with METIS!");
@@ -309,6 +320,73 @@ void Mesh::partition() {
         fill(elem_partition.begin(), elem_partition.end(), 0);
         fill(node_partition.begin(), node_partition.end(), 0);
     }
+
+    // Count how many elements are contained within each partition
+    std::vector<int> elem_partition_size(num_partitions, 0);
+    for (auto it = elem_partition.begin(); it != elem_partition.end(); it++) {
+        elem_partition_size[*it]++;
+    }
+    num_elems_part = elem_partition_size[network.rank];
+
+    // Count how many nodes are contained within each partition
+    std::vector<int> node_partition_size(num_partitions, 0);
+    for (auto it = node_partition.begin(); it != node_partition.end(); it++) {
+        node_partition_size[*it]++;
+    }
+    num_nodes_part = node_partition_size[network.rank];
+
+    // Size views accordingly
+    Kokkos::resize(elem_IDs, num_elems_part);
+    Kokkos::resize(node_IDs, num_nodes_part);
+    Kokkos::resize(elem_to_node_IDs, elem_IDs.extent(0), num_nodes_per_elem);
+    Kokkos::resize(node_coords, node_IDs.extent(0), dim);
+
+    // Store the element IDs and elem_to_node_IDs on each partition
+    int counter = 0;
+    for (unsigned i = 0; i < num_elems; i++) {
+        auto rank = elem_partition[i];
+        if (network.rank == rank) {
+            elem_IDs(counter) = i;
+            for (unsigned j = 0; j < num_nodes_per_elem; j++) {
+                elem_to_node_IDs(counter, j) = eind[i * num_nodes_per_elem + j];
+            }
+            counter++;
+        }
+    }
+
+    // Store the node IDs and node coordinates on each partition
+    counter = 0;
+    for (unsigned i = 0; i < num_nodes; i++) {
+        auto rank = node_partition[i];
+        if (network.rank == rank) {
+            node_IDs(counter) = i;
+            for (unsigned j = 0; j < dim; j++) {
+                node_coords(counter, j) = coord[i][j];
+            }
+            counter++;
+        }
+    }
+
+    // Print
+    for (int rank = 0; rank < network.num_ranks; rank++) {
+        if (rank == network.rank) {
+            cout << "Rank " << network.rank << " has elements:" << endl;
+            for (unsigned i = 0; i < num_elems_part; i++) {
+                cout << elem_IDs(i) << endl;
+            }
+            cout << "Rank " << network.rank << " has nodes:" << endl;
+            for (unsigned i = 0; i < num_nodes_part; i++) {
+                cout << node_IDs(i) << endl;
+            }
+        }
+    }
+
+    // Deallocate global mesh data
+    vector<int>().swap(eind);
+    vector<int>().swap(eptr);
+    vector<int>().swap(elem_partition);
+    vector<int>().swap(node_partition);
+    vector<vector<rtype>>().swap(coord);
 
     partitioned = true;
 }

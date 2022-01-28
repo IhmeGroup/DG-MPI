@@ -19,6 +19,7 @@ class MemoryNetwork {
     public:
         int num_ranks;
         int rank;
+        bool head_rank = false;
 };
 
 #endif //DG_MEMORY_NERWORK_H

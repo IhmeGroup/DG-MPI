@@ -1,4 +1,5 @@
 #include <iostream>
+#include <Kokkos_Core.hpp>
 #include "memory/memory_network.h"
 
 using std::cout, std::endl;
@@ -11,12 +12,18 @@ MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
     // Get the current rank
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) { head_rank = true; }
     // Print
     cout << "Rank " << rank << " / " << num_ranks << " reporting for duty!"
         << endl;
+
+    // Initialize Kokkos (This needs to be after MPI_Init)
+    Kokkos::initialize(argc, argv);
 }
 
 MemoryNetwork::~MemoryNetwork() {
+    // Finalize Kokkos
+    Kokkos::finalize();
     // Finalize MPI
     MPI_Finalize();
 }

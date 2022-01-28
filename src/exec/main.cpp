@@ -3,7 +3,6 @@
 #include "toml11/toml.hpp"
 #include "mesh/mesh.h"
 #include "utils/utils.h"
-#include <Kokkos_Core.hpp>
 #include "memory/memory_network.h"
 #include "numerics/numerics_data.h"
 #include "io/io_params.h"
@@ -14,9 +13,6 @@ using std::cout, std::endl, std::string;
 int main(int argc, char* argv[]) {
     // Initialize memory network
     MemoryNetwork network(argc, argv);
-
-    // Initialize Kokkos (This will need to be after MPI_Init)
-    Kokkos::initialize(argc, argv);
 
     // Default input file name
     string toml_fname = "input.toml";
@@ -36,5 +32,4 @@ int main(int argc, char* argv[]) {
 
     // Create mesh
     auto mesh = Mesh(toml_input, network);
-    cout << mesh.report() << endl;
 }
