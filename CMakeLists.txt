@@ -37,8 +37,11 @@ set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/inst
 # set(CANTERA_ROOT        CACHE PATH "Cantera root")
 
 # Use the MPI compilers
-set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
-set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+if(NOT APPLE)
+    set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
+    set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+endif()
+
 # Set the project info (done after setting compilers to avoid infinite loop)
 project(DG VERSION 1.0)
 
