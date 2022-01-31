@@ -20,6 +20,7 @@ want, especially for HDF5).
     ```
     ./download_dependencies.sh
     ```
+- MPICH (MPI library): This is automated with the same Bash script as METIS listed above. Note: For macOS users, the script is only needed for METIS. To get mpich on macOS use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
  - HDF5 (high-performance data formatting library):
     ```
     cd hdf5
