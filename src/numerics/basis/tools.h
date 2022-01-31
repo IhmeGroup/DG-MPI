@@ -25,6 +25,70 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	Kokkos::View<rtype*> &xnodes);
 
 /*
+Calculates the 1D Lagrange basis value
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_val: evaluated basis [nq, nb]
+*/
+void get_lagrange_basis_val_1D(const rtype &x, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype*> phi);
+
+/*
+Calculates the 1D Lagrange basis gradient
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
+*/
+void get_lagrange_basis_grad_1D(const rtype &x, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype*> gphi);
+
+/*
+Calculates the 2D Lagrange basis value
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_val: evaluated basis [nq, nb]
+*/
+void get_lagrange_basis_val_2D(Kokkos::View<const rtype**> quad_pts,
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype**> basis_val);
+
+/*
+Calculates the 2D Lagrange basis gradient
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
+*/
+void get_lagrange_basis_grad_2D(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype***> basis_ref_grad);
+
+/*
 Calculates the 1D Legendre basis value
 
 Inputs:

@@ -16,6 +16,101 @@ void BasisBase::get_grads(Kokkos::View<const rtype**> quad_pts,
 }
 
 
+
+/* --------------------------------------
+	LagrangeSeg Method Definitions
+----------------------------------------*/
+LagrangeSeg::LagrangeSeg(const int order){
+
+	this->order = order;
+	nb = get_num_basis_coeff(order);
+
+	// Set equidistant or GLL nodes (currently only supporting EQ)
+	get_1d_nodes = &BasisTools::equidistant_nodes_1D_range;
+}
+
+void LagrangeSeg::get_values(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val){
+
+	int nq = quad_pts.extent(0);
+
+	if (order == 0){
+		KokkosBlas::fill(basis_val, 1.);
+	}
+	else {
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+   		for (int iq = 0; iq < nq; iq++){
+        	BasisTools::get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, order, 
+        		Kokkos::subview(basis_val, iq, Kokkos::ALL()));
+    	}
+	}
+
+}
+
+void LagrangeSeg::get_grads(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad){
+
+	int nq = quad_pts.extent(0);
+
+	if (order > 0){
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+		for (int iq = 0; iq < nq; iq++){
+			BasisTools::get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, order,
+				Kokkos::subview(basis_ref_grad, iq, Kokkos::ALL(), 0));
+		}
+	}
+}
+
+
+/* --------------------------------------
+	LagrangeQuad Method Definitions
+----------------------------------------*/
+LagrangeQuad::LagrangeQuad(const int order){
+
+	this->order = order;
+	nb = get_num_basis_coeff(order);
+
+	// Set equidistant or GLL nodes (currently only supporting EQ)
+	get_1d_nodes = &BasisTools::equidistant_nodes_1D_range;
+}
+
+void LagrangeQuad::get_values(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val){
+
+	int nq = quad_pts.extent(0);
+
+	if (order == 0){
+		KokkosBlas::fill(basis_val, 1.);
+	}
+	else {
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+   		for (int iq = 0; iq < nq; iq++){
+        	BasisTools::get_lagrange_basis_val_2D(quad_pts, xnodes, order, 
+        		basis_val);
+    	}
+	}
+
+}
+
+void LagrangeQuad::get_grads(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad){
+
+	int nq = quad_pts.extent(0);
+
+	if (order > 0){
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+		for (int iq = 0; iq < nq; iq++){
+			BasisTools::get_lagrange_basis_grad_2D(quad_pts, xnodes, order,
+				basis_ref_grad);
+		}
+	}
+}
+
+
 /* --------------------------------------
 	LegendreSeg Method Definitions
 ----------------------------------------*/
