@@ -103,15 +103,23 @@ class Mesh {
         std::vector<int> eind; // for metis
         std::vector<int> elem_partition; // vector of partition ID for each element
         std::vector<int> node_partition; // vector of partition ID for each node
+        std::vector<int> iface_partition; // vector of partition ID for each interior face
     public:
+        // This is the stuff that should persist throughout the simulation
+        // (previous things, especially std::vector's, are only used
+        // for the mesh reading step).
         int num_elems_part;
         int num_nodes_part;
+        int num_ifaces_part;
         Kokkos::View<int*> local_to_global_node_IDs;
         Kokkos::View<int*> local_to_global_elem_IDs;
+        Kokkos::View<int*> local_to_global_iface_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_node_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_elem_IDs;
+        Kokkos::UnorderedMap<int, int> global_to_local_iface_IDs;
         Kokkos::View<rtype**> node_coords;
         Kokkos::View<int**> elem_to_node_IDs;
+        Kokkos::View<int**> interior_faces;
 
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned

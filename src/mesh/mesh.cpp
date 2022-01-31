@@ -321,6 +321,18 @@ void Mesh::partition() {
         fill(node_partition.begin(), node_partition.end(), 0);
     }
 
+    // Now the faces are partitioned. The ownership of a face is given to the
+    // left element of each face, meaning that a face is always stored on the
+    // left element's partition.
+    iface_partition.resize(nIF);
+    // Loop over interior faces
+    for (unsigned i = 0; i < nIF; i++) {
+        // Get left element ID
+        auto elem_ID = IF_to_elem[i][0];
+        // Get the partition of the left element, and store it
+        iface_partition[i] = elem_partition[elem_ID];
+    }
+
     // Count how many elements are contained within each partition
     std::vector<int> elem_partition_size(num_partitions, 0);
     for (auto it = elem_partition.begin(); it != elem_partition.end(); it++) {
@@ -335,19 +347,30 @@ void Mesh::partition() {
     }
     num_nodes_part = node_partition_size[network.rank];
 
+    // Count how many interior faces are contained within each partition
+    std::vector<int> iface_partition_size(num_partitions, 0);
+    for (auto it = iface_partition.begin(); it != iface_partition.end(); it++) {
+        iface_partition_size[*it]++;
+    }
+    num_ifaces_part = iface_partition_size[network.rank];
+
     // Size views accordingly
     Kokkos::resize(local_to_global_elem_IDs, num_elems_part);
     Kokkos::resize(local_to_global_node_IDs, num_nodes_part);
+    Kokkos::resize(local_to_global_iface_IDs, num_ifaces_part);
     Kokkos::resize(elem_to_node_IDs, num_elems_part, num_nodes_per_elem);
     Kokkos::resize(node_coords, num_nodes_part, dim);
+    Kokkos::resize(interior_faces, num_ifaces_part, 6);
 
     // Store the element IDs and elem_to_node_IDs on each partition
     int counter = 0;
     for (unsigned i = 0; i < num_elems; i++) {
         auto rank = elem_partition[i];
         if (network.rank == rank) {
+            // Mapping from local to global, and back
             local_to_global_elem_IDs(counter) = i;
             global_to_local_elem_IDs.insert(i, counter);
+            // Node IDs of each element on this partition
             for (unsigned j = 0; j < num_nodes_per_elem; j++) {
                 elem_to_node_IDs(counter, j) = eind[i * num_nodes_per_elem + j];
             }
@@ -360,14 +383,38 @@ void Mesh::partition() {
     for (unsigned i = 0; i < num_nodes; i++) {
         auto rank = node_partition[i];
         if (network.rank == rank) {
+            // Mapping from local to global, and back
             local_to_global_node_IDs(counter) = i;
             global_to_local_node_IDs.insert(i, counter);
+            // Node coordinates of each node on this partition
             for (unsigned j = 0; j < dim; j++) {
                 node_coords(counter, j) = coord[i][j];
             }
             counter++;
         }
     }
+
+    // Store the interior face information on each partition
+    // TODO: There should be 4 faces but there are 8??? IF_to_elem has
+    // duplicates!
+    /*
+    counter = 0;
+    for (unsigned i = 0; i < num_nodes; i++) {
+        auto rank = node_partition[i];
+        if (network.rank == rank) {
+            // Mapping from local to global, and back
+            local_to_global_iface_IDs(counter) = i;
+            global_to_local_iface_IDs.insert(i, counter);
+            // Neighbors, reference face IDs, and orientations of each interior
+            // face on this partition
+            for (unsigned j = 0; j < 6; j++) {
+                cout << "RANK " << network.rank << " " << counter << " " << j << " " << num_ifaces_part << endl;
+                interior_faces(counter, j) = IF_to_elem[counter][j];
+            }
+            counter++;
+        }
+    }
+    */
 
     // Print
     for (int rank = 0; rank < network.num_ranks; rank++) {
@@ -380,6 +427,12 @@ void Mesh::partition() {
             for (unsigned i = 0; i < num_nodes_part; i++) {
                 cout << local_to_global_node_IDs(i) << endl;
             }
+            /*
+            cout << "Rank " << network.rank << " has interior faces:" << endl;
+            for (unsigned i = 0; i < num_ifaces_part; i++) {
+                cout << local_to_global_iface_IDs(i) << endl;
+            }
+            */
         }
     }
 
@@ -389,6 +442,7 @@ void Mesh::partition() {
     vector<int>().swap(elem_partition);
     vector<int>().swap(node_partition);
     vector<vector<rtype>>().swap(coord);
+    vector<vector<int>>().swap(IF_to_elem);
 
     partitioned = true;
 }

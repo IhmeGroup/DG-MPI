@@ -5,47 +5,6 @@
 
 using namespace std;
 
-template <class T>
-string enum_to_string(T enum_value) {
-    // Get array of enum to string
-    vector<string> enum_to_string = get_enum_to_string_array<T>();
-    // Return the string
-    return enum_to_string[enum_value];
-}
-
-template <>
-vector<string> get_enum_to_string_array<BasisType> () {
-    return basis_type_to_string_array;
-}
-
-template <>
-vector<string> get_enum_to_string_array<QuadratureType> () {
-    return quadrature_type_to_string_array;
-}
-
-template <class T>
-T enum_from_string(string str) {
-    // Get array of enum to string
-    vector<string> enum_to_string = get_enum_to_string_array<T>();
-    // Find index of enum
-    auto index_it = std::find(std::begin(enum_to_string),
-            std::end(enum_to_string), str);
-    // Check if the item exists in the array
-    if (index_it == std::end(enum_to_string)) {
-        // If it doesn't exist, then print the available choices and throw an
-        // exception
-        std::stringstream msg;
-        msg << "Oh no! " << str << " is not a valid choice!" << endl;
-        msg << "Instead, try one of these:" << endl;
-        for (auto it = std::begin(enum_to_string); it != std::end(enum_to_string); it++) {
-            msg << "    " << *it << endl;
-        }
-        throw InputException(msg.str());
-    }
-    // Get the index and return the proper enum
-    auto index = std::distance(std::begin(enum_to_string), index_it);
-    return T(index);
-}
 
 namespace EnumMap {
 
