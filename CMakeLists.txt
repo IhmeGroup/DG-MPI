@@ -29,7 +29,14 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
 set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
-set(MPI_ROOT            "${CMAKE_SOURCE_DIR}/externals/mpich/install" CACHE PATH "MPI root")
+# set(HDF5_ROOT           "/home/ihme/bornhoft/utilities/hdf5-1.10.6/1.10.6" CACHE PATH "HDF5 root")
+
+if(DEFINED ENV{MPI_DIR})
+	set(MPI_ROOT "$ENV{MPI_DIR}")
+else()
+    message(STATUS "Using local installs for mpich")
+endif()
+
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
 # set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
@@ -38,9 +45,15 @@ set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/inst
 
 # Use the MPI compilers
 if(NOT APPLE)
-    set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
-    set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+    if(DEFINED ENV{MPI_DIR})
+        set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
+        set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+    else()
+        set(CMAKE_C_COMPILER "mpicc")
+        set(CMAKE_CXX_COMPILER "mpicxx")
+    endif()
 endif()
+ 
 
 # Set the project info (done after setting compilers to avoid infinite loop)
 project(DG VERSION 1.0)
@@ -98,7 +111,9 @@ link_directories("${MPI_ROOT}/lib/libmpich.${so}")
 include(FetchContent)
 FetchContent_Declare(
     googletest
-    URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+    # URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -171,6 +186,7 @@ message(STATUS "Build type:          ${CMAKE_BUILD_TYPE}")
 message(STATUS "METIS root:          ${METIS_ROOT}")
 message(STATUS "HDF5 root:           ${HDF5_ROOT}")
 message(STATUS "Kokkos root:         ${Kokkos_ROOT}")
+message(STATUS "MPI root:            ${MPI_ROOT}")
     # message(STATUS "Kokkos kernels root: ${KokkosKernels_ROOT}")
 
 # if(BUILD_BENCHMARKS)
