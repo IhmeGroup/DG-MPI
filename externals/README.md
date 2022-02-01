@@ -20,7 +20,10 @@ want, especially for HDF5).
     ```
     ./download_dependencies.sh
     ```
-- MPICH (MPI library): This is automated with the same Bash script as METIS listed above. Note: For macOS users, the script is only needed for METIS. To get mpich on macOS use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
+- MPICH (MPI library): MPI uses local builds (not packaged with dg-mpi). The cmake file searches for MPI_DIR and if not found it expects `mpicc` and `mpicxx` to be in the users `$PATH`. 
+   - macOS users, use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
+   - Yellowstone: use `module load mpich`
+
  - HDF5 (high-performance data formatting library):
     ```
     cd hdf5
@@ -37,15 +40,32 @@ want, especially for HDF5).
       cmake -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ENABLE_OPENMP=ON ..
       make install
     ```
-    NOTE: For macOSX users -> For openMP support I needed to get llvm via homebrew (`brew install llvm`). I also needed to update my `.zshrc_profile` with the following:
-    ```
-    export PATH="/usr/local/opt/llvm/bin:$PATH"
-    export CC=/usr/local/opt/llvm/bin/clang
-    export CXX=/usr/local/opt/llvm/bin/clang++
-    export LDFLAGS=-L/usr/local/opt/llvm/lib
-    export CPPFLAGS=-I/usr/local/opt/llvm/include
-    ```
-    This would be similar for `.bashrc` files
+    - macOSX Notes:
+         For openMP support I needed to get llvm via homebrew (`brew install llvm`). I also needed to update my `.zshrc_profile` with the following:
+         ```
+         export PATH="/usr/local/opt/llvm/bin:$PATH"
+         export CC=/usr/local/opt/llvm/bin/clang
+         export CXX=/usr/local/opt/llvm/bin/clang++
+         export LDFLAGS=-L/usr/local/opt/llvm/lib
+         export CPPFLAGS=-I/usr/local/opt/llvm/include
+         ```
+         This would be similar for `.bashrc` files
+    - Yellowstone Notes:
+         Kokkos requires CMake >= 3.16. Yellowstone has version 3.15.4. Therefore, we need to install a local build of CMake. Use the following commands to accomplish this:
+         
+         - Download the Unix/Linux source cmake file (I used version 3.22.2) `https://cmake.org/download/`
+         - Send this to yellowstone using `rsync` or whatever your favorite file transfer tool is.
+         - Once you have the `*tar.gz` file where you want the CMake build to happen use these commands:
+         ```
+         tar -zxvf cmake-3.22.2.tar.gz
+         cd cmake-3.22.2
+         mkdir install
+         cmake -DCMAKE_USE_OPENSSL=OFF -DCMAKE_INSTALL_PREFIX=<path_to_your_cmake>/install .
+         make
+         make install
+         ```
+         - Then when you go to use CMake with Kokkos you can either give the direct path to the new cmake command when executing the cmake command for Kokkos above or change your default CMake to the newly installed version (by changing the paths / unloading the module for CMake).
+
  - Kokkos-kernels:
     ```
       cd kokkos-kernels
@@ -54,3 +74,4 @@ want, especially for HDF5).
       cmake -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ROOT=../../kokkos/build/install ..
       make install
     ```
+    - Yellowstone / macOS notes : See Kokkos build description above.
