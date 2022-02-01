@@ -6,7 +6,7 @@ download_file () {
     url=$2
     hash_key=$3
     # Download file
-    wget $url
+    wget $url --no-check-certificate
     # Check that the hash matches the expected value
     if [ $(sha512sum $name | grep -Eo '^\w+') == $hash_key ]; then
         echo $name passed hash key check
@@ -36,20 +36,20 @@ make config cc=gcc prefix=../install
 make install -j"${nthreads}"
 cd ..
 
-# -- MPICH -- #
-# Download
-name=mpich-4.0.tar.gz
-url=https://www.mpich.org/static/downloads/4.0/mpich-4.0.tar.gz
-hash_key=083c1bc494cd315c7606a8d9479c0db49d25c6c88853141348883a3177780e16b549d2bfb36a381929e46b3b073638180f825fdedf3f78bf419b22d8f04cf219
-download_file $name $url $hash_key
-
-# Unzip
-mkdir mpich
-tar -xvzf $name -C mpich --strip-components 1
-rm $name
-
-# Compile
-cd mpich
-./configure --prefix=$(pwd)/install --disable-fortran
-make install -j"${nthreads}"
-cd ..
+## -- MPICH -- #
+## Download
+#name=mpich-4.0.tar.gz
+#url=https://www.mpich.org/static/downloads/4.0/mpich-4.0.tar.gz
+#hash_key=083c1bc494cd315c7606a8d9479c0db49d25c6c88853141348883a3177780e16b549d2bfb36a381929e46b3b073638180f825fdedf3f78bf419b22d8f04cf219
+#download_file $name $url $hash_key
+#
+## Unzip
+#mkdir mpich
+#tar -xvzf $name -C mpich --strip-components 1
+#rm $name
+#
+## Compile
+#cd mpich
+#./configure --prefix=$(pwd)/install --disable-fortran
+#make install -j"${nthreads}"
+#cd ..
