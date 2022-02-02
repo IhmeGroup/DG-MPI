@@ -10,12 +10,12 @@ First, get the dependancies. This is done by running
 then following the instructions in [`externals`](https://github.com/IhmeGroup/DG-MPI/tree/main/externals).
 
 To compile the solver, run:
-    ```
-    mkdir build
-    cd build
-    cmake ..
-    make
-    ```
+```
+mkdir build
+cd build
+cmake ..
+make
+```
 
 ## Style Guide
 https://google.github.io/styleguide/cppguide.html
