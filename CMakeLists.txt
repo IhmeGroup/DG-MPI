@@ -34,8 +34,7 @@ if(DEFINED ENV{HDF5_DIR})
     set(HDF5_ROOT "$ENV{HDF5_DIR}")
 else()
     message(STATUS "HDF5 obtained via dg-mpi/externals folder")
-    set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" \ 
-        CACHE PATH "HDF5 root")
+    set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install")
 endif()
 
 if(DEFINED ENV{MPI_DIR})
@@ -115,9 +114,8 @@ link_directories("${MPI_ROOT}/lib/libmpich.${so}")
 include(FetchContent)
 FetchContent_Declare(
     googletest
-    # URL https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG        703bd9caab50b139428cea1aaff9974ebee5742e # release-1.10.0
+    GIT_TAG e2239ee6043f73722e7aa812a459f54a28552929 # release-1.11.0
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
