@@ -20,11 +20,11 @@ want, especially for HDF5).
     ```
     ./download_dependencies.sh
     ```
-- MPICH (MPI library): MPI uses local builds (not packaged with dg-mpi). The cmake file searches for MPI_DIR and if not found it expects `mpicc` and `mpicxx` to be in the users `$PATH`. 
+- MPICH (MPI library): MPI uses local builds (not packaged with dg-mpi). The cmake file searches for the environment variable `MPI_DIR` and if not found it expects `mpicc` and `mpicxx` to be in the user's `$PATH`. 
    - macOS users, use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
    - Yellowstone: use `module load mpich`
 
- - HDF5 (high-performance data formatting library):
+ - HDF5 (high-performance data formatting library): The cmake searches for the environment variable `HDF5_DIR` and if not found it uses the built in HDF5 located in DG-MPI/externals. If using the externals version of HDF5 continue with the following commands:
     ```
     cd hdf5
     mkdir build
@@ -32,6 +32,7 @@ want, especially for HDF5).
     cmake -DCMAKE_INSTALL_PREFIX=./install -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
     make install
     ```
+    - Yellowstone: use `module load hdf5`
  - Kokkos:
     ```
       cd kokkos
