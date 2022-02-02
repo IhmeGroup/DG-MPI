@@ -107,8 +107,6 @@ link_directories("${MPI_ROOT}/lib/libmpich.${so}")
 #   Googletest + cmake tutorial: https://google.github.io/googletest/quickstart-cmake.html
 #   CMake Googletest module: https://cmake.org/cmake/help/git-stage/module/GoogleTest.html
 #
-#   Using the version from the following link (using the *.zip file at the bottom of page):
-#   https://github.com/google/googletest/releases/tag/release-1.11.0
 # ----------------------------------------------------------------------------------------------- #
 
 include(FetchContent)
@@ -124,36 +122,19 @@ FetchContent_MakeAvailable(googletest)
 
 
 
-# if (USE_KOKKOS)
 find_package(Kokkos REQUIRED)
 find_package(KokkosKernels REQUIRED)
-
-# find_package(KokkosKernels REQUIRED)
-    # add_compile_definitions(DG_USE_KOKKOS)
-# endif()
-# Note: do not use target_link_libraries(target PUBLIC OpenMP::OpenMP_CXX)
-# This will link against libgomp and pthread with GNU.
-# You don't want that: Realm is providing the OpenMP runtime.
-# The -fopenmp flag is still required at compile time.
-# If symbols are missing, report it to Sean Treichler.
 find_package(OpenMP REQUIRED)
 
 # set preprocessor definitions
 if(USE_DOUBLES)
     add_compile_definitions(USE_DOUBLES)
 endif()
-# if (USE_MKL)
-    # add_compile_definitions(ENABLE_EIGEN_MKL)
-# endif()
-# if(USE_DCR)
-    # add_compile_definitions(USE_DCR)
-# endif()
 
 # global include
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/src")
 include_directories("${PROJECT_SOURCE_DIR}/externals")
-# include_directories(${EIGEN_ROOT})
 
 # temporary fix for compiling on MacOS
 # the first step is to install llvm and libomp via homebrew
