@@ -28,8 +28,15 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # some variables to help find external libraries
 set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
-set(HDF5_ROOT           "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" CACHE PATH "HDF5 root")
-# set(HDF5_ROOT           "/home/ihme/bornhoft/utilities/hdf5-1.10.6/1.10.6" CACHE PATH "HDF5 root")
+
+if(DEFINED ENV{HDF5_DIR})
+    message(STATUS "HDF5 obtained via environment")
+    set(HDF5_ROOT "$ENV{HDF5_DIR}")
+else()
+    message(STATUS "HDF5 obtained via dg-mpi/externals folder")
+    set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install" \ 
+        CACHE PATH "HDF5 root")
+endif()
 
 if(DEFINED ENV{MPI_DIR})
 	set(MPI_ROOT "$ENV{MPI_DIR}")
@@ -39,9 +46,6 @@ endif()
 
 set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
 set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
-# set(KokkosKernels_ROOT  CACHE PATH "KokkosKernels root")
-# set(SLTBENCH_ROOT       CACHE PATH "sltbench root")
-# set(CANTERA_ROOT        CACHE PATH "Cantera root")
 
 # Use the MPI compilers
 if(NOT APPLE)
