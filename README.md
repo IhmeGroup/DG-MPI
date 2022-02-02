@@ -7,7 +7,7 @@ First, get the dependancies. This is done by running
     ```
     git submodule init
     ```
-then following the instructions in `externals`.
+then following the instructions in [`externals`](https://github.com/IhmeGroup/DG-MPI/tree/main/externals).
 
 To compile the solver, run
     ```
