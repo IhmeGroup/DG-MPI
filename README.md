@@ -9,7 +9,7 @@ First, get the dependancies. This is done by running
     ```
 then following the instructions in [`externals`](https://github.com/IhmeGroup/DG-MPI/tree/main/externals).
 
-To compile the solver, run
+To compile the solver, run:
     ```
     mkdir build
     cd build
