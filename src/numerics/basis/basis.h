@@ -128,6 +128,25 @@ public:
 		Kokkos::View<rtype***> basis_ref_grad) override;
 };
 
+class LagrangeHex : public BasisBase, public HexShape {
+public:
+	/*
+	Class constructor
+	*/
+	LagrangeHex(const int order);
+
+	/*
+	Class destructor
+	*/
+	~LagrangeHex() = default;
+
+	void get_values(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val) override;
+
+	void get_grads(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad) override;
+};
+
 
 class LegendreSeg : public BasisBase, public SegShape {
 public:

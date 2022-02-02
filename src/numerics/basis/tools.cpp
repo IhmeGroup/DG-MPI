@@ -126,6 +126,89 @@ void get_lagrange_basis_grad_2D(Kokkos::View<const rtype**> quad_pts,
 }
 
 DG_KOKKOS_FUNCTION
+void get_lagrange_basis_val_3D(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype**> basis_val) {
+
+	// get shape of basis_val
+	const int nq = quad_pts.extent(0);
+	const int nb = basis_val.extent(1);
+
+	// allocate the x and y basis vals
+	Kokkos::View<rtype**> valx("basis_val_x", nq, p + 1);
+	Kokkos::View<rtype**> valy("basis_val_y", nq, p + 1);
+	Kokkos::View<rtype**> valz("basis_val_z", nq, p + 1);
+
+	for (int iq = 0; iq < nq; iq++){
+		get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p, 
+				Kokkos::subview(valx, iq, Kokkos::ALL()));
+		get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+				Kokkos::subview(valy, iq, Kokkos::ALL()));
+		get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes, p,
+				Kokkos::subview(valz, iq, Kokkos::ALL()));
+	}
+	for (int iq = 0; iq < nq; iq++){
+		for (int k = 0; k < p + 1; k++){
+			for (int j = 0; j < p + 1; j++){
+				for (int i = 0; i < p + 1; i++){
+					basis_val(iq, k * (p + 1) * (p + 1) + j * (p + 1) + i) =
+							valx(iq, i) * valy(iq, j) * valz(iq, k);
+				}
+			}
+		}
+	}
+}
+
+
+DG_KOKKOS_FUNCTION
+void get_lagrange_basis_grad_3D(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype***> basis_ref_grad) {
+	// get shape of basis_ref_grad
+	const int nq = quad_pts.extent(0);
+	const int nb = basis_ref_grad.extent(1);
+	const int ndims = basis_ref_grad.extent(2);
+
+	// // allocate the x and y basis vals + basis gradients
+	Kokkos::View<rtype**> valx("basis_val_x", nq, p + 1);
+	Kokkos::View<rtype**> valy("basis_val_y", nq, p + 1);
+	Kokkos::View<rtype**> valz("basis_val_z", nq, p + 1);
+	Kokkos::View<rtype***> gradx("basis_grad_x", nq, p + 1, 1);
+	Kokkos::View<rtype***> grady("basis_grad_y", nq, p + 1, 1);
+	Kokkos::View<rtype***> gradz("basis_grad_z", nq, p + 1, 1);
+
+	for (int iq = 0; iq < nq; iq++){
+		get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p, 
+				Kokkos::subview(valx, iq, Kokkos::ALL()));
+		get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+				Kokkos::subview(valy, iq, Kokkos::ALL()));
+		get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes, p,
+				Kokkos::subview(valz, iq, Kokkos::ALL()));
+		get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, p,
+				Kokkos::subview(gradx, iq, Kokkos::ALL(), 0));
+		get_lagrange_basis_grad_1D(quad_pts(iq, 1), xnodes, p,
+				Kokkos::subview(grady, iq, Kokkos::ALL(), 0));
+		get_lagrange_basis_grad_1D(quad_pts(iq, 2), xnodes, p,
+				Kokkos::subview(gradz, iq, Kokkos::ALL(), 0));		
+	}
+
+	for (int iq = 0; iq < nq; iq++){
+		for (int k = 0; k < p + 1; k++){
+			for (int j = 0; j < p + 1; j++){
+				for (int i = 0; i < p + 1; i++){
+					basis_ref_grad(iq, k * (p + 1) * (p + 1) + j * (p + 1) + i, 0) = 
+							gradx(iq, i, 0) * valy(iq, j) * valz(iq, k);
+					basis_ref_grad(iq, k * (p + 1) * (p + 1) + j * (p + 1) + i, 1) = 
+							valx(iq, i) * grady(iq, j, 0) * valz(iq, k);
+					basis_ref_grad(iq, k * (p + 1) * (p + 1) + j * (p + 1) + i, 2) = 
+							valx(iq, i) * valy(iq, j) * gradz(iq, k, 0);
+				}
+			}
+		}
+	}
+}
+
+DG_KOKKOS_FUNCTION
 void get_legendre_basis_val_1D(const rtype &x, const int p, 
 	Kokkos::View<rtype*> phi) {
     if(p >= 0) {

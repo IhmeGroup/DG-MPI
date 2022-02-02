@@ -89,6 +89,38 @@ void get_lagrange_basis_grad_2D(Kokkos::View<const rtype**> quad_pts,
 	int p, Kokkos::View<rtype***> basis_ref_grad);
 
 /*
+Calculates the 3D Lagrange basis value
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_val: evaluated basis [nq, nb]
+*/
+void get_lagrange_basis_val_3D(Kokkos::View<const rtype**> quad_pts,
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype**> basis_val);
+
+/*
+Calculates the 3D Lagrange basis gradient
+
+Inputs:
+-------
+	x: coordinate of current node [nq]
+	p: order of polynomial space
+
+Outputs:
+--------
+	basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
+*/
+void get_lagrange_basis_grad_3D(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<const rtype*> xnodes,
+	int p, Kokkos::View<rtype***> basis_ref_grad);
+
+/*
 Calculates the 1D Legendre basis value
 
 Inputs:

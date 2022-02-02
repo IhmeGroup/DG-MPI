@@ -138,10 +138,9 @@ TEST(basis_test_suite, test_lagrangequad_basis_should_be_nodal){
                 EXPECT_NEAR(expected(i, j), basis_val(i, j), DOUBLE_TOL);
             }
         }
-
-
     }
 }
+
 /*
 Tests the Lagrange basis gradient for p=1 (LagrangeQuad)
 */
@@ -201,8 +200,99 @@ TEST(basis_test_suite, test_lagrangequad_basis_gradient_p1){
     for (int k = 0; k < 2; k++){
         for (int i = 0; i < nb; i++){
             for (int j = 0; j < nb; j++){
-                EXPECT_NEAR(expected(i, j, dim), 
-                        basis_grad_ref(i, j, dim), DOUBLE_TOL);
+                EXPECT_NEAR(expected(i, j, k), 
+                        basis_grad_ref(i, j, k), DOUBLE_TOL);
+            }
+        }
+    }
+}
+
+/*
+Tests that the Lagrange basis should be nodal (LagrangeHex)
+*/
+TEST(basis_test_suite, test_lagrangehex_basis_should_be_nodal){
+    // loop over order (up to p = 6)
+    for (int order = 1; order < 6; order++){
+        Basis::LagrangeHex basis(order);
+
+        int nb = basis.get_num_basis_coeff(order);
+        int nb_1d = basis.get_order() + 1;
+        Kokkos::View<rtype*> xnodes("xnodes", nb_1d);
+        Kokkos::View<rtype**> basis_val("basis_val", nb, nb);
+        basis.get_1d_nodes(-1., 1., nb_1d, xnodes);
+        Kokkos::View<rtype**> quad_pts("quad_pts", nb, 3);
+        
+        // logic to construct quad pts for a 3d hex
+        int dim = 0;
+        for (int k = 0; k<nb; k++){
+                if (dim % nb_1d == 0) dim = 0;
+                quad_pts(k, 0) = xnodes(dim);
+                dim += 1;
+        }
+        dim = 0;
+        for (int k = 0; k < nb; k++){
+            if (k % nb_1d == 0 && k != 0) dim += 1;
+            if (dim == nb_1d) dim = 0;
+            quad_pts(k, 1) = xnodes(dim);
+        }
+        dim = 0;
+        int counter = 1;
+        for (int k = 0; k < nb; k++){
+            if (k == nb_1d*nb_1d*counter) counter +=1;
+            quad_pts(k, 2) = xnodes(counter - 1);
+        }
+
+        basis.get_values(quad_pts, basis_val);
+
+        Kokkos::View<rtype**> expected("expected", nb, nb);
+        for (int i = 0; i < nb; i++){
+            for (int j = 0; j < nb; j++){
+                if (i == j){
+                    expected(i, j) = 1.;
+                }
+                EXPECT_NEAR(expected(i, j), basis_val(i, j), DOUBLE_TOL);
+            }
+        }
+    }
+}
+
+/*
+Tests the Lagrange basis gradient for p=1 (LagrangeHex)
+*/
+TEST(basis_test_suite, test_lagrangehex_basis_gradient_p1){
+
+    int order = 1;
+    Basis::LagrangeHex basis(order);
+
+    int nb = basis.get_num_basis_coeff(order);
+    int nb_1d = basis.get_order() + 1;
+    Kokkos::View<rtype*> xnodes("xnodes", nb_1d);
+    Kokkos::View<rtype***> basis_grad_ref("basis_grad_ref", nb, nb, 3);
+    basis.get_1d_nodes(-1., 1., nb_1d, xnodes);
+    Kokkos::View<rtype**> quad_pts("quad_pts", 1, 3);
+    
+    quad_pts(0, 0) = -1.; quad_pts(0, 1) = -1.; quad_pts(0, 2) = -1;
+
+    basis.get_grads(quad_pts, basis_grad_ref);
+
+    Kokkos::View<rtype***> expected("expected", nb, nb, 3);
+
+    // xi = (-1, -1, -1)
+    expected(0, 0, 0) = -.5; expected(0, 0, 1) = -.5; expected(0, 0, 2) = -.5;
+    expected(0, 1, 0) = .5;  expected(0, 1, 1) = 0.;  expected(0, 1, 2) = 0.;
+    expected(0, 2, 0) = 0.;  expected(0, 2, 1) = .5;  expected(0, 2, 2) = 0.;
+    expected(0, 3, 0) = 0.;  expected(0, 3, 1) = 0.;  expected(0, 3, 2) = 0.;
+    expected(0, 4, 0) = 0.;  expected(0, 4, 1) = 0.;  expected(0, 4, 2) = .5;
+    expected(0, 5, 0) = 0.;  expected(0, 5, 1) = 0.;  expected(0, 5, 2) = 0.;
+    expected(0, 6, 0) = 0.;  expected(0, 6, 1) = 0.;  expected(0, 6, 2) = 0.;
+    expected(0, 7, 0) = 0.;  expected(0, 7, 1) = 0.;  expected(0, 7, 2) = 0.;
+
+
+    for (int k = 0; k < 3; k++){
+        for (int i = 0; i < 1; i++){
+            for (int j = 0; j < nb; j++){
+                EXPECT_NEAR(expected(i, j, k), 
+                        basis_grad_ref(i, j, k), DOUBLE_TOL);
             }
         }
     }
