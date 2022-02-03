@@ -38,7 +38,7 @@ else()
 endif()
 
 if(DEFINED ENV{MPI_DIR})
-	set(MPI_ROOT "$ENV{MPI_DIR}")
+    set(MPI_ROOT "$ENV{MPI_DIR}")
 else()
     message(STATUS "Using local installs for mpich")
 endif()
@@ -56,7 +56,7 @@ if(NOT APPLE)
         set(CMAKE_CXX_COMPILER "mpicxx")
     endif()
 endif()
- 
+
 
 # Set the project info (done after setting compilers to avoid infinite loop)
 project(DG VERSION 1.0)

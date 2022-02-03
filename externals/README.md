@@ -20,7 +20,8 @@ want, especially for HDF5).
     ```
     ./download_dependencies.sh
     ```
-- MPICH (MPI library): MPI uses local builds (not packaged with dg-mpi). The cmake file searches for the environment variable `MPI_DIR` and if not found it expects `mpicc` and `mpicxx` to be in the user's `$PATH`. 
+- MPICH (MPI library): MPI uses local builds (not packaged with dg-mpi). The cmake file searches for the environment variable `MPI_DIR` and if not found it expects `mpicc` and `mpicxx` to be in the user's `$PATH`.
+   - Ubuntu users, use `sudo apt install mpich`
    - macOS users, use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
    - Yellowstone: use `module load mpich`
 
@@ -53,7 +54,7 @@ want, especially for HDF5).
          This would be similar for `.bashrc` files
     - Yellowstone Notes:
          Kokkos requires CMake >= 3.16. Yellowstone has version 3.15.4. Therefore, we need to install a local build of CMake. Use the following commands to accomplish this:
-         
+
          - Download the Unix/Linux source cmake file (I used version 3.22.2) `https://cmake.org/download/`
          - Send this to yellowstone using `rsync` or whatever your favorite file transfer tool is.
          - Once you have the `*tar.gz` file where you want the CMake build to happen use these commands:
