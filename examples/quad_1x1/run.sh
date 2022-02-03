@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # point this variable to the solver binary on your system
-EXEC="../../build/src/exec/solver"
+EXEC="../../build/src/exec/main"
 
 NCPU=0 # number of nodes
 

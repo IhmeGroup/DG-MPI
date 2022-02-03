@@ -1,29 +1,27 @@
-# main solver
+add_executable(main main.cpp)
 
-add_executable(solver main.cpp)
-
-target_link_libraries(solver
-    PRIVATE memory mesh numerics io utils)
+target_link_libraries(main
+    PRIVATE io memory mesh numerics solver utils)
 
 # Only this target links to these libraries
 if (USE_MKL)
-    target_link_libraries(solver PRIVATE ${MKL_LIBRARIES})
+    target_link_libraries(main PRIVATE ${MKL_LIBRARIES})
 endif()
 
 if (USE_1D)
-    target_compile_definitions(solver PRIVATE USE_1D)
+    target_compile_definitions(main PRIVATE USE_1D)
 endif()
 
 if (USE_OLD_OUTPUT)
-    target_compile_definitions(solver PRIVATE USE_OLD_OUTPUT)
+    target_compile_definitions(main PRIVATE USE_OLD_OUTPUT)
 endif()
 
 # Notes:
 # it is important (I think this is the minimal requirement) that all Kokkos libraries are built as static
 # otherwise they will bring with them at link time the system omp library (see note about omp flags)
-target_link_libraries(solver PRIVATE Kokkos::kokkoscore)
+target_link_libraries(main PRIVATE Kokkos::kokkoscore)
 # prevent from linking to system's OpenMP implementation
-# target_link_options(solver PRIVATE "-Wl,--as-needed")
+# target_link_options(main PRIVATE "-Wl,--as-needed")
 
 
 # Notes:
@@ -33,7 +31,7 @@ target_link_libraries(solver PRIVATE Kokkos::kokkoscore)
 #    we still need the appropriate omp flags but ONLY at compile-time
 # 2) I don't remember the role of ENABLE_EXPORTS ON
 #    I think this has to do with debugging and getting line numbers with stack traces
-set_target_properties(solver
+set_target_properties(main
     PROPERTIES
         ENABLE_EXPORTS ON
         COMPILE_FLAGS ${OpenMP_CXX_FLAGS})

@@ -6,6 +6,7 @@
 #include "memory/memory_network.h"
 #include "numerics/numerics_data.h"
 #include "io/io_params.h"
+#include "solver/base.h"
 
 using std::cout, std::endl, std::string;
 
@@ -32,4 +33,7 @@ int main(int argc, char* argv[]) {
 
     // Create mesh
     auto mesh = Mesh(toml_input, network);
+
+    // Create solver
+    auto solver = Solver(toml_input, mesh, network);
 }

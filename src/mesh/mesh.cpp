@@ -324,6 +324,9 @@ void Mesh::partition() {
     // Now the faces are partitioned. The ownership of a face is given to the
     // left element of each face, meaning that a face is always stored on the
     // left element's partition.
+    //
+    // Actually, no, let's try something: give the face to both sides.
+    // TODO: Remove this paragraph
     iface_partition.resize(nIF);
     // Loop over interior faces
     for (unsigned i = 0; i < nIF; i++) {
@@ -349,8 +352,26 @@ void Mesh::partition() {
 
     // Count how many interior faces are contained within each partition
     std::vector<int> iface_partition_size(num_partitions, 0);
-    for (auto it = iface_partition.begin(); it != iface_partition.end(); it++) {
-        iface_partition_size[*it]++;
+    //for (auto it = iface_partition.begin(); it != iface_partition.end(); it++) {
+    //    iface_partition_size[*it]++;
+    //}
+    for (unsigned i = 0; i < nIF; i++) {
+        // Get left element ID
+        auto elem_ID = IF_to_elem[i][0];
+        // Get the rank
+        auto left_rank = elem_partition[elem_ID];
+        // Increment the size of the face partition on the left element's rank
+        iface_partition_size[left_rank]++;
+        // Get right element ID
+        elem_ID = IF_to_elem[i][3];
+        // Get the rank
+        auto right_rank = elem_partition[elem_ID];
+        // Increment the size of the face partition on the right element's rank,
+        // but ONLY if it's a different rank. No duplicates within a rank, only
+        // at rank boundaries.
+        if (left_rank != right_rank) {
+            iface_partition_size[right_rank]++;
+        }
     }
     num_ifaces_part = iface_partition_size[network.rank];
 
@@ -397,9 +418,8 @@ void Mesh::partition() {
     // Store the interior face information on each partition
     // TODO: There should be 4 faces but there are 8??? IF_to_elem has
     // duplicates!
-    /*
     counter = 0;
-    for (unsigned i = 0; i < num_nodes; i++) {
+    for (unsigned i = 0; i < nIF; i++) {
         auto rank = node_partition[i];
         if (network.rank == rank) {
             // Mapping from local to global, and back
@@ -408,13 +428,11 @@ void Mesh::partition() {
             // Neighbors, reference face IDs, and orientations of each interior
             // face on this partition
             for (unsigned j = 0; j < 6; j++) {
-                cout << "RANK " << network.rank << " " << counter << " " << j << " " << num_ifaces_part << endl;
                 interior_faces(counter, j) = IF_to_elem[counter][j];
             }
             counter++;
         }
     }
-    */
 
     // Print
     for (int rank = 0; rank < network.num_ranks; rank++) {
@@ -427,12 +445,10 @@ void Mesh::partition() {
             for (unsigned i = 0; i < num_nodes_part; i++) {
                 cout << local_to_global_node_IDs(i) << endl;
             }
-            /*
             cout << "Rank " << network.rank << " has interior faces:" << endl;
             for (unsigned i = 0; i < num_ifaces_part; i++) {
                 cout << local_to_global_iface_IDs(i) << endl;
             }
-            */
         }
     }
 
@@ -471,8 +487,7 @@ string Mesh::report() const {
     if (partitioned) {
         msg << "--> Mesh is partitioned: " << endl;
         for (int part = 0; part < num_partitions; part++) {
-            long int N = count(elem_partition.begin(), elem_partition.end(), part);
-            msg << "Elements in partition " << part << ": " << N << endl;
+            msg << "Elements in partition " << network.rank << ": " << num_elems_part << endl;
         }
     }
     else {

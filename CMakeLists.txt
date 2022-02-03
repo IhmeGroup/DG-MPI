@@ -154,6 +154,7 @@ add_subdirectory(src/memory)
 add_subdirectory(src/mesh)
 add_subdirectory(src/numerics)
 add_subdirectory(src/physics)
+add_subdirectory(src/solver)
 add_subdirectory(src/utils)
 add_subdirectory(test)
 

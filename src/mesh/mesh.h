@@ -26,7 +26,7 @@ class Mesh {
          *
          * @param input_info
          */
-        explicit Mesh(const toml::value &input_info, MemoryNetwork& network);
+        Mesh(const toml::value& input_info, MemoryNetwork& network);
 
         /*! \brief Read the HDF5 mesh file directly
          *
