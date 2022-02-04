@@ -1,10 +1,11 @@
 #include "gtest/gtest.h"
+#include <Kokkos_Core.hpp>
 #include "memory/memory_network.h"
 
 
 int main(int argc, char **argv) {
-    // Initialize memory network
-    MemoryNetwork network(argc, argv);
+    // Initialize Kokkos
+    Kokkos::initialize(argc, argv);
 
     // Run GoogleTest
     ::testing::InitGoogleTest(&argc, argv);

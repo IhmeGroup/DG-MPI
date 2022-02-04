@@ -3,6 +3,7 @@
 #include <map>
 #include <numeric>
 #include <string>
+#include <unordered_set>
 #include "H5Cpp.h"
 // #include "hdf5.h"
 #include "metis.h"
@@ -30,7 +31,14 @@ Mesh::Mesh(const toml::value &input_info, MemoryNetwork& network)
     : network{network} {
     auto mesh_info = toml::find(input_info, "Mesh");
     string mesh_file_name = toml::find<string>(mesh_info, "file");
-    num_partitions = toml::find<int>(mesh_info, "npartitions");
+
+    // If the number of partitions is specified, use that
+    if (input_info.contains("npartitions")) {
+        num_partitions = toml::find<int>(mesh_info, "npartitions");
+    // Otherwise, the number of ranks is used
+    } else {
+        num_partitions = network.num_ranks;
+    }
 
     // TODO figure out boundaries from the HDF5 file directly (Kihiro 2021/03/04)
     if (input_info.contains("Boundaries")) {
@@ -156,6 +164,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
         dataset = file.openDataSet(DSET_IFACE_DATA);
         dataspace = dataset.getSpace();
         dataset.read(buff_int.data(), PredType::NATIVE_INT, mspace, dataspace);
+        vector<unordered_set<int> > already_created(num_elems);
         for (unsigned i = 0; i < nIF; i++) {
             IF_to_elem[i].resize(6);
             IF_to_elem[i][0] = buff_int[6 * i + 0]; // left element ID
@@ -321,21 +330,6 @@ void Mesh::partition() {
         fill(node_partition.begin(), node_partition.end(), 0);
     }
 
-    // Now the faces are partitioned. The ownership of a face is given to the
-    // left element of each face, meaning that a face is always stored on the
-    // left element's partition.
-    //
-    // Actually, no, let's try something: give the face to both sides.
-    // TODO: Remove this paragraph
-    iface_partition.resize(nIF);
-    // Loop over interior faces
-    for (unsigned i = 0; i < nIF; i++) {
-        // Get left element ID
-        auto elem_ID = IF_to_elem[i][0];
-        // Get the partition of the left element, and store it
-        iface_partition[i] = elem_partition[elem_ID];
-    }
-
     // Count how many elements are contained within each partition
     std::vector<int> elem_partition_size(num_partitions, 0);
     for (auto it = elem_partition.begin(); it != elem_partition.end(); it++) {
@@ -352,9 +346,8 @@ void Mesh::partition() {
 
     // Count how many interior faces are contained within each partition
     std::vector<int> iface_partition_size(num_partitions, 0);
-    //for (auto it = iface_partition.begin(); it != iface_partition.end(); it++) {
-    //    iface_partition_size[*it]++;
-    //}
+    std::vector<int> ghost_faces_vector;
+    std::vector<std::unordered_set<int> > sets_of_neighbor_ranks(network.num_ranks);
     for (unsigned i = 0; i < nIF; i++) {
         // Get left element ID
         auto elem_ID = IF_to_elem[i][0];
@@ -366,14 +359,22 @@ void Mesh::partition() {
         elem_ID = IF_to_elem[i][3];
         // Get the rank
         auto right_rank = elem_partition[elem_ID];
-        // Increment the size of the face partition on the right element's rank,
-        // but ONLY if it's a different rank. No duplicates within a rank, only
-        // at rank boundaries.
+        // Check if this face is on a rank boundary
         if (left_rank != right_rank) {
+            // Increment the size of the face partition on the right element's
+            // rank, but ONLY if it's a different rank. No duplicates within a
+            // rank, only at rank boundaries.
             iface_partition_size[right_rank]++;
+            // If the left and right rank are not the same, then this face is a
+            // ghost face. Add it to the ghost faces vector.
+            ghost_faces_vector.push_back(i);
         }
+        // Add this face's neighbor ranks to each corresponding rank
+        sets_of_neighbor_ranks[left_rank].insert(right_rank);
+        sets_of_neighbor_ranks[right_rank].insert(left_rank);
     }
     num_ifaces_part = iface_partition_size[network.rank];
+    num_neighbor_ranks = sets_of_neighbor_ranks[network.rank].size();
 
     // Size views accordingly
     Kokkos::resize(local_to_global_elem_IDs, num_elems_part);
@@ -381,10 +382,18 @@ void Mesh::partition() {
     Kokkos::resize(local_to_global_iface_IDs, num_ifaces_part);
     Kokkos::resize(elem_to_node_IDs, num_elems_part, num_nodes_per_elem);
     Kokkos::resize(node_coords, num_nodes_part, dim);
-    Kokkos::resize(interior_faces, num_ifaces_part, 6);
+    Kokkos::resize(interior_faces, num_ifaces_part, 8);
+    Kokkos::resize(neighbor_ranks, num_neighbor_ranks);
+
+    // Set neighbor ranks
+    int counter = 0;
+    for (auto rank : sets_of_neighbor_ranks[network.rank]) {
+        neighbor_ranks(counter) = rank;
+        counter++;
+    }
 
     // Store the element IDs and elem_to_node_IDs on each partition
-    int counter = 0;
+    counter = 0;
     for (unsigned i = 0; i < num_elems; i++) {
         auto rank = elem_partition[i];
         if (network.rank == rank) {
@@ -416,23 +425,38 @@ void Mesh::partition() {
     }
 
     // Store the interior face information on each partition
-    // TODO: There should be 4 faces but there are 8??? IF_to_elem has
-    // duplicates!
     counter = 0;
     for (unsigned i = 0; i < nIF; i++) {
-        auto rank = node_partition[i];
-        if (network.rank == rank) {
+        // Element rank on the left and right
+        auto left_rank = elem_partition[IF_to_elem[i][0]];
+        auto right_rank = elem_partition[IF_to_elem[i][3]];
+        if (network.rank == left_rank or network.rank == right_rank) {
             // Mapping from local to global, and back
             local_to_global_iface_IDs(counter) = i;
             global_to_local_iface_IDs.insert(i, counter);
-            // Neighbors, reference face IDs, and orientations of each interior
-            // face on this partition
-            for (unsigned j = 0; j < 6; j++) {
-                interior_faces(counter, j) = IF_to_elem[counter][j];
+            // Set rank on left and right
+            interior_faces(counter, 0) = left_rank;
+            interior_faces(counter, 4) = right_rank;
+
+            // Neighbors, reference face IDs, and orientations
+            for (unsigned j = 0; j < 3; j++) {
+                // On the left
+                interior_faces(counter, j + 1) = IF_to_elem[i][j];
+                // On the right
+                interior_faces(counter, j + 5) = IF_to_elem[i][j + 3];
             }
             counter++;
         }
     }
+
+    cout << "CHECK VIEW" << endl;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 8; j++) {
+            cout << interior_faces(i, j) << "  ";
+        }
+        cout << endl;
+    }
+    cout << "END CHECK VIEW" << endl;
 
     // Print
     for (int rank = 0; rank < network.num_ranks; rank++) {

@@ -107,16 +107,22 @@ class Mesh {
     public:
         // This is the stuff that should persist throughout the simulation
         // (previous things, especially std::vector's, are only used
-        // for the mesh reading step).
+        // for the mesh reading step). All data structures above this are
+        // subject to further code review/removal - treat the below as the true
+        // mesh API for now.
         int num_elems_part;
         int num_nodes_part;
         int num_ifaces_part;
+        int num_gfaces_part;
+        int num_neighbor_ranks;
         Kokkos::View<int*> local_to_global_node_IDs;
         Kokkos::View<int*> local_to_global_elem_IDs;
         Kokkos::View<int*> local_to_global_iface_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_node_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_elem_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_iface_IDs;
+        Kokkos::View<int*> neighbor_ranks;
+        Kokkos::View<int*> ghost_faces;
         Kokkos::View<rtype**> node_coords;
         Kokkos::View<int**> elem_to_node_IDs;
         Kokkos::View<int**> interior_faces;

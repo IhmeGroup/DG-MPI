@@ -5,7 +5,6 @@ checkpoint_interval = 100
 
 [Mesh]
 file = "quad_1x1.h5"
-npartitions = 1
 
 [Numerics]
 order = 2
