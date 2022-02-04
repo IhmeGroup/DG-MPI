@@ -13,6 +13,8 @@ list(APPEND GTEST_SOURCES
     test_physics.cpp
     numerics/basis/test_basis.cpp
     numerics/basis/test_tools.cpp
+    numerics/test_nodes.cpp
+    numerics/quadrature/test_quadrature.cpp
     mesh/test_mesh.cpp
 )
 
