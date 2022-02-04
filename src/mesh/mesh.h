@@ -115,6 +115,7 @@ class Mesh {
         int num_ifaces_part;
         int num_gfaces_part;
         int num_neighbor_ranks;
+        Kokkos::View<int*> num_faces_per_rank_boundary;
         Kokkos::View<int*> local_to_global_node_IDs;
         Kokkos::View<int*> local_to_global_elem_IDs;
         Kokkos::View<int*> local_to_global_iface_IDs;
@@ -122,7 +123,7 @@ class Mesh {
         Kokkos::UnorderedMap<int, int> global_to_local_elem_IDs;
         Kokkos::UnorderedMap<int, int> global_to_local_iface_IDs;
         Kokkos::View<int*> neighbor_ranks;
-        Kokkos::View<int*> ghost_faces;
+        int** ghost_faces;
         Kokkos::View<rtype**> node_coords;
         Kokkos::View<int**> elem_to_node_IDs;
         Kokkos::View<int**> interior_faces;

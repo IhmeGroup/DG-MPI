@@ -368,10 +368,10 @@ void Mesh::partition() {
             // If the left and right rank are not the same, then this face is a
             // ghost face. Add it to the ghost faces vector.
             ghost_faces_vector.push_back(i);
+            // Add this face's neighbor ranks to each corresponding rank
+            sets_of_neighbor_ranks[left_rank].insert(right_rank);
+            sets_of_neighbor_ranks[right_rank].insert(left_rank);
         }
-        // Add this face's neighbor ranks to each corresponding rank
-        sets_of_neighbor_ranks[left_rank].insert(right_rank);
-        sets_of_neighbor_ranks[right_rank].insert(left_rank);
     }
     num_ifaces_part = iface_partition_size[network.rank];
     num_neighbor_ranks = sets_of_neighbor_ranks[network.rank].size();
@@ -384,6 +384,7 @@ void Mesh::partition() {
     Kokkos::resize(node_coords, num_nodes_part, dim);
     Kokkos::resize(interior_faces, num_ifaces_part, 8);
     Kokkos::resize(neighbor_ranks, num_neighbor_ranks);
+    Kokkos::resize(num_faces_per_rank_boundary, num_neighbor_ranks);
 
     // Set neighbor ranks
     int counter = 0;
@@ -425,6 +426,7 @@ void Mesh::partition() {
     }
 
     // Store the interior face information on each partition
+    num_gfaces_part = 0;
     counter = 0;
     for (unsigned i = 0; i < nIF; i++) {
         // Element rank on the left and right
@@ -437,6 +439,8 @@ void Mesh::partition() {
             // Set rank on left and right
             interior_faces(counter, 0) = left_rank;
             interior_faces(counter, 4) = right_rank;
+            // If they're not the same, increment the ghost faces
+            if (left_rank != right_rank) { num_gfaces_part++; }
 
             // Neighbors, reference face IDs, and orientations
             for (unsigned j = 0; j < 3; j++) {
@@ -448,6 +452,93 @@ void Mesh::partition() {
             counter++;
         }
     }
+
+    // Get number of faces in each rank boundary
+    for (int i = 0; i < num_gfaces_part; i++) {
+        // Get global face ID
+        auto global_face_ID = ghost_faces_vector[i];
+        // Get local face ID
+        auto face_ID = global_to_local_iface_IDs.value_at(
+                global_to_local_iface_IDs.find(global_face_ID));
+        // Get left and right rank
+        auto rank_L = interior_faces(face_ID, 0);
+        auto rank_R = interior_faces(face_ID, 4);
+        // Add to the count on those ranks
+        if (network.rank == rank_L) {
+            // Get the rank neighbor index
+            int index;
+            for (int j = 0; j < num_neighbor_ranks; j++) {
+                if (neighbor_ranks(j) == rank_R) {
+                    index = j;
+                    break;
+                }
+            }
+            // Increment
+            num_faces_per_rank_boundary(index)++;
+        } else if (network.rank == rank_R) {
+            // Get the rank neighbor index
+            int index;
+            for (int j = 0; j < num_neighbor_ranks; j++) {
+                if (neighbor_ranks(j) == rank_L) {
+                    index = j;
+                    break;
+                }
+            }
+            // Increment
+            num_faces_per_rank_boundary(index)++;
+        }
+    }
+
+    // Allocate ghost faces of each neighbor rank
+    ghost_faces = new int*[num_neighbor_ranks];
+    for (int i = 0; i < num_neighbor_ranks; i++) {
+        ghost_faces[i] = new int[num_faces_per_rank_boundary[i]];
+    }
+
+    // Set ghost faces of each neighbor rank
+    vector<int> gface_counter(num_neighbor_ranks, 0);
+    for (int i = 0; i < ghost_faces_vector.size(); i++) {
+        // Get global face ID
+        auto global_face_ID = ghost_faces_vector[i];
+        // Get local face ID
+        auto face_ID = global_to_local_iface_IDs.value_at(
+                global_to_local_iface_IDs.find(global_face_ID));
+        // Get left and right rank
+        auto rank_L = interior_faces(face_ID, 0);
+        auto rank_R = interior_faces(face_ID, 4);
+        if (network.rank == rank_L) {
+            // Get the rank neighbor index
+            int index;
+            for (int j = 0; j < num_neighbor_ranks; j++) {
+                if (neighbor_ranks(j) == rank_R) {
+                    index = j;
+                    break;
+                }
+            }
+            ghost_faces[index][gface_counter[index]] = global_face_ID;
+            gface_counter[index]++;
+        } else if (network.rank == rank_R) {
+            // Get the rank neighbor index
+            int index;
+            for (int j = 0; j < num_neighbor_ranks; j++) {
+                if (neighbor_ranks(j) == rank_L) {
+                    index = j;
+                    break;
+                }
+            }
+            ghost_faces[index][gface_counter[index]] = global_face_ID;
+            gface_counter[index]++;
+        }
+    }
+
+    cout << "Ghost faces of rank " << network.rank << ":" << endl;
+    for (int i = 0; i < num_neighbor_ranks; i++) {
+        for (int j = 0; j < num_faces_per_rank_boundary[i]; j++) {
+            cout << ghost_faces[i][j] << "  ";
+        }
+        cout << endl;
+    }
+    cout << endl;
 
     cout << "CHECK VIEW" << endl;
     for (int i = 0; i < 3; i++) {
