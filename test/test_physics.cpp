@@ -62,7 +62,8 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     const rtype v = 3.5;
     const rtype w = -4.5;
     const rtype gam = 1.4;
-    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * (u * u + v * v);
+    const rtype rhoE = P / (gam - 1.) + 0.5 * rho * 
+        (u * u + v * v + w * w);
 
     Physics::Euler<3> physics;
     physics.set_physical_params();
@@ -74,7 +75,7 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     U(3) = rho * w;
     U(4) = P / (gam - 1.) + 0.5 * rho * (u * u + v * v + w * w);
 
-    Kokkos::View<rtype[4][3]> Fref("Fref");
+    Kokkos::View<rtype[5][3]> Fref("Fref");
     Fref(0, 0) = rho * u;
     Fref(1, 0) = rho * u * u + P;
     Fref(2, 0) = rho * u * v;
@@ -91,12 +92,12 @@ TEST(PhysicsTestSuite, ConvFluxPhysical3D) {
     Fref(3, 2) = rho * w * w + P;
     Fref(4, 2) = (rhoE + P) * w;
 
-    Kokkos::View<rtype[4][3]> F("F");
+    Kokkos::View<rtype[5][3]> F("F");
     physics.conv_flux_physical(U, F);
 
-    for (unsigned i = 0; i < 4; i++) {
+    for (unsigned i = 0; i < 5; i++) {
         for (unsigned j = 0; j < 3; j++){
-            EXPECT_NEAR(F(i, j), Fref(i, j), DOUBLE_TOL);
+            EXPECT_DOUBLE_EQ(F(i, j), Fref(i, j));
         }
     }
 }
