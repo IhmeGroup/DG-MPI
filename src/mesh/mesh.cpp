@@ -27,10 +27,13 @@ static const string DSET_NODE_COORD("NodeCoords");
 static const string DSET_ELEM_TO_NODES("Elem2Nodes");
 static const string DSET_IFACE_DATA("IFaceData");
 
-Mesh::Mesh(const toml::value &input_info, MemoryNetwork& network)
-    : network{network} {
+Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
+        string mesh_file_name) : network{network} {
     auto mesh_info = toml::find(input_info, "Mesh");
-    string mesh_file_name = toml::find<string>(mesh_info, "file");
+    // If the mesh file name is not specified, then read it from the input file
+    if (mesh_file_name == "") {
+        string mesh_file_name = toml::find<string>(mesh_info, "file");
+    }
 
     // If the number of partitions is specified, use that
     if (input_info.contains("npartitions")) {

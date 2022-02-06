@@ -22,11 +22,18 @@
  */
 class Mesh {
     public:
-        /*! \brief Constructor using a TOML input
-         *
-         * @param input_info
-         */
-        Mesh(const toml::value& input_info, MemoryNetwork& network);
+        /*
+        Constructor for the mesh.
+
+        Inputs:
+        -------
+        input_info - TOML input file
+        network - memory network object
+        mesh_file_name - optional name of mesh file. If not specified, looks for
+            the name in the input file.
+        */
+        Mesh(const toml::value& input_info, const MemoryNetwork& network,
+                std::string mesh_file_name = "");
 
         /*! \brief Read the HDF5 mesh file directly
          *
@@ -97,7 +104,7 @@ class Mesh {
         std::vector<std::vector<int>> elem_to_IF;
         std::vector<int> nBG_in_elem;
         std::vector<std::vector<int>> elem_to_BF;
-        MemoryNetwork& network;
+        const MemoryNetwork& network;
     public:
         std::vector<int> eptr; // for metis
         std::vector<int> eind; // for metis
@@ -151,7 +158,7 @@ class Mesh {
          * like:
          * ghost_faces = {
          *     {*, *, *},
-         *     {*, *,},
+         *     {*, *},
          *     {*, *, *, *}
          * }
          * where the *'s represent global face IDs. The first row (with 3 faces)
