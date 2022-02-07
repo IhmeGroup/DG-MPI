@@ -1,4 +1,4 @@
-add_library(memory STATIC memory_network.cpp)
+add_library(memory STATIC memory_network.cpp) #dumb.cpp)
 target_link_libraries(memory
     PRIVATE Kokkos::kokkoscore mpi)
 

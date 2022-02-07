@@ -20,7 +20,7 @@ MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
         << endl;
 
     // Initialize Kokkos (This needs to be after MPI_Init)
-    Kokkos::initialize(argc, argv);
+    // Kokkos::initialize(argc, argv);
 }
 
 MemoryNetwork::~MemoryNetwork() {
