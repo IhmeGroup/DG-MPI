@@ -38,14 +38,11 @@ void Euler<2>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
     Kokkos::View<rtype**> F){
 
-    printf("test");
-    const rtype P = 1.;//get_pressure(U);
+    const rtype P = get_pressure(U);
     const rtype r1 = 1. / U(0);
     const rtype ru = U(1);
     const rtype rv = U(2);
     const rtype rE = U(3);
-    // std::cout<<"TEST 2"<<std::endl;
-    printf("test dual");
 
     F(0, 0) = ru;
     F(1, 0) = ru * ru * r1 + P;
@@ -56,7 +53,6 @@ void Euler<2>::conv_flux_physical(
     F(1, 1) = ru * rv * r1;
     F(2, 1) = rv * rv * r1 + P;
     F(3, 1) = (rE + P) * rv * r1;
-    // std::cout<<"TEST 3"<<std::endl;
 
 }
 
