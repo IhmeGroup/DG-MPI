@@ -11,7 +11,7 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 		return;
 	}
 	if (stop <= start) {
-		throw ValueErrorException("Assume beginning is smaller than end");
+		// throw ValueErrorException("Assume beginning is smaller than end");
 	}
 	if (xnodes.extent(0) != nnodes){
 		Kokkos::resize(xnodes, nnodes);
@@ -240,7 +240,7 @@ void get_legendre_basis_val_1D(const rtype &x, const int p,
         std::string error_message = "Legendre polynomial P = ";
         error_message += std::to_string(p);
         error_message += " not implemented.";
-        throw std::runtime_error(error_message);
+        // throw std::runtime_error(error_message);
     }
 
 }
@@ -276,7 +276,7 @@ void get_legendre_basis_grad_1D(const rtype &x, const int p,
         std::string error_message = "Legendre polynomial P = ";
         error_message += std::to_string(p);
         error_message += " not implemented.";
-        throw std::runtime_error(error_message);
+        // throw std::runtime_error(error_message);
     }
 }
 
