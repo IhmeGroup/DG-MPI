@@ -143,6 +143,9 @@ if(APPLE)
     link_directories("/usr/local/lib" "/usr/local/opt/llvm/lib")
 endif()
 
+# Add source directory for use in the code (for example, for finding input files
+# for tests)
+add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 ###########################
 # project sub-directories #

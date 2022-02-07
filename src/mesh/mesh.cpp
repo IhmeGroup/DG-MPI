@@ -32,7 +32,7 @@ Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
     auto mesh_info = toml::find(input_info, "Mesh");
     // If the mesh file name is not specified, then read it from the input file
     if (mesh_file_name == "") {
-        string mesh_file_name = toml::find<string>(mesh_info, "file");
+        mesh_file_name = toml::find<string>(mesh_info, "file");
     }
 
     // If the number of partitions is specified, use that

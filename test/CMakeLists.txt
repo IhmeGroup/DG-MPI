@@ -52,11 +52,13 @@ target_sources(test_mpi_enabled PRIVATE ${MPITEST_SOURCES})
 # add any directories that contain needed functions
 target_link_libraries(test_mpi_enabled
     PRIVATE
-        mesh
+        mesh io
 )
 
 target_link_libraries(test_mpi_enabled
-    PUBLIC Kokkos::kokkoscore mpi)
-
-# Add source directory for use in finding test input files
-add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+    PUBLIC Kokkos::kokkoscore mpi
+    PRIVATE ${HDF5_LIBRARIES})
+target_include_directories(test_mpi_enabled
+    PRIVATE ${HDF5_INCLUDE_DIRS})
+# Create the directories for storing data
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test/mpi_enabled_tests/mesh/")
