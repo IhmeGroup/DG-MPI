@@ -15,11 +15,13 @@ class MemoryNetwork {
     public:
         MemoryNetwork(int argc, char* argv[]);
         ~MemoryNetwork();
+        void barrier() const;
 
     public:
         int num_ranks;
         int rank;
         bool head_rank = false;
+        MPI_Comm comm;
 };
 
 #endif //DG_MEMORY_NERWORK_H
