@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 
+quad_node_order = [0, 1, 3, 2]
+triangle_node_order = [0, 1, 2]
+
 
 def main():
     # Name of HDF5 file
@@ -17,6 +20,13 @@ def main():
     num_elems = h5_file.attrs['Number of Elements']
     num_nodes = h5_file.attrs['Number of Nodes']
     num_nodes_per_elem = h5_file.attrs['Number of Nodes Per Element']
+
+    if num_nodes_per_elem == 4:
+        node_order = quad_node_order
+    elif num_nodes_per_elem == 3:
+        node_order = triangle_node_order
+    else:
+        print('Element type not supported.')
 
     # Allocate
     global_node_coords = np.empty((num_nodes, dim))
@@ -44,23 +54,26 @@ def main():
     # Loop over ranks
     for i in range(num_ranks):
         color = None
+        label = f'Rank {i}'
         # Loop over elements
         for elem_ID in range(elem_to_node_IDs_list[i].shape[0]):
             # Coordinates
-            # TODO: This only works for quads
-            coords = global_node_coords[elem_to_node_IDs_list[i][elem_ID]][[0,1,3,2]]
+            coords = global_node_coords[
+                    elem_to_node_IDs_list[i][elem_ID]][node_order]
             # Loop them so the first point shows up again at the end
             coords = np.vstack((coords, coords[0]))
-            # Plot, with all elements in the same rank being the same color
-            p = plt.plot(coords[:, 0], coords[:, 1], linewidth=2, color=color,
-                    label=None)[0]
+            # Plot, with all elements in the same rank being the same color, and
+            # the label only used once
+            p = plt.plot(coords[:, 0], coords[:, 1], linewidth=1.5, color=color,
+                    label=label)[0]
             color = p.get_color()
+            label = None
     plt.xlabel('$x$', fontsize=20)
     plt.ylabel('$y$', fontsize=20)
     plt.tick_params(labelsize=12)
-    #plt.legend(loc='center left', fontsize = 20)
-    plt.grid(linestyle='--')
-    plt.savefig('mesh.pdf', bbox_inches='tight')
+    plt.legend(loc='upper left', fontsize = 12)
+    #plt.grid(linestyle='--')
+    plt.savefig('mesh.svg', bbox_inches='tight')
     plt.show()
 
 if __name__ == '__main__':

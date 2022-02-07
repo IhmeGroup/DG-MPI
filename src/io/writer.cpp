@@ -14,14 +14,10 @@ Writer::Writer(const Mesh& mesh) {
     // TODO: get file name
     const string file_name = string(PROJECT_ROOT) + "/build/test/mpi_enabled_tests/mesh/data.h5";
 
-    // Open and close the file, just to create it (or wipe it)
-    H5::H5File file(file_name, H5F_ACC_TRUNC);
-    file.close();
-
     // Write some attributes, on the head rank
     mesh.network.barrier();
     if (mesh.network.head_rank) {
-        H5::H5File file(file_name, H5F_ACC_RDWR);
+        H5::H5File file(file_name, H5F_ACC_TRUNC);
         // Number of ranks
         write_attribute(mesh.network.num_ranks, "Number of Ranks", file);
         // Number of dimensions
