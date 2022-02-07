@@ -5,8 +5,8 @@
 namespace Basis {
 
 int ShapeBase::get_num_basis_coeff(int p){
-	throw NotImplementedException("ShapeBase does not implement "
-                                      "get_num_basis_coeff -> implement in child class");
+	// throw NotImplementedException("ShapeBase does not implement "
+ //                                      "get_num_basis_coeff -> implement in child class");
 }
 
 /* --------------------------------------

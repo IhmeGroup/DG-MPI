@@ -5,14 +5,14 @@ namespace Basis {
 
 void BasisBase::get_values(Kokkos::View<const rtype**> quad_pts,
 		Kokkos::View<rtype**> basis_val){
-	throw NotImplementedException("BasisBase does not implement "
-                        "get_values -> implement in child class");
+	// throw NotImplementedException("BasisBase does not implement "
+ //                        "get_values -> implement in child class");
 }
 
 void BasisBase::get_grads(Kokkos::View<const rtype**> quad_pts,
 		Kokkos::View<rtype***> basis_ref_grad){
-	throw NotImplementedException("BasisBase does not implement "
-                        "get_grads -> implement in child class");
+	// throw NotImplementedException("BasisBase does not implement "
+ //                        "get_grads -> implement in child class");
 }
 
 
