@@ -9,6 +9,7 @@
 class Solver {
     public:
         Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network);
+        void precompute_matrix_helpers();
     public:
         // Solution coefficients
         Kokkos::View<rtype***> Uc;
