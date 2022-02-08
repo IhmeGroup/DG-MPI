@@ -8,7 +8,7 @@ file = "quad_1x1.h5"
 
 [Numerics]
 order = 2
-basis = "Legendre2D"
+basis = "LagrangeEq1D"
 
 [Stepper]
 start = 0.0
