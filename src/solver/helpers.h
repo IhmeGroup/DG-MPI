@@ -7,9 +7,9 @@ namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
 
-	VolumeHelperFunctor();
+	~VolumeHelperFunctor() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
     void operator()(const int ie) const;
 
 };

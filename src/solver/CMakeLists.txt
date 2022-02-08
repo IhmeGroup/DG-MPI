@@ -1,4 +1,7 @@
-add_library(solver STATIC base.cpp helpers.cpp)
+add_library(solver STATIC 
+    base.cpp 
+    helpers.cpp)
+
 target_link_libraries(solver
     PRIVATE Kokkos::kokkoscore
     PRIVATE memory)

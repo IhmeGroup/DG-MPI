@@ -1,8 +1,8 @@
+#include "solver/helpers.h"
+
 namespace VolumeHelpers {
 
-	VolumeHelperFunctor::VolumeHelperFunctor(){};
-
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
     void VolumeHelperFunctor::operator()(const int ie) const {
 
     	 printf("Hello from ie = %i\n", ie);

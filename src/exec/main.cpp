@@ -36,4 +36,7 @@ int main(int argc, char* argv[]) {
 
     // Create solver
     auto solver = Solver(toml_input, mesh, network);
+
+    // Precompute Helpers
+    solver.precompute_matrix_helpers();
 }
