@@ -7,13 +7,18 @@ namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
 
-	~VolumeHelperFunctor() = default;
+	// ~VolumeHelperFunctor() = default;
+	VolumeHelperFunctor();
 
 	KOKKOS_FUNCTION
     void operator()(const int ie) const;
 
+
+    int testing;
 };
 
 } // end namespace VolumeHelper
+
+#include "solver/helpers.cpp"
 
 #endif // DG_SOLVER_HELPERS_H

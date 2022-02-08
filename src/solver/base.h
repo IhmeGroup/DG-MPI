@@ -4,11 +4,14 @@
 #include <Kokkos_Core.hpp>
 #include "toml11/toml.hpp"
 #include "memory/memory_network.h"
+#include "numerics/numerics_data.h"
 #include "mesh/mesh.h"
+#include "numerics/basis/basis.h"
 
 class Solver {
     public:
-        Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network);
+        Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network,
+            Numerics::NumericsParams& params);
         void precompute_matrix_helpers();
     public:
         // Solution coefficients
@@ -19,6 +22,12 @@ class Solver {
         const toml::value& input_file;
         Mesh& mesh;
         MemoryNetwork& network;
+        Numerics::NumericsParams& params;
+
+        // Basis class
+        Basis::Basis basis;
+        int nb;
+        int order;
 };
 
 #endif // DG_SOLVER_H
