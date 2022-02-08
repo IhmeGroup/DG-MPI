@@ -18,7 +18,7 @@ endif()
 # set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
 # specify build type specific flags
-set(warning_flags "-Wall -Wextra")
+set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
 set(CMAKE_CXX_FLAGS_DEBUG   "-g  -O0 ${warning_flags}")
 set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG ${warning_flags}")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG ${warning_flags}")
@@ -125,6 +125,8 @@ FetchContent_MakeAvailable(googletest)
 find_package(Kokkos REQUIRED)
 find_package(KokkosKernels REQUIRED)
 find_package(OpenMP REQUIRED)
+
+
 
 # set preprocessor definitions
 if(USE_DOUBLES)
