@@ -16,6 +16,8 @@ class MemoryNetwork {
         MemoryNetwork(int argc, char* argv[]);
         ~MemoryNetwork();
         void barrier() const;
+        template <class T>
+        void print(T data) const;
 
     public:
         int num_ranks;

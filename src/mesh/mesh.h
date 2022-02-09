@@ -34,6 +34,7 @@ class Mesh {
         */
         Mesh(const toml::value& input_info, const MemoryNetwork& network,
                 std::string mesh_file_name = "");
+        ~Mesh();
 
         /*! \brief Read the HDF5 mesh file directly
          *

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include "io/writer.h"
 
@@ -12,7 +13,10 @@ Writer::Writer(const Mesh& mesh) {
     //const string file_name = Utils::get_fname_with_iter(
     //    inputs.restart_file_prefix, ".h5", time_info->iter_curr);
     // TODO: get file name
-    const string file_name = string(PROJECT_ROOT) + "/build/test/mpi_enabled_tests/mesh/data.h5";
+    //const string file_name = std::to_string(PROJECT_ROOT) + "/build/test/mpi_enabled_tests/mesh/data.h5";
+    std::stringstream stream;
+    stream << PROJECT_ROOT << "/build/test/mpi_enabled_tests/mesh/data.h5";
+    const string file_name = stream.str();
 
     // Write some attributes, on the head rank
     mesh.network.barrier();
