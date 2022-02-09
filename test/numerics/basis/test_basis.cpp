@@ -42,7 +42,7 @@ Tests that the Lagrange basis should be nodal (LagrangeSeg)
 TEST(basis_test_suite, test_lagrangeseg_basis_should_be_nodal){
     // loop over order (up to p = 6)
     for (int order = 1; order < 6; order++){
-        Basis::Basis basis(enum_from_string<BasisType>("LagrangeEq1D"), order);
+        Basis::Basis basis(enum_from_string<BasisType>("LagrangeSeg"), order);
 
         int nb = order + 1;
         Kokkos::View<rtype*> xnodes("xnodes", nb);
@@ -75,7 +75,7 @@ Tests the Lagrange basis gradient for p=1 (LagrangeSeg)
 TEST(basis_test_suite, test_lagrangeseg_basis_gradient_p1){
 
     int order = 1;
-    Basis::Basis basis(enum_from_string<BasisType>("LagrangeEq1D"), order);
+    Basis::Basis basis(enum_from_string<BasisType>("LagrangeSeg"), order);
 
     int nb = order + 1;//basis.get_num_basis_coeff(order);
     Kokkos::View<rtype*> xnodes("xnodes", nb);
@@ -105,9 +105,9 @@ Tests that the Lagrange basis should be nodal (LagrangeQuad)
 TEST(basis_test_suite, test_lagrangequad_basis_should_be_nodal){
     // loop over order (up to p = 6)
     for (int order = 1; order < 6; order++){
-        Basis::Basis basis(enum_from_string<BasisType>("LagrangeEq2D"), order);
+        Basis::Basis basis(enum_from_string<BasisType>("LagrangeQuad"), order);
 
-        int nb = (order + 1.) * (order + 1.)//basis.get_num_basis_coeff(order);
+        int nb = (order + 1.) * (order + 1.);//basis.get_num_basis_coeff(order);
 
         Kokkos::View<rtype*> xnodes("xnodes", basis.get_order() + 1);
         Kokkos::View<rtype**> basis_val("basis_val", nb, nb);
@@ -148,9 +148,9 @@ Tests the Lagrange basis gradient for p=1 (LagrangeQuad)
 TEST(basis_test_suite, test_lagrangequad_basis_gradient_p1){
 
     int order = 1;
-    Basis::Basis basis(enum_from_string<BasisType>("LagrangeEq2D"), order);
+    Basis::Basis basis(enum_from_string<BasisType>("LagrangeQuad"), order);
 
-    int nb = (order + 1.) * (order + 1.)//basis.get_num_basis_coeff(order);
+    int nb = (order + 1.) * (order + 1.);//basis.get_num_basis_coeff(order);
     int nb_1d = basis.get_order() + 1;
     Kokkos::View<rtype*> xnodes("xnodes", nb_1d);
     Kokkos::View<rtype***> basis_grad_ref("basis_grad_ref", nb, nb, 2);

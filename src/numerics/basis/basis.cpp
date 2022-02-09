@@ -96,12 +96,12 @@ Basis::Basis(BasisType basis_type, const int order){
 	this->order = order;
 	get_1d_nodes = BasisTools::equidistant_nodes_1D_range;
 
-	if (basis_type == BasisType::LagrangeEq1D){
+	if (basis_type == BasisType::LagrangeSeg){
 		get_values_pointer = get_values_lagrangeseg;
 		get_grads_pointer = get_grads_lagrangeseg;
 		name = "LagrangeSeg";
 	}
-	if (basis_type == BasisType::LagrangeEq2D){
+	if (basis_type == BasisType::LagrangeQuad){
 		get_values_pointer = get_values_lagrangequad;
 		get_grads_pointer = get_grads_lagrangequad;
 		name = "LagrangeQuad";

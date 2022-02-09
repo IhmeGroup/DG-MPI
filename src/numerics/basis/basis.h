@@ -277,7 +277,7 @@ Child classes (available basis functions) of this base class include:
 //     static BasisBase *create_basis(const BasisType basis_type, const int order) {
 //         switch (basis_type) {
 //             case BasisType::LagrangeEq1D:
-//             // case BasisType::LagrangeEq2D:
+//             // case BasisType::LagrangeQuad:
 //             //     return new LagrangeEqBasis2D(order);
 //             // case BasisType::LagrangeEq3D:
 //             //     return new LagrangeEqBasis3D(order);
