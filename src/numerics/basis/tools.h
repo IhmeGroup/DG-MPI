@@ -4,6 +4,7 @@
 #include "common/defines.h"
 #include "common/my_exceptions.h"
 
+#include "numerics/basis/basis.h"
 #include <Kokkos_Core.hpp>
 
 namespace BasisTools {

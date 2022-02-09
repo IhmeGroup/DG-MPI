@@ -3,6 +3,71 @@
 namespace Basis {
 
 
+Basis::Basis(BasisType basis_type, const int order){
+
+	this->order = order;
+	get_1d_nodes = BasisTools::equidistant_nodes_1D_range;
+
+	if (basis_type == BasisType::LagrangeEq1D){
+		get_values_pointer = get_values_lagrangeseg;
+		get_grads_pointer = get_grads_lagrangeseg;
+		name = "LagrangeSeg";
+	}
+
+}
+
+void Basis::get_values(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<rtype**> basis_val) {
+
+	get_values_pointer(quad_pts, basis_val, 
+		order, get_1d_nodes);
+}
+
+void Basis::get_grads(Kokkos::View<const rtype**> quad_pts, 
+	Kokkos::View<rtype***> basis_ref_grad) {
+
+	get_grads_pointer(quad_pts, basis_ref_grad, 
+		order, get_1d_nodes);
+}
+void get_values_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype, rtype, int,
+		Kokkos::View<rtype*> &)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order == 0){
+		KokkosBlas::fill(basis_val, 1.);
+	}
+	else {
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+   		for (int iq = 0; iq < nq; iq++){
+        	BasisTools::get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, order, 
+        		Kokkos::subview(basis_val, iq, Kokkos::ALL()));
+    	}
+	}
+
+}
+
+void get_grads_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order > 0){
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+		for (int iq = 0; iq < nq; iq++){
+			BasisTools::get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, order,
+				Kokkos::subview(basis_ref_grad, iq, Kokkos::ALL(), 0));
+		}
+	}
+}
+
+
 void BasisBase::get_values(Kokkos::View<const rtype**> quad_pts,
 		Kokkos::View<rtype**> basis_val){
 	throw NotImplementedException("BasisBase does not implement "
@@ -14,6 +79,7 @@ void BasisBase::get_grads(Kokkos::View<const rtype**> quad_pts,
 	throw NotImplementedException("BasisBase does not implement "
                         "get_grads -> implement in child class");
 }
+
 
 
 
@@ -267,8 +333,5 @@ void LegendreHex::get_grads(Kokkos::View<const rtype**> quad_pts,
 			basis_ref_grad);	
 	}
 }
-
-
-
 
 } // end namespace Basis

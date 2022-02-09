@@ -6,11 +6,66 @@
 #include "numerics/basis/shape.h"
 #include "numerics/basis/tools.h"
 
+#include "common/enums.h"
+
 #include <Kokkos_Core.hpp>
 #include <KokkosBlas1_fill.hpp>
 
 namespace Basis {
 
+
+
+void get_values_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype, rtype, int,
+		Kokkos::View<rtype*> &));
+
+void get_grads_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype, rtype, int,
+		Kokkos::View<rtype*> &));
+
+class Basis {
+
+public:
+
+	/*
+	Constructor
+	*/
+	Basis(BasisType basis_type, const int order);
+	Basis() = default;
+	~Basis() = default;
+
+	inline int get_order(){return order;}
+	inline std::string get_name(){return name;}
+	inline int get_nb(){return nb;}
+
+	void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes);
+
+	void get_values(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val);
+
+	void get_grads(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad);
+
+private:
+
+	void (*get_values_pointer)(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype, rtype, int,
+		Kokkos::View<rtype*> &));
+
+	void (*get_grads_pointer)(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype, rtype, int,
+		Kokkos::View<rtype*> &));
+
+protected:
+	std::string name; // name of basis
+	int nb; //number of polynomial coefficients
+	int order; // polynomial or geometric order
+};
 
 /*
 This is a base class used for the base methods
@@ -208,8 +263,36 @@ public:
 };
 
 
-
-
+// class BasisFactory {
+//   public:
+//     static BasisBase *create_basis(const BasisType basis_type, const int order) {
+//         switch (basis_type) {
+//             case BasisType::LagrangeEq1D:
+//             // case BasisType::LagrangeEq2D:
+//             //     return new LagrangeEqBasis2D(order);
+//             // case BasisType::LagrangeEq3D:
+//             //     return new LagrangeEqBasis3D(order);
+//             // case BasisType::LagrangeGLL1D:
+//             //     return new LagrangeGLLBasis1D(order);
+//             // case BasisType::LagrangeGLL2D:
+//             //     return new LagrangeGLLBasis2D(order);
+//             // case BasisType::LagrangeGLL3D:
+//             //     return new LagrangeGLLBasis3D(order);
+//             // case BasisType::LagrangeGL2D:
+//             //     return new LagrangeGLBasis2D(order);
+//             // case BasisType::LagrangeGL3D:
+//             //     return new LagrangeGLBasis3D(order);
+//             // case BasisType::Legendre2D:
+//             //     return new LegendreBasis2D(order);
+//             // case BasisType::Legendre3D:
+//             //     return new LegendreBasis3D(order);
+//             // case BasisType::TriangleLagrange:
+//             //     return new TriLagrangeBasis(order);
+//             default:
+//                 return nullptr;
+//         }
+//     }
+// };
 } // end namespace Basis
 
 #endif //DG_NUMERICS_BASIS_H

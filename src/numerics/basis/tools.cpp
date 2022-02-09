@@ -2,6 +2,7 @@
 
 namespace BasisTools {
 
+
 DG_KOKKOS_FUNCTION
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	Kokkos::View<rtype*> &xnodes) {
