@@ -55,8 +55,8 @@ T enum_from_string(string str) {
 }
 
 enum BasisType {
-    LagrangeEq1D,
-    LagrangeEq2D,
+    LagrangeSeg,
+    LagrangeQuad,
     LagrangeEq3D,
     LagrangeGLL1D,
     LagrangeGLL2D,
@@ -70,8 +70,8 @@ enum BasisType {
 template <>
 inline vector<string> get_enum_to_string_array<BasisType> () {
     return vector<string> {
-        "LagrangeEq1D",
-        "LagrangeEq2D",
+        "LagrangeSeg",
+        "LagrangeQuad",
         "LagrangeEq3D",
         "LagrangeGLL1D",
         "LagrangeGLL2D",
