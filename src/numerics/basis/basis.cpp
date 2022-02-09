@@ -100,7 +100,7 @@ Basis::Basis(BasisType basis_type, const int order){
 		get_values_pointer = get_values_lagrangeseg;
 		get_grads_pointer = get_grads_lagrangeseg;
 		name = "LagrangeSeg";
-		// shape = Shape(enum_from_string<ShapeType>("Segment"));
+		shape = Shape(enum_from_string<ShapeType>("Segment"));
 	}
 	if (basis_type == BasisType::LagrangeQuad){
 		get_values_pointer = get_values_lagrangequad;

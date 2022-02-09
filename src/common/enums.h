@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
+
 #include "common/my_exceptions.h"
 
 using std::cout, std::endl;
