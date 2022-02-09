@@ -3,6 +3,7 @@
 namespace Basis {
 
 
+
 /* --------------------------------------
 	LagrangeSeg Method Definitions
 ----------------------------------------*/
@@ -44,6 +45,47 @@ void get_grads_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
 	}
 }
 
+/* --------------------------------------
+	LagrangeQuad Method Definitions
+----------------------------------------*/
+void get_values_lagrangequad(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order == 0){
+		KokkosBlas::fill(basis_val, 1.);
+	}
+	else {
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+   		for (int iq = 0; iq < nq; iq++){
+        	BasisTools::get_lagrange_basis_val_2D(quad_pts, xnodes, order, 
+        		basis_val);
+    	}
+	}
+
+}
+
+void get_grads_lagrangequad(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order > 0){
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+		for (int iq = 0; iq < nq; iq++){
+			BasisTools::get_lagrange_basis_grad_2D(quad_pts, xnodes, order,
+				basis_ref_grad);
+		}
+	}
+}
+
 
 
 /* ------------------------------------------------------
@@ -58,6 +100,11 @@ Basis::Basis(BasisType basis_type, const int order){
 		get_values_pointer = get_values_lagrangeseg;
 		get_grads_pointer = get_grads_lagrangeseg;
 		name = "LagrangeSeg";
+	}
+	if (basis_type == BasisType::LagrangeEq2D){
+		get_values_pointer = get_values_lagrangequad;
+		get_grads_pointer = get_grads_lagrangequad;
+		name = "LagrangeQuad";
 	}
 
 }

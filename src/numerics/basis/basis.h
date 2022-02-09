@@ -14,7 +14,6 @@
 namespace Basis {
 
 
-
 void get_values_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
 		Kokkos::View<rtype**> basis_val, const int order, 
 		void (*get_1d_nodes)(rtype, rtype, int,
@@ -24,6 +23,16 @@ void get_grads_lagrangeseg(Kokkos::View<const rtype**> quad_pts,
 		Kokkos::View<rtype***> basis_ref_grad, const int order, 
 		void (*get_1d_nodes)(rtype, rtype, int,
 		Kokkos::View<rtype*> &));
+
+void get_values_lagrangequad(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes));
+
+void get_grads_lagrangequad(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes));
 
 class Basis {
 
@@ -38,7 +47,7 @@ public:
 
 	inline int get_order(){return order;}
 	inline std::string get_name(){return name;}
-	inline int get_nb(){return nb;}
+	inline int get_num_basis_coeffs(){return nb;}
 
 	void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
 		Kokkos::View<rtype*> &xnodes);
