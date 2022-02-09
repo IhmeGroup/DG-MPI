@@ -3,7 +3,7 @@
 
 #include "common/defines.h"
 #include "common/my_exceptions.h"
-#include "numerics/basis/shape.h"
+// #include "numerics/basis/shape.h"
 #include "numerics/basis/tools.h"
 
 #include "common/enums.h"
@@ -70,6 +70,8 @@ private:
 		void (*get_1d_nodes)(rtype, rtype, int,
 		Kokkos::View<rtype*> &));
 
+// public:
+	// Shape shape;
 protected:
 	std::string name; // name of basis
 	int nb; //number of polynomial coefficients

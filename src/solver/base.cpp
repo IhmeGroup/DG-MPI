@@ -19,6 +19,7 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
     std::cout<<basis.get_order()<<std::endl;
 
     std::cout<<basis.get_name()<<std::endl;
+    // std::cout<<basis.shape.get_num_basis_coeff(basis.get_order())<<std::endl;
 
 }
 

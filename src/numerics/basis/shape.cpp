@@ -4,6 +4,18 @@
 
 namespace Basis {
 
+
+int get_num_basis_coeff_segment(int p){
+	return p + 1;
+}
+
+Shape::Shape(ShapeType shape_type){
+	if (shape_type == ShapeType::Segment){
+		get_num_basis_coeff = get_num_basis_coeff_segment;
+		name = "Segment";
+	}
+}
+
 int ShapeBase::get_num_basis_coeff(int p){
 	throw NotImplementedException("ShapeBase does not implement "
                                       "get_num_basis_coeff -> implement in child class");

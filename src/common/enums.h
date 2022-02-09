@@ -127,7 +127,7 @@ inline vector<string> get_enum_to_string_array<NormType> () {
 }
 
 enum ShapeType {
-    Line,
+    Segment,
     Quadrilateral,
     Hexahedron,
     Triangle
@@ -135,7 +135,7 @@ enum ShapeType {
 template <>
 inline vector<string> get_enum_to_string_array<ShapeType> () {
     return vector<string> {
-        "Line",
+        "Segment",
         "Quadrilateral",
         "Hexahedron",
         "Triangle"

@@ -3,11 +3,34 @@
 
 #include "common/defines.h"
 #include "common/my_exceptions.h"
+#include "common/enums.h"
 
 #include <Kokkos_Core.hpp>
 
 namespace Basis {
 
+int get_num_basis_coeff_segment(int p);
+
+class Shape {
+
+public:
+
+	/*
+	Constructor
+	*/
+	Shape(ShapeType shape_type);
+	Shape() = default;
+	~Shape() = default;
+
+	inline std::string get_name(){return name;}
+
+	int (*get_num_basis_coeff)(int p);
+
+// private:
+
+protected:
+	std::string name; // name of basis
+};
 /*
 This is a Mixin class used to represent a shape. Supported shapes include
 point, segment, quadrilateral, triangle, hexahedron, tetrahedron, and prism
