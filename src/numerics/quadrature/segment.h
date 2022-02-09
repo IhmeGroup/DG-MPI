@@ -24,7 +24,7 @@ Outputs:
 */
 KOKKOS_FUNCTION
 void get_segment_weights_gl(const int order, 
-    View<rtype*>& wts);
+    View<rtype*>::HostMirror& wts);
 
 
 /*
@@ -44,9 +44,9 @@ Outputs:
 KOKKOS_FUNCTION
 void get_quadrature_gauss_legendre(
     const int order,
-    int &nq,
-    View<rtype**>& quad_pts,
-    View<rtype*>& quad_wts);
+    int& nq,
+    Kokkos::View<rtype**>::HostMirror& quad_pts,
+    Kokkos::View<rtype*>::HostMirror& quad_wts);
 
 } // end namespace SegmentQuadrature
 

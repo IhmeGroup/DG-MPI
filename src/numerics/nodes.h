@@ -68,7 +68,7 @@ Outputs:
 */
 KOKKOS_FUNCTION
 void get_gauss_legendre_segment_nodes(const int order, 
-    View<rtype*> pts);
+    View<rtype*>::HostMirror pts);
 
 
 /* Get the line Gauss-Legendre-Lobatto (GLL) nodes in reference space

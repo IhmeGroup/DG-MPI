@@ -18,6 +18,7 @@ Shape::Shape(ShapeType shape_type){
 		get_num_basis_coeff = get_num_basis_coeff_segment;
 		get_quadrature_order_pointer = 
 			QuadratureTools::get_gausslegendre_quadrature_order;
+		
 		get_quadrature_data = 
 			SegmentQuadrature::get_quadrature_gauss_legendre;
 		NDIMS = 1;

@@ -96,7 +96,7 @@ void get_equidistant_nodes_hexahedron(const int order,
 
 KOKKOS_FUNCTION
 void get_gauss_legendre_segment_nodes(const int order, 
-    View<rtype*> pts) {
+    View<rtype*>::HostMirror pts) {
 
     switch(order){
         case 0 :

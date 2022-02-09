@@ -16,7 +16,7 @@ list(APPEND GTEST_SOURCES
     numerics/basis/test_basis.cpp
     numerics/basis/test_tools.cpp
     numerics/test_nodes.cpp
-    numerics/quadrature/test_quadrature.cpp
+    # numerics/quadrature/test_quadrature.cpp
 )
 
 target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})

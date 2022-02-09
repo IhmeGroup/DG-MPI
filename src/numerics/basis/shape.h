@@ -14,6 +14,7 @@ namespace Basis {
 int get_num_basis_coeff_segment(int p);
 int get_num_basis_coeff_quadrilateral(int p);
 
+
 class Shape {
 
 public:
@@ -33,8 +34,8 @@ public:
 	int get_quadrature_order(const int order);
 
 	void (*get_quadrature_data)(const int order, int& nq,
-		Kokkos::View<rtype**>& quad_pts,
-		Kokkos::View<rtype*>& quad_wts);
+		Kokkos::View<rtype**>::HostMirror& quad_pts,
+		Kokkos::View<rtype*>::HostMirror& quad_wts);
 
 private:
 	int (*get_quadrature_order_pointer)(const int order, 
