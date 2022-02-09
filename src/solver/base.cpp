@@ -26,7 +26,7 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
 
 void Solver::precompute_matrix_helpers() {
 
-    VolumeHelperFunctor functor;
+    VolumeHelperFunctor functor(basis);
 
     int num_elements = 1000;
     Kokkos::parallel_for(num_elements, functor);

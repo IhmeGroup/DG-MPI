@@ -2,6 +2,7 @@
 #include <math.h>
 #include "gtest/gtest.h"
 #include "numerics/nodes.h"
+#include "numerics/basis/basis.h"
 #include "numerics/quadrature/segment.h"
 #include "numerics/quadrature/quadrilateral.h"
 #include "numerics/quadrature/hexahedron.h"
@@ -64,4 +65,14 @@ TEST(quadrature_test_suite, test_weights_sum_to_area){
 
 
 	}
+}
+
+/* Fix this test to mean someting */
+TEST(quadrature_test_suite, quad_rule){
+
+    Basis::Basis basis(enum_from_string<BasisType>("LagrangeSeg"), 2);
+
+    int qorder = basis.shape.get_quadrature_order(2);
+
+    std::cout<<qorder<<std::endl;
 }

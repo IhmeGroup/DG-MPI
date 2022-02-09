@@ -10,6 +10,7 @@ using Kokkos::View;
 using Kokkos::subview;
 using Kokkos::ALL;
 
+
 /*
 Gets the Gauss Legendre segment weights
 

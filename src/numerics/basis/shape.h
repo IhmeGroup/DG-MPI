@@ -4,12 +4,15 @@
 #include "common/defines.h"
 #include "common/my_exceptions.h"
 #include "common/enums.h"
+#include "numerics/quadrature/tools.h"
+#include "numerics/quadrature/segment.h"
 
 #include <Kokkos_Core.hpp>
 
 namespace Basis {
 
 int get_num_basis_coeff_segment(int p);
+int get_num_basis_coeff_quadrilateral(int p);
 
 class Shape {
 
@@ -22,14 +25,24 @@ public:
 	Shape() = default;
 	~Shape() = default;
 
+	inline int get_NDIMS(){return NDIMS;}
 	inline std::string get_name(){return name;}
 
 	int (*get_num_basis_coeff)(int p);
 
-// private:
+	int get_quadrature_order(const int order);
+
+	void (*get_quadrature_data)(const int order, int& nq,
+		Kokkos::View<rtype**>& quad_pts,
+		Kokkos::View<rtype*>& quad_wts);
+
+private:
+	int (*get_quadrature_order_pointer)(const int order, 
+		const int NDIMS_);
 
 protected:
 	std::string name; // name of basis
+	int NDIMS; // number of dimensions
 };
 /*
 This is a Mixin class used to represent a shape. Supported shapes include

@@ -1,5 +1,6 @@
 #include "numerics/quadrature/segment.h"
 #include "numerics/nodes.h"
+#include <math.h>
 
 namespace SegmentQuadrature {
 
