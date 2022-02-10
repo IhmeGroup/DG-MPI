@@ -40,28 +40,28 @@ TEST(quadrature_test_suite, test_weights_sum_to_area){
 		EXPECT_NEAR(segment_sum, segment_length, DOUBLE_TOL);
 
 		// 2D Quadrilateral
-		QuadrilateralQuadrature::get_quadrature_gauss_legendre(order,
-    		nq, quad_pts, quad_wts);
+		// QuadrilateralQuadrature::get_quadrature_gauss_legendre(order,
+  //   		nq, quad_pts, quad_wts);
 
-		nwts = quad_wts.extent(0);
+		// nwts = quad_wts.extent(0);
 
-		rtype quadrilateral_sum = 0.;
-		for (int i = 0; i < nwts; i++){
-			quadrilateral_sum += quad_wts(i);
-		}
-		EXPECT_NEAR(quadrilateral_sum, quadrilateral_area, DOUBLE_TOL);
+		// rtype quadrilateral_sum = 0.;
+		// for (int i = 0; i < nwts; i++){
+		// 	quadrilateral_sum += quad_wts(i);
+		// }
+		// EXPECT_NEAR(quadrilateral_sum, quadrilateral_area, DOUBLE_TOL);
 
-		// 3D Hexahedron
-		HexahedronQuadrature::get_quadrature_gauss_legendre(order,
-    		nq, quad_pts, quad_wts);
+		// // 3D Hexahedron
+		// HexahedronQuadrature::get_quadrature_gauss_legendre(order,
+  //   		nq, quad_pts, quad_wts);
 
-		nwts = quad_wts.extent(0);
+		// nwts = quad_wts.extent(0);
 		
-		rtype hexahedron_sum = 0.;
-		for (int i = 0; i < nwts; i++){
-			hexahedron_sum += quad_wts(i);
-		}
-		EXPECT_NEAR(hexahedron_sum, hexahedron_area, DOUBLE_TOL);
+		// rtype hexahedron_sum = 0.;
+		// for (int i = 0; i < nwts; i++){
+		// 	hexahedron_sum += quad_wts(i);
+		// }
+		// EXPECT_NEAR(hexahedron_sum, hexahedron_area, DOUBLE_TOL);
 
 
 	}

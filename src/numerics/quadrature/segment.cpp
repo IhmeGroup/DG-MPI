@@ -1,4 +1,4 @@
-// #include "numerics/quadrature/segment.h"
+#include "numerics/quadrature/segment.h"
 #include "numerics/nodes.h"
 #include <math.h>
 
@@ -461,4 +461,8 @@ void get_quadrature_gauss_legendre(
     nq = quad_wts.extent(0);
 }
 
+template void get_segment_weights_gl<Kokkos::View<rtype*>::HostMirror>(const int order, 
+    Kokkos::View<rtype*>::HostMirror& wts);
+template void get_segment_weights_gl<Kokkos::View<rtype*>>(const int order, 
+    Kokkos::View<rtype*>& wts);
 } // end namespace Quadrature

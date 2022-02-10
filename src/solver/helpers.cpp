@@ -43,6 +43,7 @@ void VolumeHelperFunctor::get_quadrature(
     Kokkos::resize(quad_pts, h_quad_pts.extent(0), h_quad_pts.extent(1));
     Kokkos::resize(quad_wts, h_quad_wts.extent(0));
     
+    std::cout<<h_quad_wts(0)<<std::endl;
     Kokkos::deep_copy(quad_pts, h_quad_pts);
     Kokkos::deep_copy(quad_wts, h_quad_wts);
 

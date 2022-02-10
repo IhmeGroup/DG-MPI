@@ -22,9 +22,9 @@ Outputs:
 --------
     wts: view to store quadrature weights
 */
-KOKKOS_FUNCTION
+template<typename view_type> KOKKOS_FUNCTION
 void get_segment_weights_gl(const int order, 
-    View<rtype*>::HostMirror& wts);
+    view_type& wts);
 
 
 /*
@@ -41,12 +41,18 @@ Outputs:
     quad_pts: quadrature point coordinates [nq, ndims]
     quad_wts: quadrature weights [nq, 1]
 */
-KOKKOS_FUNCTION
 void get_quadrature_gauss_legendre(
     const int order,
     int& nq,
     Kokkos::View<rtype**>::HostMirror& quad_pts,
     Kokkos::View<rtype*>::HostMirror& quad_wts);
+
+KOKKOS_FUNCTION
+void get_quadrature_gauss_legendre(
+    const int order,
+    int& nq,
+    Kokkos::View<rtype**>& quad_pts,
+    Kokkos::View<rtype*>& quad_wts);
 
 } // end namespace SegmentQuadrature
 
