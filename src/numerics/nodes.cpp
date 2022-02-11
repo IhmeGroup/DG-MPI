@@ -18,7 +18,6 @@ Outputs:
 	xref - view to store coordinates [order + 1]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_segment(const int order, 
 	View<rtype*> &xref) {
     if (order == 0) {
@@ -46,7 +45,6 @@ Outputs:
 	xref - view to store coordinates. [order + 1 * order + 1, 2]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_quadrilateral(const int order, 
 	View<rtype**> &xref) {
 
@@ -74,7 +72,6 @@ Outputs:
 	xref - view to store coordinates. [order + 1 * order + 1, 3]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_hexahedron(const int order, 
 	View<rtype**> &xref) {
 
@@ -96,7 +93,7 @@ void get_equidistant_nodes_hexahedron(const int order,
 	}
 }
 
-KOKKOS_FUNCTION
+
 void get_gauss_legendre_segment_nodes(const int order, 
     View<rtype*>::HostMirror pts) {
 
@@ -504,7 +501,7 @@ void get_gauss_legendre_segment_nodes(const int order,
     }
 }
 
-KOKKOS_FUNCTION
+
 void get_gll_segment_nodes(const int order, 
     View<rtype*> &pts) {
     // switch(order){

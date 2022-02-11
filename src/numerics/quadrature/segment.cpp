@@ -4,7 +4,6 @@
 
 namespace SegmentQuadrature {
 
-KOKKOS_FUNCTION
 void get_segment_weights_gl(const int order, 
     Kokkos::View<rtype*>::HostMirror wts){    
     switch(order){

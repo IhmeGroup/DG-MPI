@@ -3,7 +3,6 @@
 namespace BasisTools {
 
 
-DG_KOKKOS_FUNCTION
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	host_view_type_1D &xnodes) {
 
@@ -22,7 +21,7 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	}
 } 
 
-DG_KOKKOS_FUNCTION
+
 void get_lagrange_basis_val_1D(const rtype &x, 
 	host_view_type_1D xnodes, int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi){
@@ -37,7 +36,7 @@ void get_lagrange_basis_val_1D(const rtype &x,
 	}
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_lagrange_basis_grad_1D(const rtype &x, 
 	host_view_type_1D xnodes, int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi){
@@ -59,7 +58,7 @@ void get_lagrange_basis_grad_1D(const rtype &x,
 
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_lagrange_basis_val_2D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_2D basis_val) {
@@ -88,7 +87,6 @@ void get_lagrange_basis_val_2D(host_view_type_2D quad_pts,
 }
 
 
-DG_KOKKOS_FUNCTION
 void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_3D basis_ref_grad) {
@@ -124,7 +122,7 @@ void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts,
 	}
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_lagrange_basis_val_3D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_2D basis_val) {
@@ -159,7 +157,6 @@ void get_lagrange_basis_val_3D(host_view_type_2D quad_pts,
 }
 
 
-DG_KOKKOS_FUNCTION
 void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_3D basis_ref_grad) {
@@ -207,7 +204,7 @@ void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts,
 	}
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_legendre_basis_val_1D(const rtype &x, const int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi) {
     if(p >= 0) {
@@ -238,12 +235,12 @@ void get_legendre_basis_val_1D(const rtype &x, const int p,
         std::string error_message = "Legendre polynomial P = ";
         error_message += std::to_string(p);
         error_message += " not implemented.";
-        // throw std::runtime_error(error_message);
+        printf(error_message.c_str());
     }
 
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_legendre_basis_grad_1D(const rtype &x, const int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi) {
     if(p >= 0) {
@@ -274,11 +271,11 @@ void get_legendre_basis_grad_1D(const rtype &x, const int p,
         std::string error_message = "Legendre polynomial P = ";
         error_message += std::to_string(p);
         error_message += " not implemented.";
-        // throw std::runtime_error(error_message);
+        printf(error_message.c_str());
     }
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_legendre_basis_val_2D(host_view_type_2D quad_pts, 
 		const int p, host_view_type_2D basis_val){
 	// get shape of basis_val
@@ -304,7 +301,6 @@ void get_legendre_basis_val_2D(host_view_type_2D quad_pts,
 	}
 }
 
-DG_KOKKOS_FUNCTION
 void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
 		const int p, host_view_type_3D basis_ref_grad){
 	// get shape of basis_ref_grad
@@ -339,7 +335,7 @@ void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
 	}
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
 	const int p, host_view_type_2D basis_val){
 	// get shape of basis_val
@@ -372,7 +368,7 @@ void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
 
 }
 
-DG_KOKKOS_FUNCTION
+
 void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
 	const int p, host_view_type_3D basis_ref_grad){
 	// get shape of basis_ref_grad

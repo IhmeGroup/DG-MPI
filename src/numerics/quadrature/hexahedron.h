@@ -25,7 +25,6 @@ Outputs:
     quad_pts: quadrature point coordinates [nq, ndims]
     quad_wts: quadrature weights [nq, 1]
 */
-KOKKOS_FUNCTION
 void get_quadrature_gauss_legendre(
     const int order,
     const int nq_1d,
