@@ -62,6 +62,13 @@ Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
     }
 }
 
+Mesh::~Mesh() {
+    for (int i = 0; i < num_neighbor_ranks; i++) {
+        delete [] ghost_faces[i];
+    }
+    delete [] ghost_faces;
+}
+
 void Mesh::read_mesh(const string &mesh_file_name) {
     try {
         H5::H5File file(mesh_file_name, H5F_ACC_RDONLY);
@@ -457,38 +464,46 @@ void Mesh::partition() {
     }
 
     // Get number of faces in each rank boundary
-    for (int i = 0; i < num_gfaces_part; i++) {
+    for (int i = 0; i < ghost_faces_vector.size(); i++) {
         // Get global face ID
         auto global_face_ID = ghost_faces_vector[i];
-        // Get local face ID
-        auto face_ID = global_to_local_iface_IDs.value_at(
-                global_to_local_iface_IDs.find(global_face_ID));
-        // Get left and right rank
-        auto rank_L = interior_faces(face_ID, 0);
-        auto rank_R = interior_faces(face_ID, 4);
-        // Add to the count on those ranks
-        if (network.rank == rank_L) {
-            // Get the rank neighbor index
-            int index;
-            for (int j = 0; j < num_neighbor_ranks; j++) {
-                if (neighbor_ranks(j) == rank_R) {
-                    index = j;
-                    break;
+
+        // Check if this ghost face exists on this partition
+        auto local_face_index = global_to_local_iface_IDs.find(global_face_ID);
+        if (local_face_index != -1) {
+            // Get local face ID
+            auto face_ID = global_to_local_iface_IDs.value_at(local_face_index);
+            // Get left and right rank
+            auto rank_L = interior_faces(face_ID, 0);
+            auto rank_R = interior_faces(face_ID, 4);
+
+            // If this rank is on the left, then count this ghost face on the
+            // right rank's index
+            if (network.rank == rank_L) {
+                // Get the rank neighbor index
+                int index;
+                for (int j = 0; j < num_neighbor_ranks; j++) {
+                    if (neighbor_ranks(j) == rank_R) {
+                        index = j;
+                        break;
+                    }
                 }
-            }
-            // Increment
-            num_faces_per_rank_boundary(index)++;
-        } else if (network.rank == rank_R) {
-            // Get the rank neighbor index
-            int index;
-            for (int j = 0; j < num_neighbor_ranks; j++) {
-                if (neighbor_ranks(j) == rank_L) {
-                    index = j;
-                    break;
+                // Increment
+                num_faces_per_rank_boundary(index)++;
+            // If this rank is on the right, then count this ghost face on the
+            // left rank's index
+            } else if (network.rank == rank_R) {
+                // Get the rank neighbor index
+                int index;
+                for (int j = 0; j < num_neighbor_ranks; j++) {
+                    if (neighbor_ranks(j) == rank_L) {
+                        index = j;
+                        break;
+                    }
                 }
+                // Increment
+                num_faces_per_rank_boundary(index)++;
             }
-            // Increment
-            num_faces_per_rank_boundary(index)++;
         }
     }
 
@@ -503,34 +518,43 @@ void Mesh::partition() {
     for (int i = 0; i < ghost_faces_vector.size(); i++) {
         // Get global face ID
         auto global_face_ID = ghost_faces_vector[i];
-        // Get local face ID
-        auto face_ID = global_to_local_iface_IDs.value_at(
-                global_to_local_iface_IDs.find(global_face_ID));
-        // Get left and right rank
-        auto rank_L = interior_faces(face_ID, 0);
-        auto rank_R = interior_faces(face_ID, 4);
-        if (network.rank == rank_L) {
-            // Get the rank neighbor index
-            int index;
-            for (int j = 0; j < num_neighbor_ranks; j++) {
-                if (neighbor_ranks(j) == rank_R) {
-                    index = j;
-                    break;
+
+        // Check if this ghost face exists on this partition
+        auto local_face_index = global_to_local_iface_IDs.find(global_face_ID);
+        if (local_face_index != -1) {
+            // Get local face ID
+            auto face_ID = global_to_local_iface_IDs.value_at(local_face_index);
+            // Get left and right rank
+            auto rank_L = interior_faces(face_ID, 0);
+            auto rank_R = interior_faces(face_ID, 4);
+
+            // If this rank is on the left, then add this ghost face to the
+            // right rank's index
+            if (network.rank == rank_L) {
+                // Get the rank neighbor index
+                int index;
+                for (int j = 0; j < num_neighbor_ranks; j++) {
+                    if (neighbor_ranks(j) == rank_R) {
+                        index = j;
+                        break;
+                    }
                 }
-            }
-            ghost_faces[index][gface_counter[index]] = global_face_ID;
-            gface_counter[index]++;
-        } else if (network.rank == rank_R) {
-            // Get the rank neighbor index
-            int index;
-            for (int j = 0; j < num_neighbor_ranks; j++) {
-                if (neighbor_ranks(j) == rank_L) {
-                    index = j;
-                    break;
+                ghost_faces[index][gface_counter[index]] = global_face_ID;
+                gface_counter[index]++;
+            // If this rank is on the right, then add this ghost face to the
+            // left rank's index
+            } else if (network.rank == rank_R) {
+                // Get the rank neighbor index
+                int index;
+                for (int j = 0; j < num_neighbor_ranks; j++) {
+                    if (neighbor_ranks(j) == rank_L) {
+                        index = j;
+                        break;
+                    }
                 }
+                ghost_faces[index][gface_counter[index]] = global_face_ID;
+                gface_counter[index]++;
             }
-            ghost_faces[index][gface_counter[index]] = global_face_ID;
-            gface_counter[index]++;
         }
     }
 

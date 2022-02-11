@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <Kokkos_Core.hpp>
 #include "memory/memory_network.h"
 
@@ -33,3 +34,30 @@ MemoryNetwork::~MemoryNetwork() {
 void MemoryNetwork::barrier() const {
     MPI_Barrier(comm);
 }
+
+template <class T>
+void MemoryNetwork::print(T data) const {
+    barrier();
+    if (head_rank) {
+        cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+    }
+    // Loop over ranks
+    for (int i = 0; i < num_ranks; i++) {
+        barrier();
+        // Only print on the appropriate rank
+        if (i == rank) {
+            // Print
+            cout << "Rank " << rank << " says:" << endl;
+            cout << data << endl;
+        }
+    }
+    barrier();
+    if (head_rank) {
+        cout << "------------------------------ The Ranks Have Spoken ------------------------------" << endl;
+    }
+}
+
+template void MemoryNetwork::print<int>(int) const;
+template void MemoryNetwork::print<char*>(char*) const;
+template void MemoryNetwork::print<const char*>(const char*) const;
+template void MemoryNetwork::print<std::string>(std::string) const;
