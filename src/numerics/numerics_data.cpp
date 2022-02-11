@@ -20,7 +20,7 @@ unsigned get_num_bases(const BasisType type, const unsigned order) {
         case BasisType::Legendre2D:
             return (order + 1) * (order + 1);
             break;
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
         case BasisType::Legendre3D:
@@ -43,7 +43,7 @@ unsigned get_num_bases_1d(const BasisType type, const unsigned order) {
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
         case BasisType::Legendre2D:
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
         case BasisType::Legendre3D:
@@ -197,7 +197,7 @@ void get_solfile_params(
             break;
         }
 
-        case BasisType::LagrangeEq3D :
+        case BasisType::LagrangeHex :
         case BasisType::LagrangeGLL3D :
         case BasisType::LagrangeGL3D :
         case BasisType::Legendre3D : {
@@ -258,11 +258,11 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
             norient = 2;
             break;
         }
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
         case BasisType::Legendre3D: {
-            gbasis = BasisType::LagrangeEq3D;
+            gbasis = BasisType::LagrangeHex;
             nface = 6;
             norient = 8;
             break;
@@ -288,7 +288,7 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
         case BasisType::Legendre2D:
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
         case BasisType::Legendre3D: {

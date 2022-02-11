@@ -7,7 +7,7 @@
 #include "numerics/quadrature/tools.h"
 #include "numerics/quadrature/segment.h"
 #include "numerics/quadrature/quadrilateral.h"
-
+#include "numerics/quadrature/hexahedron.h"
 
 #include <Kokkos_Core.hpp>
 
