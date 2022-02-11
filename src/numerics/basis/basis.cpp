@@ -235,7 +235,6 @@ void get_grads_legendrehex(host_view_type_2D quad_pts,
 	Basis Method Definitions + Function Pointer Wrappers
 --------------------------------------------------------*/
 Basis::Basis(BasisType basis_type, const int order){
-
 	this->order = order;
 	get_1d_nodes = BasisTools::equidistant_nodes_1D_range;
 
