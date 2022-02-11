@@ -12,7 +12,7 @@ add_executable(
 list(APPEND GTEST_SOURCES
     main.cpp
     test_hello.cpp
-    test_physics.cpp
+    # test_physics.cpp
     numerics/basis/test_basis.cpp
     numerics/basis/test_tools.cpp
     numerics/test_nodes.cpp

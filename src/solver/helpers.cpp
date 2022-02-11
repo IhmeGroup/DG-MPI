@@ -12,6 +12,7 @@ VolumeHelperFunctor::VolumeHelperFunctor(Basis::Basis basis){
 
 
     get_quadrature(basis, basis.get_order());
+    get_reference_data(basis, basis.get_order());
     // std::cout<<basis.get_order()<<std::endl;
     // testing = 2;
 }
@@ -19,9 +20,10 @@ VolumeHelperFunctor::VolumeHelperFunctor(Basis::Basis basis){
 KOKKOS_FUNCTION
 void VolumeHelperFunctor::operator()(const int ie) const {
 
-	 // printf("Hello from ie = %i\n", testing);
-    printf("Hello from quad_pts = %f\n", quad_pts(0, 0));
-    printf("Hello from quad_wts = %f\n", quad_wts(0));
+
+    printf("quad_wts: %f\n" , quad_wts(0));
+
+
 
 }
 
@@ -39,13 +41,39 @@ void VolumeHelperFunctor::get_quadrature(
     Kokkos::resize(quad_pts, nq, NDIMS);
     Kokkos::resize(quad_wts, nq);
 
-    host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(quad_pts);
-    host_view_type_1D h_quad_wts = Kokkos::create_mirror_view(quad_wts);
+    h_quad_pts = Kokkos::create_mirror_view(quad_pts);
+    h_quad_wts = Kokkos::create_mirror_view(quad_wts);
 
     basis.shape.get_quadrature_data(qorder, nq_1d, h_quad_pts, h_quad_wts);
 
     Kokkos::deep_copy(quad_pts, h_quad_pts);
     Kokkos::deep_copy(quad_wts, h_quad_wts);
+
+}
+
+void VolumeHelperFunctor::get_reference_data(
+    Basis::Basis basis, const int order){
+    
+
+    // unpack
+    int NDIMS = basis.shape.get_NDIMS();
+    int nb = basis.shape.get_num_basis_coeff(order);
+    int nq = quad_pts.extent(0);
+
+    // need to establish an initial size for views
+    Kokkos::resize(basis_val, nq, nb);
+    Kokkos::resize(basis_ref_grad, nq, nb, NDIMS);
+
+    h_basis_val = Kokkos::create_mirror_view(basis_val);
+    h_basis_ref_grad = Kokkos::create_mirror_view(basis_ref_grad);
+
+    basis.get_values(h_quad_pts, h_basis_val);
+    basis.get_grads(h_quad_pts, h_basis_ref_grad);
+
+    Kokkos::deep_copy(basis_val, h_basis_val);
+    Kokkos::deep_copy(basis_ref_grad, h_basis_ref_grad);
+
+
 
 }
 

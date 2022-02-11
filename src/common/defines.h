@@ -31,6 +31,9 @@ using host_view_type_1D = view_type_1D::HostMirror;
 using view_type_2D = Kokkos::View<rtype**>;
 using host_view_type_2D = view_type_2D::HostMirror;
 
+using view_type_3D = Kokkos::View<rtype***>;
+using host_view_type_3D = view_type_3D::HostMirror;
+
 /* It is the responsibility of the file using Kokkos to include the Kokkos headers.
  * Namely, include <Kokkos_Core.hpp> guarded by DG_USE_KOKKOS
  * for the following macros to be defined. */

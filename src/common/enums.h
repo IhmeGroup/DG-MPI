@@ -61,13 +61,14 @@ enum BasisType {
     LagrangeQuad,
     LagrangeHex,
     LagrangeEq3D,
+    LegendreSeg,
+    LegendreQuad,
+    LegendreHex,
     LagrangeGLL1D,
     LagrangeGLL2D,
     LagrangeGLL3D,
     LagrangeGL2D,
     LagrangeGL3D,
-    Legendre2D,
-    Legendre3D,
     TriangleLagrange
 };
 template <>
@@ -76,14 +77,15 @@ inline vector<string> get_enum_to_string_array<BasisType> () {
         "LagrangeSeg",
         "LagrangeQuad",
         "LagrangeHex",
+        "LegendreSeg",
+        "LegendreQuad",
+        "LegendreHex",
         "LagrangeEq3D",
         "LagrangeGLL1D",
         "LagrangeGLL2D",
         "LagrangeGLL3D",
         "LagrangeGL2D",
         "LagrangeGL3D",
-        "Legendre2D",
-        "Legendre3D",
         "TriangleLagrange"
     };
 }
