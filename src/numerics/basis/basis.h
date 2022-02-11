@@ -34,6 +34,16 @@ void get_grads_lagrangequad(Kokkos::View<const rtype**> quad_pts,
 		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
 		Kokkos::View<rtype*> &xnodes));
 
+void get_values_lagrangehex(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes));
+
+void get_grads_lagrangehex(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes));
+
 class Basis {
 
 public:

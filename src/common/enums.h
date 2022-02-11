@@ -59,6 +59,7 @@ T enum_from_string(string str) {
 enum BasisType {
     LagrangeSeg,
     LagrangeQuad,
+    LagrangeHex,
     LagrangeEq3D,
     LagrangeGLL1D,
     LagrangeGLL2D,
@@ -74,6 +75,7 @@ inline vector<string> get_enum_to_string_array<BasisType> () {
     return vector<string> {
         "LagrangeSeg",
         "LagrangeQuad",
+        "LagrangeHex",
         "LagrangeEq3D",
         "LagrangeGLL1D",
         "LagrangeGLL2D",

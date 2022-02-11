@@ -87,6 +87,46 @@ void get_grads_lagrangequad(Kokkos::View<const rtype**> quad_pts,
 }
 
 
+/* --------------------------------------
+	LagrangeHex Method Definitions
+----------------------------------------*/
+void get_values_lagrangehex(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype**> basis_val, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order == 0){
+		KokkosBlas::fill(basis_val, 1.);
+	}
+	else {
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+   		for (int iq = 0; iq < nq; iq++){
+        	BasisTools::get_lagrange_basis_val_3D(quad_pts, xnodes, order, 
+        		basis_val);
+    	}
+	}
+}
+
+void get_grads_lagrangehex(Kokkos::View<const rtype**> quad_pts,
+		Kokkos::View<rtype***> basis_ref_grad, const int order, 
+		void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
+		Kokkos::View<rtype*> &xnodes)){
+
+	int nq = quad_pts.extent(0);
+
+	if (order > 0){
+		Kokkos::View<rtype*> xnodes("xnodes", order + 1);
+		get_1d_nodes(-1., 1., order + 1, xnodes);
+		for (int iq = 0; iq < nq; iq++){
+			BasisTools::get_lagrange_basis_grad_3D(quad_pts, xnodes, order,
+				basis_ref_grad);
+		}
+	}
+}
+
 
 /* ------------------------------------------------------
 	Basis Method Definitions + Function Pointer Wrappers
@@ -107,7 +147,12 @@ Basis::Basis(BasisType basis_type, const int order){
 		get_grads_pointer = get_grads_lagrangequad;
 		name = "LagrangeQuad";
 		shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
-
+	}
+	if (basis_type == BasisType::LagrangeHex){
+		get_values_pointer = get_values_lagrangehex;
+		get_grads_pointer = get_grads_lagrangehex;
+		name = "LagrangeHex";
+		shape = Shape(enum_from_string<ShapeType>("Hexahedron"));
 	}
 
 }

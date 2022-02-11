@@ -28,14 +28,15 @@ void VolumeHelperFunctor::operator()(const int ie) const {
 void VolumeHelperFunctor::get_quadrature(
     Basis::Basis basis, const int order){
 
+    int NDIMS = basis.shape.get_NDIMS();
     int qorder = basis.shape.get_quadrature_order(order);
     int nq_1d; int nq;
-    QuadratureTools::get_number_of_quadrature_points(qorder, basis.shape.get_NDIMS(), 
+    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS, 
             nq_1d, nq);
 
     // need to establish an initial size for views prior
     // to resizing inside of get_quadrature_data
-    Kokkos::resize(quad_pts, nq, 1);
+    Kokkos::resize(quad_pts, nq, NDIMS);
     Kokkos::resize(quad_wts, nq);
 
     host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(quad_pts);
