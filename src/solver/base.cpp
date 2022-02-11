@@ -13,13 +13,8 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
     // Kokkos::resize(U_face, mesh.num_ifaces_part, 2, 2);
 
     order = toml::find<int>(input_file, "Numerics", "order");    
-
     basis = Basis::Basis(params.basis, order);
 
-    std::cout<<basis.get_order()<<std::endl;
-
-    std::cout<<basis.get_name()<<std::endl;
-    std::cout<<basis.shape.get_num_basis_coeff(basis.get_order())<<std::endl;
 
 }
 

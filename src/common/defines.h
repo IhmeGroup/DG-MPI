@@ -1,6 +1,8 @@
 #ifndef DG_DEFINES_H
 #define DG_DEFINES_H
 
+#include <Kokkos_Core.hpp>
+
 // compiler directive to switch between single and double precision
 #ifdef USE_DOUBLES
 using rtype = double;
@@ -22,18 +24,19 @@ using rtype = float;
 #define FILE_NAME_LEN_MAX 128 //!< maximum length of a file name
 #define VAR_NAME_LEN_MAX 128 //!< maximum length of a variable name
 
-// #ifdef DG_USE_KOKKOS
+
+using view_type_1D = Kokkos::View<rtype*>;
+using host_view_type_1D = view_type_1D::HostMirror;
+
+using view_type_2D = Kokkos::View<rtype**>;
+using host_view_type_2D = view_type_2D::HostMirror;
+
 /* It is the responsibility of the file using Kokkos to include the Kokkos headers.
  * Namely, include <Kokkos_Core.hpp> guarded by DG_USE_KOKKOS
  * for the following macros to be defined. */
 #define DG_KOKKOS_FUNCTION KOKKOS_FUNCTION
 #define DG_KOKKOS_INLINE_FUNCTION KOKKOS_INLINE_FUNCTION
 #define DG_KOKKOS_FORCEINLINE_FUNCTION KOKKOS_FORCEINLINE_FUNCTION
-#else
-/* If Kokkos is not used, then these macros are empty which ensures backward compatibility. */
-// #define DG_KOKKOS_FUNCTION
-// #define DG_KOKKOS_INLINE_FUNCTION inline
-// #define DG_KOKKOS_FORCEINLINE_FUNCTION inline
-// #endif
+
 
 #endif //DG_DEFINES_H

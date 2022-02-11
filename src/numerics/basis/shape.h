@@ -6,6 +6,8 @@
 #include "common/enums.h"
 #include "numerics/quadrature/tools.h"
 #include "numerics/quadrature/segment.h"
+#include "numerics/quadrature/quadrilateral.h"
+
 
 #include <Kokkos_Core.hpp>
 
@@ -33,7 +35,7 @@ public:
 
 	int get_quadrature_order(const int order);
 
-	void (*get_quadrature_data)(const int order, int& nq,
+	void (*get_quadrature_data)(const int order, const int nq_1d,
 		Kokkos::View<rtype**>::HostMirror& quad_pts,
 		Kokkos::View<rtype*>::HostMirror& quad_wts);
 

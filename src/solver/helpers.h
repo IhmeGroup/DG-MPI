@@ -1,7 +1,9 @@
 #ifndef DG_SOLVER_HELPERS_H
 #define DG_SOLVER_HELPERS_H
 
+#include "common/defines.h"
 #include "numerics/basis/basis.h"
+#include "numerics/quadrature/tools.h"
 #include <Kokkos_Core.hpp>
 
 namespace VolumeHelpers {

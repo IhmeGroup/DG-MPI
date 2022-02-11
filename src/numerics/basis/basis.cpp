@@ -106,6 +106,8 @@ Basis::Basis(BasisType basis_type, const int order){
 		get_values_pointer = get_values_lagrangequad;
 		get_grads_pointer = get_grads_lagrangequad;
 		name = "LagrangeQuad";
+		shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
+
 	}
 
 }

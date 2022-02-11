@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <math.h>
 #include "gtest/gtest.h"
+#include "common/defines.h"
 #include "numerics/nodes.h"
 #include "numerics/basis/basis.h"
 #include "numerics/quadrature/segment.h"
@@ -23,8 +24,12 @@ TEST(quadrature_test_suite, test_weights_sum_to_area){
 
 	for (int order = 1; order < 20; order++){
 
-		View<rtype**> quad_pts("quad_pts", 1, 1);
-		View<rtype*> quad_wts("quad_wts", 1);
+		View<rtype**> d_quad_pts("quad_pts", 1, 1);
+		View<rtype*> d_quad_wts("quad_wts", 1);
+	
+		host_view_type_2D quad_pts = Kokkos::create_mirror_view(d_quad_pts);
+    	host_view_type_1D quad_wts = Kokkos::create_mirror_view(d_quad_wts);
+
 
 		// 1D Line Segment
 		SegmentQuadrature::get_quadrature_gauss_legendre(order,

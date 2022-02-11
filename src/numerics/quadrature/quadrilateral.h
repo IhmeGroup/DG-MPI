@@ -25,12 +25,12 @@ Outputs:
     quad_pts: quadrature point coordinates [nq, ndims]
     quad_wts: quadrature weights [nq, 1]
 */
-// KOKKOS_FUNCTION
-// void get_quadrature_gauss_legendre(
-//     const int order,
-//     int &nq,
-//     View<rtype**>& quad_pts,
-//     View<rtype*>& quad_wts);
+KOKKOS_FUNCTION
+void get_quadrature_gauss_legendre(
+    const int order,
+    const int nq_1d,
+    Kokkos::View<rtype**>::HostMirror& quad_pts,
+    Kokkos::View<rtype*>::HostMirror& quad_wts);
 
 
 } // end namespace QuadrilateralQuadrature

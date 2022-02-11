@@ -13,4 +13,12 @@ int get_gausslegendre_quadrature_order(const int order_,
     return pow(nq1d, NDIMS);
 }
 
+
+void get_number_of_quadrature_points(const int order, const int NDIMS, int& nq_1d, int& nq){
+
+    if ((order + 2) % 2 == 0) {nq_1d = (order + 2) / 2;}
+    if ((order + 1) % 2 == 0) {nq_1d = (order + 1) / 2;}
+    nq = pow(nq_1d, NDIMS);
+}
+
 }
