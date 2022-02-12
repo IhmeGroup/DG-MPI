@@ -5,8 +5,8 @@ target_include_directories(mesh
 target_link_libraries(mesh
     PRIVATE ${METIS_LIBRARIES}
     PRIVATE ${HDF5_LIBRARIES}
-    PRIVATE Kokkos::kokkoscore
-    PRIVATE Kokkos::kokkos
+    PUBLIC Kokkos::kokkoscore
+    PUBLIC Kokkos::kokkos
     PRIVATE memory)
 
 set_target_properties(mesh

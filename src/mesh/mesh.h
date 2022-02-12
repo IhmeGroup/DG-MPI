@@ -45,6 +45,12 @@ class Mesh {
          */
         void read_mesh(const std::string &mesh_file_name);
 
+        // Copy data in host mirrors to the device Views.
+        void copy_from_host_to_device();
+
+        // Copy data in device Views to host mirrors.
+        void copy_from_device_to_host();
+
         /*! \brief Report mesh object
          *
          * @return
@@ -177,6 +183,20 @@ class Mesh {
         // the rank, element ID, ref. face ID, and orientation on the left, and
         // the rank, element ID, ref. face ID, and orientation on the right.
         Kokkos::View<int**> interior_faces;
+
+        // Everything below is the host mirror version of the data structures
+        // above. The same comments from above apply here.
+        Kokkos::View<int*>::HostMirror h_num_faces_per_rank_boundary;
+        Kokkos::View<int*>::HostMirror h_neighbor_ranks;
+        Kokkos::View<int*>::HostMirror h_local_to_global_node_IDs;
+        Kokkos::View<int*>::HostMirror h_local_to_global_elem_IDs;
+        Kokkos::View<int*>::HostMirror h_local_to_global_iface_IDs;
+        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_node_IDs;
+        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_elem_IDs;
+        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_iface_IDs;
+        Kokkos::View<rtype**>::HostMirror h_node_coords;
+        Kokkos::View<int**>::HostMirror h_elem_to_node_IDs;
+        Kokkos::View<int**>::HostMirror h_interior_faces;
 
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned

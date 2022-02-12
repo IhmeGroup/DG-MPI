@@ -3,7 +3,8 @@
 #include <Kokkos_Core.hpp>
 #include "memory/memory_network.h"
 
-using std::cout, std::endl;
+using std::cout;
+using std::endl;
 
 
 MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {

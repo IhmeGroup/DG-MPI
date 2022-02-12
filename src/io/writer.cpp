@@ -6,17 +6,13 @@
 using std::string, std::vector;
 
 
-Writer::Writer(const Mesh& mesh) {
-    /* We write one restart file overall. Only point task 0 creates a file. The other point tasks
-     * return immediately. The top-level task must wait that point task 0 returned before
-     * attempting to write to the restart file. */
-    //const string file_name = Utils::get_fname_with_iter(
-    //    inputs.restart_file_prefix, ".h5", time_info->iter_curr);
-    // TODO: get file name
-    //const string file_name = std::to_string(PROJECT_ROOT) + "/build/test/mpi_enabled_tests/mesh/data.h5";
+Writer::Writer(Mesh& mesh) {
     std::stringstream stream;
     stream << PROJECT_ROOT << "/build/test/mpi_enabled_tests/mesh/data.h5";
     const string file_name = stream.str();
+
+    // Copy everything to the host from the device
+    mesh.copy_from_device_to_host();
 
     // Write some attributes, on the head rank
     mesh.network.barrier();
@@ -51,27 +47,32 @@ Writer::Writer(const Mesh& mesh) {
             vector<hsize_t> dimensions;
             /* -- Node coordinates -- */
             // Dimensions of the dataset: (num_nodes, dim)
-            dimensions = vector<hsize_t>({mesh.num_nodes_part, mesh.dim});
-            write_dataset(mesh.node_coords.data(), "Node Coordinates", group,
+            dimensions.resize(2);
+            dimensions[0] = mesh.num_nodes_part;
+            dimensions[1] = mesh.dim;
+            write_dataset(mesh.h_node_coords.data(), "Node Coordinates", group,
                     dimensions);
 
             /* -- Local to global node IDs -- */
             // Dimensions of the dataset: (num_nodes)
-            dimensions = vector<hsize_t>({mesh.num_nodes_part});
-            write_dataset(mesh.local_to_global_node_IDs.data(),
+            dimensions.resize(1);
+            dimensions[0] = mesh.num_nodes_part;
+            write_dataset(mesh.h_local_to_global_node_IDs.data(),
                     "Local to Global Node IDs", group, dimensions);
 
             /* -- Element nodes -- */
             // Dimensions of the dataset: (num_elems, num_nodes_per_elem)
-            dimensions = vector<hsize_t>({mesh.num_elems_part,
-                    mesh.num_nodes_per_elem});
-            write_dataset(mesh.elem_to_node_IDs.data(),
+            dimensions.resize(2);
+            dimensions[0] = mesh.num_elems_part;
+            dimensions[1] = mesh.num_nodes_per_elem;
+            write_dataset(mesh.h_elem_to_node_IDs.data(),
                     "Element Global Node IDs", group, dimensions);
 
             /* -- Local to global element IDs -- */
             // Dimensions of the dataset: (num_elems)
-            dimensions = vector<hsize_t>({mesh.num_elems_part});
-            write_dataset(mesh.local_to_global_elem_IDs.data(),
+            dimensions.resize(1);
+            dimensions[0] = mesh.num_elems_part;
+            write_dataset(mesh.h_local_to_global_elem_IDs.data(),
                     "Local to Global Element IDs", group, dimensions);
 
             // Close file

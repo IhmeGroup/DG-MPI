@@ -30,7 +30,7 @@ want, especially for HDF5).
     cd hdf5
     mkdir build
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX=./install -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
+    cmake CC=mpicc CXX=mpicxx -DCMAKE_INSTALL_PREFIX=./install -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
     make install
     ```
     - Yellowstone: use `module load hdf5`

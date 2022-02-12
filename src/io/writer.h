@@ -8,7 +8,7 @@
 
 class Writer {
     public:
-        Writer(const Mesh& mesh);
+        Writer(Mesh& mesh);
 
     private:
         template <class T>

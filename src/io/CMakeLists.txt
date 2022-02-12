@@ -1,6 +1,7 @@
-add_library(io STATIC io_params.cpp input_info.cpp writer.cpp)
+# TODO: Uncomment these
+add_library(io STATIC writer.cpp)#io_params.cpp input_info.cpp writer.cpp)
 target_link_libraries(io
-    PUBLIC physics
+    #PUBLIC physics
     PRIVATE mesh
     PRIVATE ${HDF5_LIBRARIES}
 )

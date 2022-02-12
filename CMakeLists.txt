@@ -18,10 +18,14 @@ endif()
 # set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
 # specify build type specific flags
-set(warning_flags "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG   "-g  -O0 ${warning_flags}")
-set(CMAKE_C_FLAGS_RELEASE   "-O3 -DNDEBUG ${warning_flags}")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG ${warning_flags}")
+# TODO: Why does this not add to nvcc_wrapper?
+set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
+set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_C_FLAGS_RELEASE    "-O3 ${warning_flags}")
+set(CMAKE_CXX_FLAGS_RELEASE  "-O3 ${warning_flags}")
+set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
 
 # run path for installed executables
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -96,6 +100,10 @@ endif()
 include_directories("${MPI_ROOT}/include")
 link_directories("${MPI_ROOT}/lib/libmpich.${so}")
 
+# Kokkos
+include_directories("${Kokkos_ROOT}/include")
+include_directories("${KokkosKernels_ROOT}/include")
+
 ##############
 # googletest #
 ##############
@@ -152,11 +160,12 @@ add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 ###########################
 
 # building blocks
+# TODO: Some are commented since they're not currently compiling on GPUs
 add_subdirectory(src/io)
 add_subdirectory(src/memory)
 add_subdirectory(src/mesh)
-add_subdirectory(src/numerics)
-add_subdirectory(src/physics)
+#add_subdirectory(src/numerics)
+#add_subdirectory(src/physics)
 add_subdirectory(src/solver)
 add_subdirectory(src/utils)
 add_subdirectory(test)
