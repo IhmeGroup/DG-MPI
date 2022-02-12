@@ -52,9 +52,9 @@ Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
     }
 
     // Read in the mesh
-    // read_mesh(mesh_file_name);
+    read_mesh(mesh_file_name);
     // partition the mesh using METIS
-    // partition();
+    partition();
     // Print report on the head rank
     if (network.head_rank) {
         cout << report() << endl;

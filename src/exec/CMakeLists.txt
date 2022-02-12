@@ -1,8 +1,7 @@
 add_executable(main main.cpp)
 
-# TODO: Uncomment
 target_link_libraries(main
-    PRIVATE io memory mesh solver utils)# numerics
+    PRIVATE io memory mesh solver utils numerics)
 
 # Only this target links to these libraries
 if (USE_MKL)
