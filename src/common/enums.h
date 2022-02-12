@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
+
 #include "common/my_exceptions.h"
 
 using std::cout, std::endl;
@@ -55,31 +57,33 @@ T enum_from_string(string str) {
 }
 
 enum BasisType {
-    LagrangeEq1D,
-    LagrangeEq2D,
-    LagrangeEq3D,
+    LagrangeSeg,
+    LagrangeQuad,
+    LagrangeHex,
+    LegendreSeg,
+    LegendreQuad,
+    LegendreHex,
     LagrangeGLL1D,
     LagrangeGLL2D,
     LagrangeGLL3D,
     LagrangeGL2D,
     LagrangeGL3D,
-    Legendre2D,
-    Legendre3D,
     TriangleLagrange
 };
 template <>
 inline vector<string> get_enum_to_string_array<BasisType> () {
     return vector<string> {
-        "LagrangeEq1D",
-        "LagrangeEq2D",
-        "LagrangeEq3D",
+        "LagrangeSeg",
+        "LagrangeQuad",
+        "LagrangeHex",
+        "LegendreSeg",
+        "LegendreQuad",
+        "LegendreHex",
         "LagrangeGLL1D",
         "LagrangeGLL2D",
         "LagrangeGLL3D",
         "LagrangeGL2D",
         "LagrangeGL3D",
-        "Legendre2D",
-        "Legendre3D",
         "TriangleLagrange"
     };
 }
@@ -127,7 +131,7 @@ inline vector<string> get_enum_to_string_array<NormType> () {
 }
 
 enum ShapeType {
-    Line,
+    Segment,
     Quadrilateral,
     Hexahedron,
     Triangle
@@ -135,7 +139,7 @@ enum ShapeType {
 template <>
 inline vector<string> get_enum_to_string_array<ShapeType> () {
     return vector<string> {
-        "Line",
+        "Segment",
         "Quadrilateral",
         "Hexahedron",
         "Triangle"

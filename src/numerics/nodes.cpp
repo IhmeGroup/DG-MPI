@@ -1,9 +1,11 @@
 #include "numerics/nodes.h"
 
-namespace Nodes {
-
 using Kokkos::View;
 using Kokkos::resize;
+
+namespace Nodes {
+
+
 
 /* Get the line equidistant nodes in reference space
 	
@@ -16,7 +18,6 @@ Outputs:
 	xref - view to store coordinates [order + 1]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_segment(const int order, 
 	View<rtype*> &xref) {
     if (order == 0) {
@@ -44,7 +45,6 @@ Outputs:
 	xref - view to store coordinates. [order + 1 * order + 1, 2]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_quadrilateral(const int order, 
 	View<rtype**> &xref) {
 
@@ -72,7 +72,6 @@ Outputs:
 	xref - view to store coordinates. [order + 1 * order + 1, 3]
 
 */
-KOKKOS_FUNCTION
 void get_equidistant_nodes_hexahedron(const int order, 
 	View<rtype**> &xref) {
 
@@ -94,32 +93,28 @@ void get_equidistant_nodes_hexahedron(const int order,
 	}
 }
 
-KOKKOS_FUNCTION
+
 void get_gauss_legendre_segment_nodes(const int order, 
-    View<rtype*> pts) {
+    View<rtype*>::HostMirror pts) {
 
     switch(order){
         case 0 :
         case 1 :
-        	resize(pts, 1);
             pts(0) = 0.;
             break;
         case 2 :
         case 3 :
-        	resize(pts, 2);
             pts(0) = -0.57735026918962576450914878050196;
             pts(1) = 0.57735026918962576450914878050196;
             break;
         case 4 :
         case 5 :
-        	resize(pts, 3);
             pts(0) = -0.77459666924148337703585307995648;
             pts(1) = 0.;
             pts(2) = 0.77459666924148337703585307995648;
             break;
         case 6 :
         case 7 :
-        	resize(pts, 4);
             pts(0) = -0.86113631159405257522394648889281;
             pts(1) = -0.33998104358485626480266575910324;
             pts(2) = 0.33998104358485626480266575910324;
@@ -127,7 +122,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 8 :
         case 9 :
-        	resize(pts, 5);
             pts(0) = -0.90617984593866399279762687829939;
             pts(1) = -0.53846931010568309103631442070021;
             pts(2) = 0;
@@ -136,7 +130,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 10 :
         case 11 :
-        	resize(pts, 6);
             pts(0) = -0.93246951420315202781230155449399;
             pts(1) = -0.66120938646626451366139959501991;
             pts(2) = -0.23861918608319690863050172168071;
@@ -146,7 +139,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 12 :
         case 13 :
-        	resize(pts, 7);
             pts(0) = -0.94910791234275852452618968404785;
             pts(1) = -0.74153118559939443986386477328079;
             pts(2) = -0.40584515137739716690660641207696;
@@ -157,7 +149,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 14 :
         case 15 :
-        	resize(pts, 8);
             pts(0) = -0.96028985649753623168356086856947;
             pts(1) = -0.79666647741362673959155393647583;
             pts(2) = -0.52553240991632898581773904918925;
@@ -169,7 +160,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 16 :
         case 17 :
-        	resize(pts, 9);
             pts(0) = -0.96816023950762608983557620290367;
             pts(1) = -0.83603110732663579429942978806973;
             pts(2) = -0.61337143270059039730870203934147;
@@ -182,7 +172,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 18 :
         case 19 :
-        	resize(pts, 10);
             pts(0) = -0.97390652851717172007796401208445;
             pts(1) = -0.86506336668898451073209668842349;
             pts(2) = -0.67940956829902440623432736511487;
@@ -196,7 +185,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 20 :
         case 21 :
-        	resize(pts, 11);
             pts(0) = -0.97822865814605699280393800112286;
             pts(1) = -0.88706259976809529907515776930393;
             pts(2) = -0.73015200557404932409341625203115;
@@ -211,7 +199,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 22 :
         case 23 :
-        	resize(pts, 12);
             pts(0) = -0.98156063424671925069054909014928;
             pts(1) = -0.90411725637047485667846586611910;
             pts(2) = -0.76990267419430468703689383321282;
@@ -227,7 +214,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 24 :
         case 25 :
-        	resize(pts, 13);
             pts(0) = (-0.98418305471858814947282944880711);
             pts(1) = (-0.91759839922297796520654783650072);
             pts(2) = (-0.80157809073330991279420648958286);
@@ -244,7 +230,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 26 :
         case 27 :
-        	resize(pts, 14);
             pts(0) = (-0.98628380869681233884159726670405);
             pts(1) = (-0.92843488366357351733639113937787);
             pts(2) = (-0.82720131506976499318979474265039);
@@ -262,7 +247,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 28 :
         case 29 :
-        	resize(pts, 15);
             pts(0) = (-0.98799251802048542848956571858661);
             pts(1) = (-0.93727339240070590430775894771021);
             pts(2) = (-0.84820658341042721620064832077422);
@@ -281,7 +265,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 30 :
         case 31 :
-        	resize(pts, 16);
             pts(0) = (-0.98940093499164993259615417345033);
             pts(1) = (-0.94457502307323257607798841553461);
             pts(2) = (-0.86563120238783174388046789771239);
@@ -301,7 +284,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 32 :
         case 33 :
-        	resize(pts, 17);
             pts(0) = (-0.99057547531441733567543401994067);
             pts(1) = (-0.95067552176876776122271695789580);
             pts(2) = (-0.88023915372698590212295569448816);
@@ -322,7 +304,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 34 :
         case 35 :
-        	resize(pts, 18);
             pts(0) = (-0.99156516842093094673001600470615);
             pts(1) = (-0.95582394957139775518119589292978);
             pts(2) = (-0.89260246649755573920606059112715);
@@ -344,7 +325,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 36 :
         case 37 :
-        	resize(pts, 19);
             pts(0) = (-0.99240684384358440318901767025326);
             pts(1) = (-0.96020815213483003085277884068765);
             pts(2) = (-0.90315590361481790164266092853231);
@@ -367,7 +347,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 38 :
         case 39 :
-        	resize(pts, 20);
             pts(0) = (-0.99312859918509492478612238847132);
             pts(1) = (-0.96397192727791379126766613119728);
             pts(2) = (-0.91223442825132590586775244120330);
@@ -391,7 +370,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 40 :
         case 41 :
-        	resize(pts, 21);
             pts(0) = (-0.99375217062038950026024203593794);
             pts(1) = (-0.96722683856630629431662221490770);
             pts(2) = (-0.92009933415040082879018713371497);
@@ -416,7 +394,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 42 :
         case 43 :
-        	resize(pts, 22);
             pts(0) = (-0.99429458548239929207303142116130);
             pts(1) = (-0.97006049783542872712395098676527);
             pts(2) = (-0.92695677218717400052069293925905);
@@ -442,7 +419,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 44 :
         case 45 :
-        	resize(pts, 23);
             pts(0) = (-0.99476933499755212352392571544557);
             pts(1) = (-0.97254247121811523195602407682078);
             pts(2) = (-0.93297108682601610234919698903842);
@@ -469,7 +445,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 46 :
         case 47 :
-        	resize(pts, 24);
             pts(0) = (-0.99518721999702136017999740970074);
             pts(1) = (-0.97472855597130949819839199300817);
             pts(2) = (-0.93827455200273275852364900170872);
@@ -497,7 +472,6 @@ void get_gauss_legendre_segment_nodes(const int order,
             break;
         case 48 :
         case 49 :
-        	resize(pts, 25);
             pts(0) = (-0.99555696979049809790878494689390);
             pts(1) = (-0.97666392145951751149831538647959);
             pts(2) = (-0.94297457122897433941401116965847);
@@ -527,7 +501,7 @@ void get_gauss_legendre_segment_nodes(const int order,
     }
 }
 
-KOKKOS_FUNCTION
+
 void get_gll_segment_nodes(const int order, 
     View<rtype*> &pts) {
     // switch(order){

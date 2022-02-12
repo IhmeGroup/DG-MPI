@@ -1,34 +1,29 @@
 #include "numerics/quadrature/segment.h"
 #include "numerics/nodes.h"
+#include <math.h>
 
 namespace SegmentQuadrature {
 
-
-KOKKOS_FUNCTION
 void get_segment_weights_gl(const int order, 
-    View<rtype*>& wts){    
+    Kokkos::View<rtype*>::HostMirror wts){    
     switch(order){
         case 0 :
         case 1 :
-        	resize(wts, 1);
             wts(0) = (2.0000000000000000000000000000000);
             break;
         case 2 :
         case 3 :
-        	resize(wts, 2);
             wts(0) = (1.0000000000000000000000000000000);
             wts(1) = (1.0000000000000000000000000000000);
             break;
         case 4 :
         case 5 :
-        	resize(wts, 3);
             wts(0) = (0.55555555555555555555555555555556);
             wts(1) = (0.88888888888888888888888888888889);
             wts(2) = (0.55555555555555555555555555555556);
             break;
         case 6 :
         case 7 :
-        	resize(wts, 4);
             wts(0) = (0.34785484513745385737306394922200);
             wts(1) = (0.65214515486254614262693605077800);
             wts(2) = (0.65214515486254614262693605077800);
@@ -36,7 +31,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 8 :
         case 9 :
-        	resize(wts, 5);
             wts(0) = (0.23692688505618908751426404071992);
             wts(1) = (0.47862867049936646804129151483564);
             wts(2) = (0.56888888888888888888888888888889);
@@ -45,7 +39,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 10 :
         case 11 :
-        	resize(wts, 6);
             wts(0) = (0.17132449237917034504029614217273);
             wts(1) = (0.36076157304813860756983351383772);
             wts(2) = (0.46791393457269104738987034398955);
@@ -55,7 +48,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 12 :
         case 13 :
-        	resize(wts, 7);
             wts(0) = (0.12948496616886969327061143267908);
             wts(1) = (0.27970539148927666790146777142378);
             wts(2) = (0.38183005050511894495036977548898);
@@ -66,7 +58,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 14 :
         case 15 :
-        	resize(wts, 8);
             wts(0) = (0.10122853629037625915253135430996);
             wts(1) = (0.22238103445337447054435599442624);
             wts(2) = (0.31370664587788728733796220198660);
@@ -78,7 +69,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 16 :
         case 17 :
-        	resize(wts, 9);
             wts(0) = (0.081274388361574411971892158110524);
             wts(1) = (0.18064816069485740405847203124291);
             wts(2) = (0.26061069640293546231874286941863);
@@ -91,7 +81,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 18 :
         case 19 :
-        	resize(wts, 10);
             wts(0) = (0.066671344308688137593568809893332);
             wts(1) = (0.14945134915058059314577633965770);
             wts(2) = (0.21908636251598204399553493422816);
@@ -105,7 +94,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 20 :
         case 21 :
-        	resize(wts, 11);
             wts(0) = (0.055668567116173666482753720442549);
             wts(1) = (0.12558036946490462463469429922394);
             wts(2) = (0.18629021092773425142609764143166);
@@ -120,7 +108,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 22 :
         case 23 :
-        	resize(wts, 12);
             wts(0) = (0.047175336386511827194615961485017);
             wts(1) = (0.10693932599531843096025471819400);
             wts(2) = (0.16007832854334622633465252954336);
@@ -136,7 +123,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 24 :
         case 25 :
-        	resize(wts, 13);
             wts(0) = (0.040484004765315879520021592200986);
             wts(1) = (0.092121499837728447914421775953797);
             wts(2) = (0.13887351021978723846360177686887);
@@ -153,7 +139,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 26 :
         case 27 :
-        	resize(wts, 14);
             wts(0) = (0.035119460331751863031832876138192);
             wts(1) = (0.080158087159760209805633277062854);
             wts(2) = (0.12151857068790318468941480907248);
@@ -171,7 +156,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 28 :
         case 29 :
-        	resize(wts, 15);
             wts(0) = (0.030753241996117268354628393577204);
             wts(1) = (0.070366047488108124709267416450667);
             wts(2) = (0.10715922046717193501186954668587);
@@ -190,7 +174,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 30 :
         case 31 :
-        	resize(wts, 16);
             wts(0) = (0.027152459411754094851780572456018);
             wts(1) = (0.062253523938647892862843836994378);
             wts(2) = (0.095158511682492784809925107602246);
@@ -210,7 +193,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 32 :
         case 33 :
-        	resize(wts, 17);
             wts(0) = (0.024148302868547931960110026287565);
             wts(1) = (0.055459529373987201129440165358245);
             wts(2) = (0.085036148317179180883535370191062);
@@ -231,7 +213,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 34 :
         case 35 :
-        	resize(wts, 18);
             wts(0) = (0.021616013526483310313342710266452);
             wts(1) = (0.049714548894969796453334946202639);
             wts(2) = (0.076425730254889056529129677616637);
@@ -253,7 +234,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 36 :
         case 37 :
-        	resize(wts, 19);
             wts(0) = (0.019461788229726477036312041464438);
             wts(1) = (0.044814226765699600332838157401994);
             wts(2) = (0.069044542737641226580708258006013);
@@ -276,7 +256,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 38 :
         case 39 :
-        	resize(wts, 20);
             wts(0) = (0.017614007139152118311861962351853);
             wts(1) = (0.040601429800386941331039952274932);
             wts(2) = (0.062672048334109063569506535187042);
@@ -300,7 +279,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 40 :
         case 41 :
-        	resize(wts, 21);
             wts(0) = (0.016017228257774333324224616858471);
             wts(1) = (0.036953789770852493799950668299330);
             wts(2) = (0.057134425426857208283635826472448);
@@ -325,7 +303,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 42 :
         case 43 :
-        	resize(wts, 22);
             wts(0) = (0.014627995298272200684991098047185);
             wts(1) = (0.033774901584814154793302246865913);
             wts(2) = (0.052293335152683285940312051273211);
@@ -351,7 +328,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 44 :
         case 45 :
-        	resize(wts, 23);
             wts(0) = (0.013411859487141772081309493458615);
             wts(1) = (0.030988005856979444310694219641885);
             wts(2) = (0.048037671731084668571641071632034);
@@ -378,7 +354,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 46 :
         case 47 :
-        	resize(wts, 24);
             wts(0) = (0.012341229799987199546805667070037);
             wts(1) = (0.028531388628933663181307815951878);
             wts(2) = (0.044277438817419806168602748211338);
@@ -406,7 +381,6 @@ void get_segment_weights_gl(const int order,
             break;
         case 48 :
         case 49 :
-        	resize(wts, 25);
             wts(0) = (0.011393798501026287947902964113235);
             wts(1) = (0.026354986615032137261901815295299);
             wts(2) = (0.040939156701306312655623487711646);
@@ -436,17 +410,16 @@ void get_segment_weights_gl(const int order,
     }
 }
 
-KOKKOS_FUNCTION
 void get_quadrature_gauss_legendre(
     const int order,
-    int& nq,
-    View<rtype**>& quad_pts,
-    View<rtype*>& quad_wts) {
+    const int nq_1d,
+    Kokkos::View<rtype**>::HostMirror& quad_pts,
+    Kokkos::View<rtype*>::HostMirror& quad_wts) {
 
     Nodes::get_gauss_legendre_segment_nodes(
     	order, subview(quad_pts, ALL(), 0));
     get_segment_weights_gl(order, quad_wts);
-    nq = quad_wts.extent(0);
 }
+
 
 } // end namespace Quadrature

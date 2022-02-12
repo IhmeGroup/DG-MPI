@@ -134,6 +134,8 @@ find_package(Kokkos REQUIRED)
 find_package(KokkosKernels REQUIRED)
 find_package(OpenMP REQUIRED)
 
+
+
 # set preprocessor definitions
 if(USE_DOUBLES)
     add_compile_definitions(USE_DOUBLES)

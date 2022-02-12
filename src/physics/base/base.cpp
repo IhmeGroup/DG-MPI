@@ -24,14 +24,14 @@ template<int dim> DG_KOKKOS_FUNCTION
 void PhysicsBase<dim>::conv_flux_physical(
     Kokkos::View<const rtype*> U,
     Kokkos::View<rtype**> F){
-	throw NotImplementedException("PhysicsBase does not implement "
-                                      "conv_flux_physical -> implement in child class");
+	// throw NotImplementedException("PhysicsBase does not implement "
+ //                                      "conv_flux_physical -> implement in child class");
 }
 
 template<int dim> DG_KOKKOS_FUNCTION
 rtype PhysicsBase<dim>::get_maxwavespeed(Kokkos::View<const rtype*> U) {
-throw NotImplementedException("PhysicsBase does not implement "
-                                      "get_maxwavespeed -> implement in child class");
+// throw NotImplementedException("PhysicsBase does not implement "
+//                                       "get_maxwavespeed -> implement in child class");
 }
 
 

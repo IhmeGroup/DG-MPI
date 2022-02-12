@@ -10,20 +10,20 @@ namespace EnumMap {
 
 unsigned get_num_bases(const BasisType type, const unsigned order) {
     switch (type) {
-        case BasisType::LagrangeEq1D:
+        case BasisType::LagrangeSeg:
         case BasisType::LagrangeGLL1D:
             return order + 1;
             break;
-        case BasisType::LagrangeEq2D:
+        case BasisType::LagrangeQuad:
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
-        case BasisType::Legendre2D:
+        case BasisType::LegendreQuad:
             return (order + 1) * (order + 1);
             break;
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
-        case BasisType::Legendre3D:
+        case BasisType::LegendreHex:
             return (order + 1) * (order + 1) * (order + 1);
             break;
         case BasisType::TriangleLagrange:
@@ -37,16 +37,16 @@ unsigned get_num_bases(const BasisType type, const unsigned order) {
 
 unsigned get_num_bases_1d(const BasisType type, const unsigned order) {
     switch (type) {
-        case BasisType::LagrangeEq1D:
+        case BasisType::LagrangeSeg:
         case BasisType::LagrangeGLL1D:
-        case BasisType::LagrangeEq2D:
+        case BasisType::LagrangeQuad:
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
-        case BasisType::Legendre2D:
-        case BasisType::LagrangeEq3D:
+        case BasisType::LegendreQuad:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
-        case BasisType::Legendre3D:
+        case BasisType::LegendreHex:
             return order + 1;
         case BasisType::TriangleLagrange:
             return 0.;
@@ -187,20 +187,20 @@ void get_solfile_params(
             printf("CHFKD:A");
 
     switch (type) {
-        case BasisType::LagrangeEq2D :
+        case BasisType::LagrangeQuad :
         case BasisType::LagrangeGLL2D :
         case BasisType::LagrangeGL2D :
-        case BasisType::Legendre2D : {
+        case BasisType::LegendreQuad : {
             nppp = pow(std::max(order, 1u) + 1, 2);
             nppsc = pow(std::max(order, 1u), 2);
             nppscn = 4;
             break;
         }
 
-        case BasisType::LagrangeEq3D :
+        case BasisType::LagrangeHex :
         case BasisType::LagrangeGLL3D :
         case BasisType::LagrangeGL3D :
-        case BasisType::Legendre3D : {
+        case BasisType::LegendreHex : {
             nppp = pow(std::max(order, 1u) + 1, 3);
             nppsc = pow(std::max(order, 1u), 3);
             nppscn = 8;
@@ -242,27 +242,27 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
     // currently, the right geometric basis is determined from the solution basis
     gorder = gorder_;
     switch (basis) {
-        case BasisType::LagrangeEq1D:
+        case BasisType::LagrangeSeg:
         case BasisType::LagrangeGLL1D: {
-            gbasis = BasisType::LagrangeEq1D;
+            gbasis = BasisType::LagrangeSeg;
             nface = 2;
             norient = 1;
             break;
         }
-        case BasisType::LagrangeEq2D:
+        case BasisType::LagrangeQuad:
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
-        case BasisType::Legendre2D: {
-            gbasis = BasisType::LagrangeEq2D;
+        case BasisType::LegendreQuad: {
+            gbasis = BasisType::LagrangeQuad;
             nface = 4;
             norient = 2;
             break;
         }
-        case BasisType::LagrangeEq3D:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
-        case BasisType::Legendre3D: {
-            gbasis = BasisType::LagrangeEq3D;
+        case BasisType::LegendreHex: {
+            gbasis = BasisType::LagrangeHex;
             nface = 6;
             norient = 8;
             break;
@@ -282,16 +282,16 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
     // quadrature
     string quad_name;
     switch (basis) {
-        case BasisType::LagrangeEq1D:
+        case BasisType::LagrangeSeg:
         case BasisType::LagrangeGLL1D:
-        case BasisType::LagrangeEq2D:
+        case BasisType::LagrangeQuad:
         case BasisType::LagrangeGLL2D:
         case BasisType::LagrangeGL2D:
-        case BasisType::Legendre2D:
-        case BasisType::LagrangeEq3D:
+        case BasisType::LegendreQuad:
+        case BasisType::LagrangeHex:
         case BasisType::LagrangeGLL3D:
         case BasisType::LagrangeGL3D:
-        case BasisType::Legendre3D: {
+        case BasisType::LegendreHex: {
             quad_name = toml::find_or<string>(num_info, "quad", "GaussLegendre");
             break;
         }
@@ -355,7 +355,7 @@ NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gor
 //    init = InitType::_from_string(toml::find_or<string>(num_info, "init", "L2Projection").c_str());
 //    if (init._to_index() == InitType::Interpolation) {
 //        if (basis._to_index() != BasisType::LagrangeEq1D &&
-//            basis._to_index() != BasisType::LagrangeEq2D &&
+//            basis._to_index() != BasisType::LagrangeQuad &&
 //            basis._to_index() != BasisType::LagrangeEq3D &&
 //            basis._to_index() != BasisType::LagrangeGL2D &&
 //            basis._to_index() != BasisType::LagrangeGL3D &&
