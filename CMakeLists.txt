@@ -162,11 +162,11 @@ add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 ###########################
 
 # building blocks
-# TODO: Some are commented since they're not currently compiling on GPUs
 add_subdirectory(src/io)
 add_subdirectory(src/memory)
 add_subdirectory(src/mesh)
-#add_subdirectory(src/numerics)
+add_subdirectory(src/numerics)
+# TODO: commented since they're not currently compiling on GPUs
 #add_subdirectory(src/physics)
 add_subdirectory(src/solver)
 add_subdirectory(src/utils)

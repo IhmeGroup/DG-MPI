@@ -4,8 +4,7 @@
 #include "mesh/mesh.h"
 #include "utils/utils.h"
 #include "memory/memory_network.h"
-// TODO: Uncomment
-//#include "numerics/numerics_data.h"
+#include "numerics/numerics_data.h"
 #include "io/io_params.h"
 #include "solver/base.h"
 
@@ -30,7 +29,7 @@ int main(int argc, char* argv[]) {
 
     // TODO: This is just for testing
     // TODO: Uncomment
-    //auto numerics_params = Numerics::NumericsParams(toml_input, 3);
+    auto numerics_params = Numerics::NumericsParams(toml_input, 3);
     //auto solfile_params = SolutionFileParams(toml_input);
 
     // Create mesh

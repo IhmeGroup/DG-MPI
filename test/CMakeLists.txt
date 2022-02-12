@@ -27,7 +27,7 @@ target_link_libraries(test_gtest_all
     PRIVATE
 # TODO: commented since they're not currently compiling on GPUs
         #physics
-        #numerics
+        numerics
         gtest_main
 )
 
