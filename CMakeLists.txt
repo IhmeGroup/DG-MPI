@@ -19,7 +19,7 @@ endif()
 
 # specify build type specific flags
 # TODO: Why does this not add to nvcc_wrapper?
-set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
+set(warning_flags "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
