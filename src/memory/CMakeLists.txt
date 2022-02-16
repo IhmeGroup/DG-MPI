@@ -1,6 +1,7 @@
-add_library(memory STATIC memory_network.cpp)
+add_library(memory STATIC memory_network.h)
 target_link_libraries(memory
-    PRIVATE Kokkos::kokkoscore mpi)
+    PUBLIC Kokkos::kokkoscore
+    PRIVATE mpi mesh)
 
 set_target_properties(memory
     PROPERTIES

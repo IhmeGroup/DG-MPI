@@ -22,10 +22,10 @@ class MeshTestSuite {
         MeshTestSuite(int argc, char* argv[]) :
             network(MemoryNetwork(argc, argv)) {
             // Run tests
-            mesh_test_1();
+            test_1();
         };
 
-    void mesh_test_1() {
+    void test_1() {
         string test_case_name = "ShouldPartitionFourQuadsInHalfWithTwoRanks";
 
         // Location of input file

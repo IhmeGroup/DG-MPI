@@ -2,12 +2,15 @@
 #define DG_DEFINES_H
 
 #include <Kokkos_Core.hpp>
+#include <mpi.h>
 
 // compiler directive to switch between single and double precision
 #ifdef USE_DOUBLES
 using rtype = double;
+#define MPI_RTYPE MPI_DOUBLE
 #else
 using rtype = float;
+#define MPI_RTYPE MPI_FLOAT
 #endif
 
 #define INIT_EX_PARAMS_MAX 10

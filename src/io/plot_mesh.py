@@ -71,7 +71,7 @@ def main():
     plt.xlabel('$x$', fontsize=20)
     plt.ylabel('$y$', fontsize=20)
     plt.tick_params(labelsize=12)
-    plt.legend(loc='upper left', fontsize = 12)
+    #plt.legend(loc='upper left', fontsize = 12)
     #plt.grid(linestyle='--')
     plt.savefig('mesh.svg', bbox_inches='tight')
     plt.show()

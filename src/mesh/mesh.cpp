@@ -8,6 +8,7 @@
 #include "metis.h"
 #include "toml11/toml.hpp"
 #include "common/my_exceptions.h"
+#include "memory/memory_network.h"
 #include "mesh/mesh.h"
 
 using namespace std;
@@ -62,7 +63,7 @@ Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
 }
 
 Mesh::~Mesh() {
-    for (int i = 0; i < num_neighbor_ranks; i++) {
+    for (unsigned i = 0; i < num_neighbor_ranks; i++) {
         delete [] ghost_faces[i];
     }
     delete [] ghost_faces;
@@ -125,7 +126,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
         elem_to_IF.resize(num_elems);
         nBG_in_elem.resize(num_elems);
         elem_to_BF.resize(num_elems);
-        for (int i = 0; i < num_elems; i++) {
+        for (unsigned i = 0; i < num_elems; i++) {
             nIF_in_elem[i] = 0.0;
             elem_to_IF[i].resize(6); // max number of faces
             nBG_in_elem[i] = 0.0;
@@ -156,7 +157,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
         // ordering (row-major): nodeID X coordinates
         dataset.read(buff.data(), PredType::NATIVE_DOUBLE, mspace, dataspace);
         // fill coordinates
-        for (int iNode = 0; iNode < num_nodes; iNode++) {
+        for (unsigned iNode = 0; iNode < num_nodes; iNode++) {
             coord[iNode].resize(dim);
             for (unsigned idim = 0; idim < dim; idim++) {
                 coord[iNode][idim] = buff[iNode * dim + idim];
@@ -192,7 +193,7 @@ void Mesh::read_mesh(const string &mesh_file_name) {
 
         // fill eptr that indicates where data for node i in eind is
         idx_t counter = 0;
-        for (int i = 0; i < num_elems + 1; i++) {
+        for (unsigned i = 0; i < num_elems + 1; i++) {
             eptr[i] = counter;
             counter += num_nodes_per_elem;
         }
@@ -262,26 +263,26 @@ void Mesh::read_mesh(const string &mesh_file_name) {
     }
 }
 
-void Mesh::partition_manually() {
-    cout << "WARNING: MANUAL PARTITION REQUESTED! DID YOU REALLY HARDCODE IT?" << endl;
-
-    int N = 32;
-    int M = 4; // subdivision in each direction
-    int A = N / M;
-    assert(num_elems == N*N*N);
-    assert(num_partitions == M*M);
-
-    for (int index = 0; index < num_elems; index++) {
-        int k = index % N;
-        int j = ((index - k) / N) % N;
-        int i = ((index - k - j*N) / N / N) % N;
-
-        int ipart = ((int) i / A) * M + (int) (j/A);
-        elem_partition[index] = ipart;
-    }
-
-    partitioned = true;
-}
+//void Mesh::partition_manually() {
+//    cout << "WARNING: MANUAL PARTITION REQUESTED! DID YOU REALLY HARDCODE IT?" << endl;
+//
+//    int N = 32;
+//    int M = 4; // subdivision in each direction
+//    int A = N / M;
+//    assert(num_elems == N*N*N);
+//    assert(num_partitions == M*M);
+//
+//    for (int index = 0; index < num_elems; index++) {
+//        int k = index % N;
+//        int j = ((index - k) / N) % N;
+//        int i = ((index - k - j*N) / N / N) % N;
+//
+//        int ipart = ((int) i / A) * M + (int) (j/A);
+//        elem_partition[index] = ipart;
+//    }
+//
+//    partitioned = true;
+//}
 
 void Mesh::partition() {
     idx_t objval;
@@ -392,6 +393,9 @@ void Mesh::partition() {
     Kokkos::resize(interior_faces, num_ifaces_part, 8);
     Kokkos::resize(neighbor_ranks, num_neighbor_ranks);
     Kokkos::resize(num_faces_per_rank_boundary, num_neighbor_ranks);
+    global_to_local_elem_IDs.rehash(num_elems_part);
+    global_to_local_node_IDs.rehash(num_nodes_part);
+    global_to_local_iface_IDs.rehash(num_ifaces_part);
     // Create host mirrors from these views
     h_local_to_global_elem_IDs = Kokkos::create_mirror_view(local_to_global_elem_IDs);
     h_local_to_global_node_IDs = Kokkos::create_mirror_view(local_to_global_node_IDs);
@@ -401,9 +405,12 @@ void Mesh::partition() {
     h_interior_faces = Kokkos::create_mirror_view(interior_faces);
     h_neighbor_ranks = Kokkos::create_mirror_view(neighbor_ranks);
     h_num_faces_per_rank_boundary = Kokkos::create_mirror_view(num_faces_per_rank_boundary);
+    h_global_to_local_elem_IDs.rehash(num_elems_part);
+    h_global_to_local_node_IDs.rehash(num_nodes_part);
+    h_global_to_local_iface_IDs.rehash(num_ifaces_part);
 
     // Set neighbor ranks
-    int counter = 0;
+    unsigned counter = 0;
     for (auto rank : sets_of_neighbor_ranks[network.rank]) {
         h_neighbor_ranks(counter) = rank;
         counter++;
@@ -412,7 +419,7 @@ void Mesh::partition() {
     // Store the element IDs and elem_to_node_IDs on each partition
     counter = 0;
     for (unsigned i = 0; i < num_elems; i++) {
-        auto rank = elem_partition[i];
+        auto rank = (unsigned)elem_partition[i];
         if (network.rank == rank) {
             // Mapping from local to global, and back
             h_local_to_global_elem_IDs(counter) = i;
@@ -428,7 +435,7 @@ void Mesh::partition() {
     // Store the node IDs and node coordinates on each partition
     counter = 0;
     for (unsigned i = 0; i < num_nodes; i++) {
-        auto rank = node_partition[i];
+        auto rank = (unsigned)node_partition[i];
         if (network.rank == rank) {
             // Mapping from local to global, and back
             h_local_to_global_node_IDs(counter) = i;
@@ -446,8 +453,8 @@ void Mesh::partition() {
     counter = 0;
     for (unsigned i = 0; i < nIF; i++) {
         // Element rank on the left and right
-        auto left_rank = elem_partition[IF_to_elem[i][0]];
-        auto right_rank = elem_partition[IF_to_elem[i][3]];
+        auto left_rank = (unsigned)elem_partition[IF_to_elem[i][0]];
+        auto right_rank = (unsigned)elem_partition[IF_to_elem[i][3]];
         if (network.rank == left_rank or network.rank == right_rank) {
             // Mapping from local to global, and back
             h_local_to_global_iface_IDs(counter) = i;
@@ -470,12 +477,12 @@ void Mesh::partition() {
     }
 
     // Get number of faces in each rank boundary
-    for (int i = 0; i < ghost_faces_vector.size(); i++) {
+    for (unsigned i = 0; i < ghost_faces_vector.size(); i++) {
         // Get global face ID
         auto global_face_ID = ghost_faces_vector[i];
 
         // Check if this ghost face exists on this partition
-        auto local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
         if (local_face_index != -1) {
             // Get local face ID
             auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
@@ -488,7 +495,7 @@ void Mesh::partition() {
             if (network.rank == rank_L) {
                 // Get the rank neighbor index
                 int index;
-                for (int j = 0; j < num_neighbor_ranks; j++) {
+                for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_R) {
                         index = j;
                         break;
@@ -501,7 +508,7 @@ void Mesh::partition() {
             } else if (network.rank == rank_R) {
                 // Get the rank neighbor index
                 int index;
-                for (int j = 0; j < num_neighbor_ranks; j++) {
+                for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_L) {
                         index = j;
                         break;
@@ -514,19 +521,19 @@ void Mesh::partition() {
     }
 
     // Allocate ghost faces of each neighbor rank
-    ghost_faces = new int*[num_neighbor_ranks];
-    for (int i = 0; i < num_neighbor_ranks; i++) {
-        ghost_faces[i] = new int[h_num_faces_per_rank_boundary(i)];
+    ghost_faces = new unsigned*[num_neighbor_ranks];
+    for (unsigned i = 0; i < num_neighbor_ranks; i++) {
+        ghost_faces[i] = new unsigned[h_num_faces_per_rank_boundary(i)];
     }
 
     // Set ghost faces of each neighbor rank
     vector<int> gface_counter(num_neighbor_ranks, 0);
-    for (int i = 0; i < ghost_faces_vector.size(); i++) {
+    for (unsigned i = 0; i < ghost_faces_vector.size(); i++) {
         // Get global face ID
         auto global_face_ID = ghost_faces_vector[i];
 
         // Check if this ghost face exists on this partition
-        auto local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
         if (local_face_index != -1) {
             // Get local face ID
             auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
@@ -539,7 +546,7 @@ void Mesh::partition() {
             if (network.rank == rank_L) {
                 // Get the rank neighbor index
                 int index;
-                for (int j = 0; j < num_neighbor_ranks; j++) {
+                for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_R) {
                         index = j;
                         break;
@@ -552,7 +559,7 @@ void Mesh::partition() {
             } else if (network.rank == rank_R) {
                 // Get the rank neighbor index
                 int index;
-                for (int j = 0; j < num_neighbor_ranks; j++) {
+                for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_L) {
                         index = j;
                         break;
@@ -565,8 +572,8 @@ void Mesh::partition() {
     }
 
     cout << "Ghost faces of rank " << network.rank << ":" << endl;
-    for (int i = 0; i < num_neighbor_ranks; i++) {
-        for (int j = 0; j < h_num_faces_per_rank_boundary[i]; j++) {
+    for (unsigned i = 0; i < num_neighbor_ranks; i++) {
+        for (unsigned j = 0; j < h_num_faces_per_rank_boundary[i]; j++) {
             cout << ghost_faces[i][j] << "  ";
         }
         cout << endl;
@@ -583,7 +590,7 @@ void Mesh::partition() {
     cout << "END CHECK VIEW" << endl;
 
     // Print
-    for (int rank = 0; rank < network.num_ranks; rank++) {
+    for (unsigned rank = 0; rank < network.num_ranks; rank++) {
         if (rank == network.rank) {
             cout << "Rank " << network.rank << " has elements:" << endl;
             for (unsigned i = 0; i < num_elems_part; i++) {
@@ -615,31 +622,43 @@ void Mesh::partition() {
 }
 
 void Mesh::copy_from_host_to_device() {
+    // Use deep_copy for Views
     Kokkos::deep_copy(h_num_faces_per_rank_boundary, num_faces_per_rank_boundary);
     Kokkos::deep_copy(h_neighbor_ranks,              neighbor_ranks);
     Kokkos::deep_copy(h_local_to_global_node_IDs,    local_to_global_node_IDs);
     Kokkos::deep_copy(h_local_to_global_elem_IDs,    local_to_global_elem_IDs);
     Kokkos::deep_copy(h_local_to_global_iface_IDs,   local_to_global_iface_IDs);
-    Kokkos::deep_copy(h_global_to_local_node_IDs,    global_to_local_node_IDs);
-    Kokkos::deep_copy(h_global_to_local_elem_IDs,    global_to_local_elem_IDs);
-    Kokkos::deep_copy(h_global_to_local_iface_IDs,   global_to_local_iface_IDs);
     Kokkos::deep_copy(h_node_coords,                 node_coords);
     Kokkos::deep_copy(h_elem_to_node_IDs,            elem_to_node_IDs);
     Kokkos::deep_copy(h_interior_faces,              interior_faces);
+    // deep_copy CANNOT be used for maps! Unfortunately, trying to do so fails
+    // silently. Instead, the map is manually reconstructed on the device.
+    Kokkos::parallel_for(num_nodes_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
+            auto global_ID = local_to_global_node_IDs(local_ID);
+            global_to_local_node_IDs.insert(global_ID, local_ID);
+    });
+    Kokkos::parallel_for(num_elems_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
+            auto global_ID = local_to_global_elem_IDs(local_ID);
+            global_to_local_elem_IDs.insert(global_ID, local_ID);
+    });
+    Kokkos::parallel_for(num_ifaces_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
+            auto global_ID = local_to_global_iface_IDs(local_ID);
+            global_to_local_iface_IDs.insert(global_ID, local_ID);
+    });
 }
 
 void Mesh::copy_from_device_to_host() {
+    // Use deep_copy for Views
     Kokkos::deep_copy(num_faces_per_rank_boundary, h_num_faces_per_rank_boundary);
     Kokkos::deep_copy(neighbor_ranks,              h_neighbor_ranks);
     Kokkos::deep_copy(local_to_global_node_IDs,    h_local_to_global_node_IDs);
     Kokkos::deep_copy(local_to_global_elem_IDs,    h_local_to_global_elem_IDs);
     Kokkos::deep_copy(local_to_global_iface_IDs,   h_local_to_global_iface_IDs);
-    Kokkos::deep_copy(global_to_local_node_IDs,    h_global_to_local_node_IDs);
-    Kokkos::deep_copy(global_to_local_elem_IDs,    h_global_to_local_elem_IDs);
-    Kokkos::deep_copy(global_to_local_iface_IDs,   h_global_to_local_iface_IDs);
     Kokkos::deep_copy(node_coords,                 h_node_coords);
     Kokkos::deep_copy(elem_to_node_IDs,            h_elem_to_node_IDs);
     Kokkos::deep_copy(interior_faces,              h_interior_faces);
+    // NOTE: The maps are not copied from device to host. This is mainly because
+    // it is not needed.
 }
 
 string Mesh::report() const {
