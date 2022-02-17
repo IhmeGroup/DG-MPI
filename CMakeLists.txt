@@ -19,7 +19,7 @@ endif()
 
 # specify build type specific flags
 # TODO: Why does this not add to nvcc_wrapper?
-set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
+set(warning_flags "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
@@ -30,8 +30,12 @@ set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
 # run path for installed executables
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# some variables to help find external libraries
-set(METIS_ROOT          "${CMAKE_SOURCE_DIR}/externals/metis/build/install" CACHE PATH "METIS root")
+# some variables to help find external libraries.
+if(GPU_BUILD)
+    set(METIS_ROOT "${CMAKE_SOURCE_DIR}/build_gpu/build_externals/metis/install" CACHE PATH "METIS root")
+else()
+    set(METIS_ROOT "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/metis/install" CACHE PATH "METIS root")
+endif()
 
 if(DEFINED ENV{HDF5_DIR})
     message(STATUS "HDF5 obtained via environment")
@@ -47,8 +51,13 @@ else()
     message(STATUS "Using local installs for mpich")
 endif()
 
-set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install" CACHE PATH "Kokkos root")
-set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
+if(GPU_BUILD)
+    set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/build_gpu/build_externals/kokkos/build/install" CACHE PATH "Kokkos root")
+    set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/build_gpu/build_externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
+else()
+    set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/kokkos/build/install" CACHE PATH "Kokkos root")
+    set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")    
+endif()
 
 # Use the MPI compilers
 if(NOT APPLE)
@@ -164,8 +173,8 @@ add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 # building blocks
 add_subdirectory(src/io)
 add_subdirectory(src/memory)
-add_subdirectory(src/mesh)
 add_subdirectory(src/numerics)
+add_subdirectory(src/mesh)
 # TODO: commented since they're not currently compiling on GPUs
 #add_subdirectory(src/physics)
 add_subdirectory(src/solver)
@@ -182,6 +191,8 @@ add_subdirectory(src/exec)
 message(STATUS "-----------------------------------------------------------")
 message(STATUS "Build type:          ${CMAKE_BUILD_TYPE}")
 message(STATUS "METIS root:          ${METIS_ROOT}")
+message(STATUS "METIS include:       ${METIS_INCLUDE_DIRS}")
+message(STATUS "METIS lib:           ${METIS_LIBRARIES}")
 message(STATUS "HDF5 root:           ${HDF5_ROOT}")
 message(STATUS "Kokkos root:         ${Kokkos_ROOT}")
 message(STATUS "MPI root:            ${MPI_ROOT}")
