@@ -8,7 +8,9 @@
 #include <Kokkos_UnorderedMap.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
-#include "memory/memory_network.h"
+
+// Forward declaration
+class MemoryNetwork;
 
 /*! \brief Mesh class
  *
@@ -66,7 +68,7 @@ class Mesh {
         /*! \brief Custom manual partitionning method
          *
          */
-        void partition_manually();
+        //void partition_manually();
 
     public:
         unsigned dim; //!< number of spatial dimentions
@@ -126,36 +128,36 @@ class Mesh {
         // mesh API for now.
 
         // Number of elements in this partition
-        int num_elems_part;
+        unsigned num_elems_part;
         // Number of nodes in this partition
-        int num_nodes_part;
+        unsigned num_nodes_part;
         // Number of interior faces in this partition. This includes both:
         //  - local interior faces (faces where rank_L == rank_R)
         //  - ghost faces (faces where rank_L != rank_R)
         // This means that ghost faces are copied (one on each neighbor rank).
-        int num_ifaces_part;
+        unsigned num_ifaces_part;
         // Number of ghost faces in this partition
-        int num_gfaces_part;
+        unsigned num_gfaces_part;
         // Number of ranks that neighbor this rank
-        int num_neighbor_ranks;
+        unsigned num_neighbor_ranks;
         // View containing the number of faces shared between this rank and each
         // of its rank boundaries
-        Kokkos::View<int*> num_faces_per_rank_boundary;
+        Kokkos::View<unsigned*> num_faces_per_rank_boundary;
         // View containing all the ranks that neighbor this rank
-        Kokkos::View<int*> neighbor_ranks;
+        Kokkos::View<unsigned*> neighbor_ranks;
         /* For below, 'local' refers to partition-local, wheres 'global'
          * refers to the value for the global mesh. It does not have anything to
          * do with reference vs. physical space. */
         // Views that set a mapping from local to global node IDs, element IDs,
         // and interior face IDs
-        Kokkos::View<int*> local_to_global_node_IDs;
-        Kokkos::View<int*> local_to_global_elem_IDs;
-        Kokkos::View<int*> local_to_global_iface_IDs;
+        Kokkos::View<unsigned*> local_to_global_node_IDs;
+        Kokkos::View<unsigned*> local_to_global_elem_IDs;
+        Kokkos::View<unsigned*> local_to_global_iface_IDs;
         // Maps that set a mapping from global to local node IDs, element IDs,
         // and interior face IDs
-        Kokkos::UnorderedMap<int, int> global_to_local_node_IDs;
-        Kokkos::UnorderedMap<int, int> global_to_local_elem_IDs;
-        Kokkos::UnorderedMap<int, int> global_to_local_iface_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_node_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_elem_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_iface_IDs;
         // Jagged array containing the global face IDs of the ghost faces. The
         // first index represents the neighboring rank index, and the second
         // index represents the ghost face index in that neighboring rank.
@@ -172,31 +174,31 @@ class Mesh {
          * are those neighboring rank 2, the second row (with 2 faces) are those
          * neighboring rank 4, and the third row (with 4 faces) are those
          * neighboring rank 9. */
-        int** ghost_faces;
+        unsigned** ghost_faces;
         // View containing the coordinates for each node on this partition
         Kokkos::View<rtype**> node_coords;
         // View containing the mapping from elements to global node IDs on this
         // partition
-        Kokkos::View<int**> elem_to_node_IDs;
+        Kokkos::View<unsigned**> elem_to_node_IDs;
         // View containing the interior face information, of shape
         // [num_ifaces_part, 8], where the 8 pieces of data are:
         // the rank, element ID, ref. face ID, and orientation on the left, and
         // the rank, element ID, ref. face ID, and orientation on the right.
-        Kokkos::View<int**> interior_faces;
+        Kokkos::View<unsigned**> interior_faces;
 
         // Everything below is the host mirror version of the data structures
         // above. The same comments from above apply here.
-        Kokkos::View<int*>::HostMirror h_num_faces_per_rank_boundary;
-        Kokkos::View<int*>::HostMirror h_neighbor_ranks;
-        Kokkos::View<int*>::HostMirror h_local_to_global_node_IDs;
-        Kokkos::View<int*>::HostMirror h_local_to_global_elem_IDs;
-        Kokkos::View<int*>::HostMirror h_local_to_global_iface_IDs;
-        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_node_IDs;
-        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_elem_IDs;
-        Kokkos::UnorderedMap<int, int>::HostMirror h_global_to_local_iface_IDs;
+        Kokkos::View<unsigned*>::HostMirror h_num_faces_per_rank_boundary;
+        Kokkos::View<unsigned*>::HostMirror h_neighbor_ranks;
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_node_IDs;
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_elem_IDs;
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_iface_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_node_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_elem_IDs;
+        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_iface_IDs;
         Kokkos::View<rtype**>::HostMirror h_node_coords;
-        Kokkos::View<int**>::HostMirror h_elem_to_node_IDs;
-        Kokkos::View<int**>::HostMirror h_interior_faces;
+        Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
+        Kokkos::View<unsigned**>::HostMirror h_interior_faces;
 
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned

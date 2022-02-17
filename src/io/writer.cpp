@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include "io/writer.h"
+#include "memory/memory_network.h"
 
 using std::string, std::vector;
 
@@ -33,7 +34,7 @@ Writer::Writer(Mesh& mesh) {
     }
 
     // Loop over each rank
-    for (int rank = 0; rank < mesh.network.num_ranks; rank++) {
+    for (unsigned rank = 0; rank < mesh.network.num_ranks; rank++) {
         mesh.network.barrier();
         // Perform this in serial
         if (rank == mesh.network.rank) {
