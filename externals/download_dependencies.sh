@@ -32,6 +32,7 @@ rm $name
 
 # Compile
 cd metis
-make config cc=gcc prefix=../install
+
+make config cc=gcc prefix=$build_path
 make install -j"${nthreads}"
 cd ..
