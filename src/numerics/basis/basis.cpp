@@ -1,4 +1,5 @@
 #include "numerics/basis/basis.h"
+#include "numerics/basis/tools.h"
 
 namespace Basis {
 

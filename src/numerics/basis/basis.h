@@ -4,7 +4,6 @@
 #include "common/defines.h"
 #include "common/my_exceptions.h"
 #include "numerics/basis/shape.h"
-#include "numerics/basis/tools.h"
 
 #include "common/enums.h"
 

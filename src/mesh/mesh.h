@@ -12,6 +12,7 @@
 // Forward declaration
 class MemoryNetwork;
 
+
 /*! \brief Mesh class
  *
  * This class is really just an intermediate representation of the mesh.
@@ -200,6 +201,8 @@ class Mesh {
         Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
         Kokkos::View<unsigned**>::HostMirror h_interior_faces;
 
+        // geometric basis is a member of the mesh
+        Basis::Basis gbasis;
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned
 };

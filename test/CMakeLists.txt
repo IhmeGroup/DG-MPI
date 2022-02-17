@@ -14,6 +14,7 @@ list(APPEND GTEST_SOURCES
     main.cpp
     test_hello.cpp
     # test_physics.cpp
+    math/test_linear_algebra.cpp
     numerics/basis/test_basis.cpp
     numerics/basis/test_tools.cpp
     numerics/test_nodes.cpp

@@ -1,4 +1,5 @@
 #include "numerics/basis/tools.h"
+#include "numerics/math/linear_algebra.h"
 
 namespace BasisTools {
 
@@ -21,6 +22,25 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	}
 } 
 
+KOKKOS_FUNCTION
+void get_element_jacobian(Mesh& mesh, int elem_ID, view_type_2D quad_pts, 
+	rtype& djac, view_type_3D ijac){
+
+
+	auto node_IDs = Kokkos::subview(mesh.elem_to_node_IDs, elem_ID, Kokkos::ALL());
+
+	Kokkos::View<rtype**> elem_coords("elem_coords", mesh.dim, mesh.num_nodes_per_elem);
+	for (int i = 0; i < mesh.num_nodes_per_elem; i++){
+		for (int j = 0; j < mesh.dim; j++){
+			elem_coords(i, j) = mesh.node_coords(node_IDs(i), j);
+		}
+	}
+
+
+
+
+
+}
 
 void get_lagrange_basis_val_1D(const rtype &x, 
 	host_view_type_1D xnodes, int p, 

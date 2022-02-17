@@ -2,7 +2,9 @@
 #define DG_SOLVER_HELPERS_H
 
 #include "common/defines.h"
+#include "mesh/mesh.h"
 #include "numerics/basis/basis.h"
+#include "numerics/basis/tools.h"
 #include "numerics/quadrature/tools.h"
 #include <Kokkos_Core.hpp>
 
@@ -11,7 +13,7 @@ namespace VolumeHelpers {
 struct VolumeHelperFunctor {
 
 	// ~VolumeHelperFunctor() = default;
-	VolumeHelperFunctor(Basis::Basis basis);
+	VolumeHelperFunctor(Mesh& mesh, Basis::Basis basis);
 
 	KOKKOS_FUNCTION
     void operator()(const int ie) const;
@@ -20,7 +22,10 @@ struct VolumeHelperFunctor {
  		const int order);
 
  	void get_reference_data(Basis::Basis basis, 
+        Basis::Basis gbasis,
  		const int order);
+
+    Mesh& mesh;
 
     view_type_2D quad_pts;
     view_type_1D quad_wts;
@@ -32,7 +37,16 @@ struct VolumeHelperFunctor {
     view_type_3D basis_ref_grad;
 
     host_view_type_2D h_basis_val;
-    host_view_type_3D h_basis_ref_grad;    
+    host_view_type_3D h_basis_ref_grad;  
+
+    view_type_2D gbasis_val;
+    view_type_3D gbasis_ref_grad;
+
+    host_view_type_2D h_gbasis_val;
+    host_view_type_3D h_gbasis_ref_grad;    
+
+    view_type_1D djac_elems;
+    view_type_4D ijac_elems;
 };
 
 } // end namespace VolumeHelper

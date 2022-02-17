@@ -14,16 +14,16 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
 
     order = toml::find<int>(input_file, "Numerics", "order");    
     basis = Basis::Basis(params.basis, order);
-
+    mesh.gbasis = Basis::Basis(params.gbasis, params.gorder);
 
 }
 
 
 void Solver::precompute_matrix_helpers() {
 
-    VolumeHelperFunctor functor(basis);
+    VolumeHelperFunctor functor(mesh, basis);
 
-    int num_elements = 1000;
-    Kokkos::parallel_for(num_elements, functor);
+    printf("Num elems part: %i\n", mesh.num_elems_part);
+    Kokkos::parallel_for(mesh.num_elems_part, functor);
 
 }

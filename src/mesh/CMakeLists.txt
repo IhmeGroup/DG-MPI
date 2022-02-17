@@ -7,7 +7,8 @@ target_link_libraries(mesh
     PRIVATE ${HDF5_LIBRARIES}
     PUBLIC Kokkos::kokkoscore
     PUBLIC Kokkos::kokkos
-    PRIVATE memory)
+    PRIVATE memory
+    PRIVATE numerics)
 
 set_target_properties(mesh
     PROPERTIES

@@ -3,8 +3,7 @@
 
 #include "common/defines.h"
 #include "common/my_exceptions.h"
-
-#include "numerics/basis/basis.h"
+#include "mesh/mesh.h"
 #include <Kokkos_Core.hpp>
 
 namespace BasisTools {
@@ -24,6 +23,26 @@ Outputs:
 */
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	host_view_type_1D &xnodes);
+
+
+/* 
+Evaluate the geometric Jacobian for a specified element
+
+Inputs:
+-------
+	mesh: mesh object
+	elem_ID: element ID
+	quad_pts: coordinates of quadrature points
+
+Outputs:
+--------
+	djac: determinant of the jacobian [nq]
+	ijac: inverse of the jacobian [nq, ndims, ndims]
+*/
+KOKKOS_FUNCTION
+void get_element_jacobian(Mesh& mesh, int elem_ID, view_type_2D quad_pts, 
+	rtype& djac, view_type_3D ijac);
+
 
 /*
 Calculates the 1D Lagrange basis value
@@ -213,5 +232,7 @@ void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
 
 
 } // end namespace BasisTools
+
+// #include "numerics/basis/tools.cpp"
 
 #endif // DG_NUMERICS_BASIS_TOOLS_H
