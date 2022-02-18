@@ -75,7 +75,7 @@ void get_grads_lagrangequad(host_view_type_2D quad_pts,
 		host_view_type_1D &xnodes)){
 
 	int nq = quad_pts.extent(0);
-
+	printf("order here is: %i\n", order);
 	if (order > 0){
 		host_view_type_1D xnodes("xnodes", order + 1);
 		get_1d_nodes(-1., 1., order + 1, xnodes);
