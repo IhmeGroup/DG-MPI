@@ -36,6 +36,13 @@ namespace Math {
 			::invoke(c, A, B, 0., C);
 	}
 
+	template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
+	void cAxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType2& C){
+
+		SerialGemm<Trans::NoTranspose, Trans::NoTranspose, Algo::Gemm::Unblocked>
+			::invoke(c, A, B, 0., C);
+	}
+
 	template<typename ViewType> KOKKOS_INLINE_FUNCTION
 	void det(const ViewType &mat, rtype &det) {
 	    assert(mat.extent(0) == mat.extent(1));

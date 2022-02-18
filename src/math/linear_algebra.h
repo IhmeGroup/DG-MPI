@@ -31,6 +31,10 @@ namespace Math {
 	template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
 	void cATxB_to_C(rtype c, const ViewType1& A, 
 		const ViewType2& B, ViewType2& C);
+
+	template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
+	void cAxB_to_C(rtype c, const ViewType1& A, 
+		const ViewType2& B, ViewType2& C);
 	
 	template<typename ViewType> KOKKOS_INLINE_FUNCTION
 	void det(const ViewType &mat, rtype &det);
