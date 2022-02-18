@@ -3,6 +3,7 @@
 
 #include "common/defines.h"
 #include "mesh/mesh.h"
+#include "mesh/tools.h"
 #include "numerics/basis/basis.h"
 #include "numerics/basis/tools.h"
 #include "numerics/quadrature/tools.h"
@@ -12,10 +13,9 @@ namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
 
-	// ~VolumeHelperFunctor() = default;
 	VolumeHelperFunctor(Mesh& mesh, Basis::Basis basis);
 
-	KOKKOS_FUNCTION
+	KOKKOS_INLINE_FUNCTION
     void operator()(const member_type& member) const;
 
  	void get_quadrature(Basis::Basis basis, 
@@ -50,6 +50,8 @@ struct VolumeHelperFunctor {
     view_type_4D jac_elems;
     view_type_2D djac_elems;
     view_type_4D ijac_elems;
+
+    view_type_3D x_elems;
 };
 
 } // end namespace VolumeHelper

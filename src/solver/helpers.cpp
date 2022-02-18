@@ -14,7 +14,7 @@ KOKKOS_INLINE_FUNCTION
 void VolumeHelperFunctor::operator()(const member_type& member) const {
     // Fetch the index of the calling team within the league
     const int elem_ID = member.league_rank();
-    printf("elem_ID: %i\n", elem_ID);
+
     // get the determinant of the geometry jacobian and the inverse of 
     // the jacobian for each element and store it on the device
     BasisTools::get_element_jacobian(mesh, elem_ID, quad_pts, gbasis_ref_grad,
@@ -24,11 +24,15 @@ void VolumeHelperFunctor::operator()(const member_type& member) const {
         Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
         Kokkos::ALL(), Kokkos::ALL()), member);
 
+    // get the physical location of the quadrature points
+    MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val, 
+        Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()));
+        
+
 
 }
 
 void VolumeHelperFunctor::allocate_views(const int num_elems){
-
 
     const int nq = quad_pts.extent(0);
     const int nb = basis_val.extent(1);
@@ -37,7 +41,7 @@ void VolumeHelperFunctor::allocate_views(const int num_elems){
     Kokkos::resize(jac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(djac_elems, num_elems, nq);
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
-
+    Kokkos::resize(x_elems, num_elems, nq, ndims);
 }
 
 void VolumeHelperFunctor::get_quadrature(
@@ -94,8 +98,6 @@ void VolumeHelperFunctor::get_reference_data(
     NDIMS = gbasis.shape.get_NDIMS();
     nb = gbasis.shape.get_num_basis_coeff(gorder);
 
-    printf("gorder: %i\n", gorder);
-
     // need to establish an initial size for views
     Kokkos::resize(gbasis_val, nq, nb);
     Kokkos::resize(gbasis_ref_grad, nq, nb, NDIMS);
@@ -103,8 +105,8 @@ void VolumeHelperFunctor::get_reference_data(
     h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
     h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
 
-    basis.get_values(h_quad_pts, h_gbasis_val);
-    basis.get_grads(h_quad_pts, h_gbasis_ref_grad);
+    gbasis.get_values(h_quad_pts, h_gbasis_val);
+    gbasis.get_grads(h_quad_pts, h_gbasis_ref_grad);
 
     Kokkos::deep_copy(gbasis_val, h_gbasis_val);
     Kokkos::deep_copy(gbasis_ref_grad, h_gbasis_ref_grad);
