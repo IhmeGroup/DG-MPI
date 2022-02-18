@@ -25,7 +25,7 @@ struct VolumeHelperFunctor {
         Basis::Basis gbasis,
  		const int order);
 
-    void allocate_views(const int num_elems);
+    void allocate_views(Mesh& mesh, const int num_elems);
 
     Mesh& mesh;
 
@@ -52,7 +52,11 @@ struct VolumeHelperFunctor {
     view_type_4D ijac_elems;
 
     view_type_3D x_elems;
+    view_type_1D vol_elems;
+
+    view_type_2D elem_coords;
 };
+
 
 } // end namespace VolumeHelper
 

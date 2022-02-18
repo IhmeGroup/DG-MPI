@@ -42,7 +42,7 @@ Outputs:
 KOKKOS_INLINE_FUNCTION
 void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
 	view_type_3D basis_ref_grad, view_type_3D jac, view_type_1D djac, 
-	view_type_3D ijac, const member_type& member);
+	view_type_3D ijac, const member_type& member, view_type_2D elem_coords);
 
 
 /*
