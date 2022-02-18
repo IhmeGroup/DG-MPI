@@ -37,5 +37,10 @@ using host_view_type_2D = view_type_2D::HostMirror;
 using view_type_3D = Kokkos::View<rtype***>;
 using host_view_type_3D = view_type_3D::HostMirror;
 
+using view_type_4D = Kokkos::View<rtype****>;
+using host_view_type_4D = view_type_4D::HostMirror;
+
+using team_policy = Kokkos::TeamPolicy<>;
+using member_type = Kokkos::TeamPolicy<>::member_type;
 
 #endif //DG_DEFINES_H
