@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
 
     // Create mesh
     auto mesh = Mesh(toml_input, network);
+    
+    // Get parameters related to the numerics
     auto numerics_params = Numerics::NumericsParams(toml_input, mesh.order);
 
 
