@@ -27,13 +27,13 @@ int main(int argc, char* argv[]) {
     const int dim = toml::find<int>(toml_input, "Physics", "dim");
     //cout << toml_input.report() << endl;
 
-    // TODO: This is just for testing
-    // TODO: Uncomment
-    auto numerics_params = Numerics::NumericsParams(toml_input, 3);
+
     //auto solfile_params = SolutionFileParams(toml_input);
 
     // Create mesh
     auto mesh = Mesh(toml_input, network);
+    auto numerics_params = Numerics::NumericsParams(toml_input, mesh.order);
+
 
     // Create solver
     auto solver = Solver(toml_input, mesh, network, numerics_params);
