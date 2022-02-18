@@ -1,9 +1,3 @@
-// using view_type_1D = Kokkos::View<rtype*>;
-// using host_view_type_1D = view_type_1D::HostMirror;
-
-// using view_type_2D = Kokkos::View<rtype**>;
-// using host_view_type_2D = view_type_2D::HostMirror;
-
 namespace VolumeHelpers {
 
 
@@ -12,21 +6,37 @@ VolumeHelperFunctor::VolumeHelperFunctor(Mesh& mesh, Basis::Basis basis) : mesh{
 
     get_quadrature(basis, basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
+    allocate_views(mesh.num_elems_part);
+
+}
+
+KOKKOS_INLINE_FUNCTION
+void VolumeHelperFunctor::operator()(const member_type& member) const {
+    // Fetch the index of the calling team within the league
+    const int elem_ID = member.league_rank();
+    printf("elem_ID: %i\n", elem_ID);
+    // get the determinant of the geometry jacobian and the inverse of 
+    // the jacobian for each element and store it on the device
+    BasisTools::get_element_jacobian(mesh, elem_ID, quad_pts, gbasis_ref_grad,
+        Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
+        Kokkos::ALL(), Kokkos::ALL()),
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()), 
+        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
+        Kokkos::ALL(), Kokkos::ALL()), member);
 
 
 }
 
-KOKKOS_FUNCTION
-void VolumeHelperFunctor::operator()(const int elem_ID) const {
+void VolumeHelperFunctor::allocate_views(const int num_elems){
 
 
-    // get the determinant of the geometry jacobian and the inverse of 
-    // the jacobian for each element and store it on the device
-    BasisTools::get_element_jacobian(mesh, elem_ID, quad_pts, 
-        djac_elems(elem_ID), 
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
-        Kokkos::ALL(), Kokkos::ALL()));
+    const int nq = quad_pts.extent(0);
+    const int nb = basis_val.extent(1);
+    const int ndims = quad_pts.extent(1);
 
+    Kokkos::resize(jac_elems, num_elems, nq, ndims, ndims);
+    Kokkos::resize(djac_elems, num_elems, nq);
+    Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
 
 }
 
@@ -83,6 +93,8 @@ void VolumeHelperFunctor::get_reference_data(
     int gorder = gbasis.get_order();
     NDIMS = gbasis.shape.get_NDIMS();
     nb = gbasis.shape.get_num_basis_coeff(gorder);
+
+    printf("gorder: %i\n", gorder);
 
     // need to establish an initial size for views
     Kokkos::resize(gbasis_val, nq, nb);

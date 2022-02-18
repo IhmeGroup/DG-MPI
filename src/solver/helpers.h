@@ -16,7 +16,7 @@ struct VolumeHelperFunctor {
 	VolumeHelperFunctor(Mesh& mesh, Basis::Basis basis);
 
 	KOKKOS_FUNCTION
-    void operator()(const int ie) const;
+    void operator()(const member_type& member) const;
 
  	void get_quadrature(Basis::Basis basis, 
  		const int order);
@@ -24,6 +24,8 @@ struct VolumeHelperFunctor {
  	void get_reference_data(Basis::Basis basis, 
         Basis::Basis gbasis,
  		const int order);
+
+    void allocate_views(const int num_elems);
 
     Mesh& mesh;
 
@@ -45,7 +47,8 @@ struct VolumeHelperFunctor {
     host_view_type_2D h_gbasis_val;
     host_view_type_3D h_gbasis_ref_grad;    
 
-    view_type_1D djac_elems;
+    view_type_4D jac_elems;
+    view_type_2D djac_elems;
     view_type_4D ijac_elems;
 };
 
