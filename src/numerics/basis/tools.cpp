@@ -1,18 +1,8 @@
-// #include "numerics/basis/tools.h"
 #include "math/linear_algebra.h"
+#include "mesh/tools.h"
 
 #include<Kokkos_Core.hpp>
-#include "KokkosBatched_LU_Decl.hpp"
-#include "KokkosBatched_LU_Serial_Impl.hpp"
-#include "KokkosBatched_LU_Team_Impl.hpp"
-#include "KokkosBatched_SolveLU_Decl.hpp"
 
-#include "KokkosBatched_Gemm_Decl.hpp"
-#include "KokkosBatched_Gemm_Serial_Impl.hpp"
-#include "KokkosBatched_Gemm_Team_Impl.hpp"
-
-
-using namespace KokkosBatched;
 namespace BasisTools {
 
 inline
@@ -40,14 +30,10 @@ void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
 	view_type_3D ijac, const member_type& member){
 
 	const int nq = ijac.extent(0);
-	auto node_IDs = Kokkos::subview(mesh.elem_to_node_IDs, elem_ID, Kokkos::ALL());
+	Kokkos::View<rtype**> elem_coords("elem_coords", 
+			mesh.num_nodes_per_elem, mesh.dim);
 
-	Kokkos::View<rtype**> elem_coords("elem_coords", mesh.num_nodes_per_elem, mesh.dim);
-	for (int i = 0; i < mesh.num_nodes_per_elem; i++){
-		for (int j = 0; j < mesh.dim; j++){
-			elem_coords(i, j) = mesh.node_coords(node_IDs(i), j);
-		}
-	}
+	MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords);
 
 	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), [&] (const int iq) {
 		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq, 
@@ -60,26 +46,6 @@ void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
 		Math::invA(jac_iq, ijac_iq);
 
 	});
-
-	printf("nq: %i\n", nq);
-	for (int i=0; i < nq; i++){
-		printf("i: %i\n", i);
-		printf("jac_iq_00: %f\n", jac(i, 0, 0));
-		printf("jac_iq_01: %f\n", jac(i, 0, 1));
-		printf("jac_iq_10: %f\n", jac(i, 1, 0));
-		printf("jac_iq_11: %f\n", jac(i, 1, 1));
-
-		printf("ijac_iq_00: %f\n", ijac(i, 0, 0));
-		printf("ijac_iq_01: %f\n", ijac(i, 0, 1));
-		printf("ijac_iq_10: %f\n", ijac(i, 1, 0));
-		printf("ijac_iq_11: %f\n", ijac(i, 1, 1));
-
-		printf("djac: %f\n", djac(i));
-
-
-	}
-
-
 }
 
 inline
