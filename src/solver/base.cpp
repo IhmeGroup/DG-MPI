@@ -23,7 +23,7 @@ void Solver::precompute_matrix_helpers() {
 
     VolumeHelperFunctor functor(mesh, basis);
 
-    printf("Num elems part: %i\n", mesh.num_elems_part);
-    Kokkos::parallel_for(mesh.num_elems_part, functor);
+    Kokkos::parallel_for("volume helpers", team_policy( mesh.num_elems_part, Kokkos::AUTO )
+        , functor);
 
 }
