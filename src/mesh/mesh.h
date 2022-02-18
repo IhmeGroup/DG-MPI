@@ -8,6 +8,7 @@
 #include <Kokkos_UnorderedMap.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
+#include "numerics/basis/basis.h"
 
 // Forward declaration
 class MemoryNetwork;
