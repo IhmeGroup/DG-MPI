@@ -1,9 +1,21 @@
-#include "numerics/basis/tools.h"
-#include "numerics/math/linear_algebra.h"
+// #include "numerics/basis/tools.h"
+#include "math/linear_algebra.h"
 
+#include<Kokkos_Core.hpp>
+#include "KokkosBatched_LU_Decl.hpp"
+#include "KokkosBatched_LU_Serial_Impl.hpp"
+#include "KokkosBatched_LU_Team_Impl.hpp"
+#include "KokkosBatched_SolveLU_Decl.hpp"
+
+#include "KokkosBatched_Gemm_Decl.hpp"
+#include "KokkosBatched_Gemm_Serial_Impl.hpp"
+#include "KokkosBatched_Gemm_Team_Impl.hpp"
+
+
+using namespace KokkosBatched;
 namespace BasisTools {
 
-
+inline
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	host_view_type_1D &xnodes) {
 
@@ -22,26 +34,55 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	}
 } 
 
-KOKKOS_FUNCTION
-void get_element_jacobian(Mesh& mesh, int elem_ID, view_type_2D quad_pts, 
-	rtype& djac, view_type_3D ijac){
+KOKKOS_INLINE_FUNCTION
+void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts, 
+	view_type_3D basis_ref_grad, view_type_3D jac, view_type_1D djac, 
+	view_type_3D ijac, const member_type& member){
 
-
+	const int nq = ijac.extent(0);
 	auto node_IDs = Kokkos::subview(mesh.elem_to_node_IDs, elem_ID, Kokkos::ALL());
 
-	Kokkos::View<rtype**> elem_coords("elem_coords", mesh.dim, mesh.num_nodes_per_elem);
+	Kokkos::View<rtype**> elem_coords("elem_coords", mesh.num_nodes_per_elem, mesh.dim);
 	for (int i = 0; i < mesh.num_nodes_per_elem; i++){
 		for (int j = 0; j < mesh.dim; j++){
 			elem_coords(i, j) = mesh.node_coords(node_IDs(i), j);
 		}
 	}
 
+	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), [&] (const int iq) {
+		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq, 
+			Kokkos::ALL(), Kokkos::ALL());
+		auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
+		auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());
+
+		Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
+		Math::det(jac_iq, djac(iq));
+		Math::invA(jac_iq, ijac_iq);
+
+	});
+
+	printf("nq: %i\n", nq);
+	for (int i=0; i < nq; i++){
+		printf("i: %i\n", i);
+		printf("jac_iq_00: %f\n", jac(i, 0, 0));
+		printf("jac_iq_01: %f\n", jac(i, 0, 1));
+		printf("jac_iq_10: %f\n", jac(i, 1, 0));
+		printf("jac_iq_11: %f\n", jac(i, 1, 1));
+
+		printf("ijac_iq_00: %f\n", ijac(i, 0, 0));
+		printf("ijac_iq_01: %f\n", ijac(i, 0, 1));
+		printf("ijac_iq_10: %f\n", ijac(i, 1, 0));
+		printf("ijac_iq_11: %f\n", ijac(i, 1, 1));
+
+		printf("djac: %f\n", djac(i));
 
 
+	}
 
 
 }
 
+inline
 void get_lagrange_basis_val_1D(const rtype &x, 
 	host_view_type_1D xnodes, int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi){
@@ -56,7 +97,7 @@ void get_lagrange_basis_val_1D(const rtype &x,
 	}
 }
 
-
+inline
 void get_lagrange_basis_grad_1D(const rtype &x, 
 	host_view_type_1D xnodes, int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi){
@@ -78,7 +119,7 @@ void get_lagrange_basis_grad_1D(const rtype &x,
 
 }
 
-
+inline
 void get_lagrange_basis_val_2D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_2D basis_val) {
@@ -106,7 +147,7 @@ void get_lagrange_basis_val_2D(host_view_type_2D quad_pts,
 	}
 }
 
-
+inline
 void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_3D basis_ref_grad) {
@@ -142,7 +183,7 @@ void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts,
 	}
 }
 
-
+inline
 void get_lagrange_basis_val_3D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_2D basis_val) {
@@ -176,7 +217,7 @@ void get_lagrange_basis_val_3D(host_view_type_2D quad_pts,
 	}
 }
 
-
+inline
 void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts, 
 	host_view_type_1D xnodes,
 	int p, host_view_type_3D basis_ref_grad) {
@@ -224,7 +265,7 @@ void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts,
 	}
 }
 
-
+inline
 void get_legendre_basis_val_1D(const rtype &x, const int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi) {
     if(p >= 0) {
@@ -260,7 +301,7 @@ void get_legendre_basis_val_1D(const rtype &x, const int p,
 
 }
 
-
+inline
 void get_legendre_basis_grad_1D(const rtype &x, const int p, 
 	Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi) {
     if(p >= 0) {
@@ -295,7 +336,7 @@ void get_legendre_basis_grad_1D(const rtype &x, const int p,
     }
 }
 
-
+inline
 void get_legendre_basis_val_2D(host_view_type_2D quad_pts, 
 		const int p, host_view_type_2D basis_val){
 	// get shape of basis_val
@@ -321,6 +362,7 @@ void get_legendre_basis_val_2D(host_view_type_2D quad_pts,
 	}
 }
 
+inline
 void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
 		const int p, host_view_type_3D basis_ref_grad){
 	// get shape of basis_ref_grad
@@ -355,7 +397,7 @@ void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
 	}
 }
 
-
+inline
 void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
 	const int p, host_view_type_2D basis_val){
 	// get shape of basis_val
@@ -388,7 +430,7 @@ void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
 
 }
 
-
+inline
 void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
 	const int p, host_view_type_3D basis_ref_grad){
 	// get shape of basis_ref_grad

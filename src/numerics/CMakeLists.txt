@@ -1,7 +1,6 @@
 add_library(numerics STATIC
     numerics_data.cpp
     nodes.cpp
-    basis/tools.cpp
     basis/basis.cpp
     basis/shape.cpp
     quadrature/tools.cpp
@@ -9,6 +8,7 @@ add_library(numerics STATIC
     quadrature/quadrilateral.cpp
     quadrature/hexahedron.cpp
     )
+
 
 # target_include_directories(numerics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/basis")
 
