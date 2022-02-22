@@ -35,6 +35,6 @@ void MeshTestSuite::test_1() {
     auto mesh = Mesh(toml_input, network, gbasis, mesh_file_name);
     // Create writer
     auto writer = Writer(mesh);
-    // Finalize mesh
+    // Cleanup
     mesh.finalize();
 };

@@ -18,10 +18,10 @@ struct VolumeHelperFunctor {
 	KOKKOS_INLINE_FUNCTION
     void operator()(const member_type& member) const;
 
- 	void get_quadrature(Basis::Basis basis, 
+ 	void get_quadrature(Basis::Basis basis,
  		const int order);
 
- 	void get_reference_data(Basis::Basis basis, 
+ 	void get_reference_data(Basis::Basis basis,
         Basis::Basis gbasis,
  		const int order);
 
@@ -39,13 +39,13 @@ struct VolumeHelperFunctor {
     view_type_3D basis_ref_grad;
 
     host_view_type_2D h_basis_val;
-    host_view_type_3D h_basis_ref_grad;  
+    host_view_type_3D h_basis_ref_grad;
 
     view_type_2D gbasis_val;
     view_type_3D gbasis_ref_grad;
 
     host_view_type_2D h_gbasis_val;
-    host_view_type_3D h_gbasis_ref_grad;    
+    host_view_type_3D h_gbasis_ref_grad;
 
     view_type_4D jac_elems;
     view_type_2D djac_elems;

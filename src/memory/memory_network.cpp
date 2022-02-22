@@ -66,9 +66,11 @@ inline void MemoryNetwork::communicate_face_solution(
         for (unsigned i = 0; i <
                 mesh.num_faces_per_rank_boundary(neighbor_rank_idx); i++) {
             // Get local face ID of this ghost face
-            auto idx = mesh.global_to_local_iface_IDs.find(
-                    mesh.ghost_faces[neighbor_rank_idx][i]);
-            auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
+            // TODO
+            //auto idx = mesh.global_to_local_iface_IDs.find(
+            //        mesh.ghost_faces[neighbor_rank_idx][i]);
+            //auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
+            unsigned local_face_ID = 0;
             // Is this rank on the left side?
             bool is_left = mesh.interior_faces(local_face_ID, 0)
                     == rank;
@@ -115,9 +117,11 @@ inline void MemoryNetwork::communicate_face_solution(
         for (unsigned i = 0; i <
                 mesh.num_faces_per_rank_boundary(neighbor_rank_idx); i++) {
             // Get local face ID of this ghost face
-            auto idx = mesh.global_to_local_iface_IDs.find(
-                    mesh.ghost_faces[neighbor_rank_idx][i]);
-            auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
+            // TODO
+            //auto idx = mesh.global_to_local_iface_IDs.find(
+            //        mesh.ghost_faces[neighbor_rank_idx][i]);
+            //auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
+            unsigned local_face_ID = 0;
             // Is this rank on the left side?
             bool is_left = mesh.interior_faces(local_face_ID, 0)
                     == rank;

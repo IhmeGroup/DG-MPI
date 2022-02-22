@@ -28,7 +28,7 @@ static const string DSET_ELEM_TO_NODES("Elem2Nodes");
 static const string DSET_IFACE_DATA("IFaceData");
 
 Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
-        Basis::Basis& basis, string mesh_file_name) : network{network},
+        Basis::Basis& gbasis, string mesh_file_name) : network{network},
         gbasis{gbasis} {
     auto mesh_info = toml::find(input_info, "Mesh");
     // If the mesh file name is not specified, then read it from the input file
@@ -394,9 +394,9 @@ void Mesh::partition() {
     Kokkos::resize(interior_faces, num_ifaces_part, 8);
     Kokkos::resize(neighbor_ranks, num_neighbor_ranks);
     Kokkos::resize(num_faces_per_rank_boundary, num_neighbor_ranks);
-    global_to_local_elem_IDs.rehash(num_elems_part);
-    global_to_local_node_IDs.rehash(num_nodes_part);
-    global_to_local_iface_IDs.rehash(num_ifaces_part);
+    //global_to_local_elem_IDs.rehash(num_elems_part);
+    //global_to_local_node_IDs.rehash(num_nodes_part);
+    //global_to_local_iface_IDs.rehash(num_ifaces_part);
     // Create host mirrors from these views
     h_local_to_global_elem_IDs = Kokkos::create_mirror_view(local_to_global_elem_IDs);
     h_local_to_global_node_IDs = Kokkos::create_mirror_view(local_to_global_node_IDs);
@@ -406,9 +406,9 @@ void Mesh::partition() {
     h_interior_faces = Kokkos::create_mirror_view(interior_faces);
     h_neighbor_ranks = Kokkos::create_mirror_view(neighbor_ranks);
     h_num_faces_per_rank_boundary = Kokkos::create_mirror_view(num_faces_per_rank_boundary);
-    h_global_to_local_elem_IDs.rehash(num_elems_part);
-    h_global_to_local_node_IDs.rehash(num_nodes_part);
-    h_global_to_local_iface_IDs.rehash(num_ifaces_part);
+    //h_global_to_local_elem_IDs.rehash(num_elems_part);
+    //h_global_to_local_node_IDs.rehash(num_nodes_part);
+    //h_global_to_local_iface_IDs.rehash(num_ifaces_part);
 
     // Set neighbor ranks
     unsigned counter = 0;
@@ -424,7 +424,7 @@ void Mesh::partition() {
         if (network.rank == rank) {
             // Mapping from local to global, and back
             h_local_to_global_elem_IDs(counter) = i;
-            h_global_to_local_elem_IDs.insert(i, counter);
+            //h_global_to_local_elem_IDs.insert(i, counter);
             // Node IDs of each element on this partition
             for (unsigned j = 0; j < num_nodes_per_elem; j++) {
                 h_elem_to_node_IDs(counter, j) = eind[i * num_nodes_per_elem + j];
@@ -440,7 +440,7 @@ void Mesh::partition() {
         if (network.rank == rank) {
             // Mapping from local to global, and back
             h_local_to_global_node_IDs(counter) = i;
-            h_global_to_local_node_IDs.insert(i, counter);
+            //h_global_to_local_node_IDs.insert(i, counter);
             // Node coordinates of each node on this partition
             for (unsigned j = 0; j < dim; j++) {
                 h_node_coords(counter, j) = coord[i][j];
@@ -459,7 +459,7 @@ void Mesh::partition() {
         if (network.rank == left_rank or network.rank == right_rank) {
             // Mapping from local to global, and back
             h_local_to_global_iface_IDs(counter) = i;
-            h_global_to_local_iface_IDs.insert(i, counter);
+            //h_global_to_local_iface_IDs.insert(i, counter);
             // Set rank on left and right
             h_interior_faces(counter, 0) = left_rank;
             h_interior_faces(counter, 4) = right_rank;
@@ -483,10 +483,14 @@ void Mesh::partition() {
         auto global_face_ID = ghost_faces_vector[i];
 
         // Check if this ghost face exists on this partition
-        int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        // TODO
+        //int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        unsigned local_face_index=0;
         if (local_face_index != -1) {
             // Get local face ID
-            auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
+            // TODO
+            //auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
+            unsigned face_ID = 0;
             // Get left and right rank
             auto rank_L = h_interior_faces(face_ID, 0);
             auto rank_R = h_interior_faces(face_ID, 4);
@@ -534,10 +538,14 @@ void Mesh::partition() {
         auto global_face_ID = ghost_faces_vector[i];
 
         // Check if this ghost face exists on this partition
-        int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        // TODO
+        //int local_face_index = h_global_to_local_iface_IDs.find(global_face_ID);
+        unsigned local_face_index=0;
         if (local_face_index != -1) {
             // Get local face ID
-            auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
+            // TODO
+            //auto face_ID = h_global_to_local_iface_IDs.value_at(local_face_index);
+            unsigned face_ID = 0;
             // Get left and right rank
             auto rank_L = h_interior_faces(face_ID, 0);
             auto rank_R = h_interior_faces(face_ID, 4);

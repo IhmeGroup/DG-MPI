@@ -12,10 +12,8 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
     // Kokkos::resize(Uc, mesh.num_elems_part, 2, 2);
     // Kokkos::resize(U_face, mesh.num_ifaces_part, 2, 2);
 
-    order = toml::find<int>(input_file, "Numerics", "order");    
+    order = toml::find<int>(input_file, "Numerics", "order");
     basis = Basis::Basis(params.basis, order);
-    mesh.gbasis = Basis::Basis(params.gbasis, params.gorder);
-
 }
 
 

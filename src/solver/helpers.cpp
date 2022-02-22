@@ -15,20 +15,20 @@ void VolumeHelperFunctor::operator()(const member_type& member) const {
     // Fetch the index of the calling team within the league
     const int elem_ID = member.league_rank();
 
-    // get the determinant of the geometry jacobian and the inverse of 
+    // get the determinant of the geometry jacobian and the inverse of
     // the jacobian for each element and store it on the device
     BasisTools::get_element_jacobian(mesh, elem_ID, quad_pts, gbasis_ref_grad,
         Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()), 
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()), member, elem_coords);
 
     // get the physical location of the quadrature points
-    MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val, 
+    MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val,
         Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
         elem_coords);
-        
+
 
 
 }
@@ -53,7 +53,7 @@ void VolumeHelperFunctor::get_quadrature(
     int NDIMS = basis.shape.get_NDIMS();
     int qorder = basis.shape.get_quadrature_order(order);
     int nq_1d; int nq;
-    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS, 
+    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
 
     // need to establish an initial size for views prior
@@ -72,9 +72,7 @@ void VolumeHelperFunctor::get_quadrature(
 }
 
 void VolumeHelperFunctor::get_reference_data(
-    Basis::Basis basis, Basis::Basis gbasis, const int order){
-    
-
+        Basis::Basis basis, Basis::Basis gbasis, const int order){
     // unpack
     int NDIMS = basis.shape.get_NDIMS();
     int nb = basis.shape.get_num_basis_coeff(order);
@@ -92,7 +90,6 @@ void VolumeHelperFunctor::get_reference_data(
 
     Kokkos::deep_copy(basis_val, h_basis_val);
     Kokkos::deep_copy(basis_ref_grad, h_basis_ref_grad);
-
 
     // repeat operations for the geometric basis
     // unpack
