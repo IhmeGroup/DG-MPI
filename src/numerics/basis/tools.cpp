@@ -33,17 +33,16 @@ void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
 
 	// MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords);
 
-	// Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), [&] (const int iq) {
-	// 	auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq,
-	// 		Kokkos::ALL(), Kokkos::ALL());
-	// 	auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
-	// 	auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());
+	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), [&] (const int iq) {
+		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq, 
+			Kokkos::ALL(), Kokkos::ALL());
+		auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
+		auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());
 
-	// 	Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
-	// 	Math::det(jac_iq, djac(iq));
-	// 	Math::invA(jac_iq, ijac_iq);
-
-	// });
+		Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
+		Math::det(jac_iq, djac(iq));
+		Math::invA(jac_iq, ijac_iq);
+	});
 }
 
 inline

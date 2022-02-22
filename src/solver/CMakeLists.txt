@@ -2,7 +2,7 @@ add_library(solver STATIC
     base.cpp )
 
 target_link_libraries(solver
-    PRIVATE Kokkos::kokkoscore
+    PUBLIC Kokkos::kokkoscore
     PRIVATE numerics)
 
 set_target_properties(solver

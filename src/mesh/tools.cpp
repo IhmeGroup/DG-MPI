@@ -20,8 +20,6 @@ namespace MeshTools {
 	void ref_to_phys(Mesh& mesh, const int elem_ID,
 		view_type_2D basis_val, view_type_2D xphys, view_type_2D elem_coords){
 
-		elem_coords_from_elem_ID(mesh, elem_ID, elem_coords);
-
 		Math::cAxB_to_C(1., basis_val, elem_coords, xphys);
 
 	}

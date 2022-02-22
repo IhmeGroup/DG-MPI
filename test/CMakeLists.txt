@@ -58,3 +58,23 @@ target_link_libraries(test_mpi_enabled
 
 # Create the directories for storing data
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test/mpi_enabled_tests/mesh/")
+
+
+
+# --- Sanity Checks ----- #
+
+# name for the executable
+add_executable(
+    test_my_sanity
+)
+
+# add test_<FILENAME>.cpp files that include tests for various features
+list(APPEND SANITY_SOURCES
+    sanity_checks/sanity_check_1.cpp
+)
+
+target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})
+
+target_link_libraries(test_my_sanity
+    PUBLIC Kokkos::kokkoscore
+)
