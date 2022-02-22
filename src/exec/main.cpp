@@ -4,6 +4,7 @@
 #include "mesh/mesh.h"
 #include "utils/utils.h"
 #include "memory/memory_network.h"
+#include "numerics/basis/basis.h"
 #include "numerics/numerics_data.h"
 #include "io/io_params.h"
 #include "solver/base.h"
@@ -31,8 +32,9 @@ int main(int argc, char* argv[]) {
     //auto solfile_params = SolutionFileParams(toml_input);
 
     // Create mesh
-    auto mesh = Mesh(toml_input, network);
-    
+    auto gbasis = Basis::Basis();
+    auto mesh = Mesh(toml_input, network, gbasis);
+
     // Get parameters related to the numerics
     auto numerics_params = Numerics::NumericsParams(toml_input, mesh.order);
 
@@ -42,4 +44,9 @@ int main(int argc, char* argv[]) {
 
     // Precompute Helpers
     solver.precompute_matrix_helpers();
+
+    // Finalize mesh
+    mesh.finalize();
+    // Finalize memory network
+    network.finalize();
 }

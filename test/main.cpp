@@ -9,5 +9,9 @@ int main(int argc, char **argv) {
 
     // Run GoogleTest
     ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    auto result = RUN_ALL_TESTS();
+
+    // Finalize Kokkos
+    Kokkos::finalize();
+    return result;
 }

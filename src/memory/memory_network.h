@@ -18,8 +18,12 @@ the MPI status (the rank, the communicator...) lives here.
 */
 class MemoryNetwork {
     public:
-        MemoryNetwork(int argc, char* argv[]);
-        ~MemoryNetwork();
+        // Constructor. Only pass in argc and argv when initializing MPI and
+        // Kokkos is desired (can only be done once per MPI rank for a single
+        // run of the program, so don't pass argc and argv twice). Otherwise, no
+        // arguments should be supplied.
+        MemoryNetwork(int argc = 0, char* argv[] = nullptr);
+        void finalize();
         // Place an MPI barrier to synchronize ranks.
         void barrier() const;
         // Send the left and right states across partition boundaries.

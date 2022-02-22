@@ -2,17 +2,21 @@
 #include <string>
 #include <Kokkos_Core.hpp>
 #include "common/defines.h"
-#include "memory/memory_network.h"
 #include "mesh/mesh.h"
 
 using std::cout;
 using std::endl;
 using std::string;
 
-
 inline MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
-    // Initialize MPI
-    MPI_Init(&argc, &argv);
+    // If arguments are provided, it is assumed that initializing MPI and Kokkos
+    // should be done. Otherwise, it is skipped.
+    if (argc != 0) {
+        // Initialize MPI
+        MPI_Init(&argc, &argv);
+        // Initialize Kokkos (This needs to be after MPI_Init)
+        Kokkos::initialize(argc, argv);
+    }
     // Default communicator
     comm = MPI_COMM_WORLD;
     // Get the number of processes
@@ -23,12 +27,9 @@ inline MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
     // Print
     cout << "Rank " << rank << " / " << num_ranks << " reporting for duty!"
         << endl;
-
-    // Initialize Kokkos (This needs to be after MPI_Init)
-    Kokkos::initialize(argc, argv);
 }
 
-inline MemoryNetwork::~MemoryNetwork() {
+inline void MemoryNetwork::finalize() {
     // Finalize Kokkos
     Kokkos::finalize();
     // Finalize MPI

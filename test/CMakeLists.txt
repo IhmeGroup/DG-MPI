@@ -38,19 +38,11 @@ include(GoogleTest)
 gtest_discover_tests(test_gtest_all)
 
 # -- MPI-enabled tests -- #
+add_subdirectory(mpi_enabled_tests/mesh)
+add_subdirectory(mpi_enabled_tests/memory)
 
 # Name for the mpi-enabled test executable file
-add_executable(
-    test_mpi_enabled
-)
-
-# add test_<FILENAME>.cpp files that include tests for various features
-list(APPEND MPITEST_SOURCES
-    mpi_enabled_tests/main.cpp
-    mpi_enabled_tests/mesh/test_mesh.cpp
-)
-
-target_sources(test_mpi_enabled PRIVATE ${MPITEST_SOURCES})
+add_executable(test_mpi_enabled mpi_enabled_tests/main.cpp)
 
 # add any directories that contain needed functions
 target_link_libraries(test_mpi_enabled
@@ -58,10 +50,11 @@ target_link_libraries(test_mpi_enabled
         mesh io
 )
 
+target_include_directories(test_mpi_enabled
+    PRIVATE mesh memory)
 target_link_libraries(test_mpi_enabled
     PUBLIC Kokkos::kokkoscore mpi
-    PRIVATE ${HDF5_LIBRARIES})
-target_include_directories(test_mpi_enabled
-    PRIVATE ${HDF5_INCLUDE_DIRS})
+    PRIVATE test_mesh test_memory)
+
 # Create the directories for storing data
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test/mpi_enabled_tests/mesh/")

@@ -56,7 +56,7 @@ if(GPU_BUILD)
     set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/build_gpu/build_externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
 else()
     set(Kokkos_ROOT         "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/kokkos/build/install" CACHE PATH "Kokkos root")
-    set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")    
+    set(KokkosKernels_ROOT  "${CMAKE_SOURCE_DIR}/build_cpu/build_externals/kokkos-kernels/build/install" CACHE PATH "Kokkos-kernels root")
 endif()
 
 # Use the MPI compilers
@@ -100,6 +100,7 @@ endif()
 
 # HDF5
 set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
+
 set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.${so};${HDF5_ROOT}/lib/libhdf5.${so}")
 if(NOT HDF5_LIBRARIES)
     message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")

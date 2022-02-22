@@ -8,10 +8,10 @@
 #include <Kokkos_UnorderedMap.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
-#include "numerics/basis/basis.h"
 
 // Forward declaration
 class MemoryNetwork;
+namespace Basis {class Basis;}
 
 
 /*! \brief Mesh class
@@ -37,8 +37,11 @@ class Mesh {
             the name in the input file.
         */
         Mesh(const toml::value& input_info, const MemoryNetwork& network,
-                std::string mesh_file_name = "");
-        ~Mesh();
+                Basis::Basis& gbasis, std::string mesh_file_name = "");
+        // Cleanup and deallocate data. Cannot be a destructor, since this
+        // should only happen once in program execution, not every time a Mesh
+        // object is destructed.
+        void finalize();
 
         /*! \brief Read the HDF5 mesh file directly
          *
@@ -202,8 +205,8 @@ class Mesh {
         Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
         Kokkos::View<unsigned**>::HostMirror h_interior_faces;
 
-        // geometric basis is a member of the mesh
-        Basis::Basis gbasis;
+        // Geometric basis
+        Basis::Basis& gbasis;
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned
 };

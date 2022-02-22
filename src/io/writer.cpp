@@ -126,3 +126,8 @@ template <>
 H5::PredType Writer::get_hdf5_type<unsigned>() {
     return H5::PredType::NATIVE_UINT;
 }
+
+template <>
+H5::PredType Writer::get_hdf5_type<unsigned*>() {
+    return H5::PredType::NATIVE_UINT;
+}

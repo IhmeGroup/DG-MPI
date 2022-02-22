@@ -28,7 +28,8 @@ static const string DSET_ELEM_TO_NODES("Elem2Nodes");
 static const string DSET_IFACE_DATA("IFaceData");
 
 Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
-        string mesh_file_name) : network{network} {
+        Basis::Basis& basis, string mesh_file_name) : network{network},
+        gbasis{gbasis} {
     auto mesh_info = toml::find(input_info, "Mesh");
     // If the mesh file name is not specified, then read it from the input file
     if (mesh_file_name == "") {
@@ -62,7 +63,7 @@ Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
     }
 }
 
-Mesh::~Mesh() {
+void Mesh::finalize() {
     for (unsigned i = 0; i < num_neighbor_ranks; i++) {
         delete [] ghost_faces[i];
     }
@@ -623,32 +624,6 @@ void Mesh::partition() {
 
 void Mesh::copy_from_host_to_device() {
     // Use deep_copy for Views
-    Kokkos::deep_copy(h_num_faces_per_rank_boundary, num_faces_per_rank_boundary);
-    Kokkos::deep_copy(h_neighbor_ranks,              neighbor_ranks);
-    Kokkos::deep_copy(h_local_to_global_node_IDs,    local_to_global_node_IDs);
-    Kokkos::deep_copy(h_local_to_global_elem_IDs,    local_to_global_elem_IDs);
-    Kokkos::deep_copy(h_local_to_global_iface_IDs,   local_to_global_iface_IDs);
-    Kokkos::deep_copy(h_node_coords,                 node_coords);
-    Kokkos::deep_copy(h_elem_to_node_IDs,            elem_to_node_IDs);
-    Kokkos::deep_copy(h_interior_faces,              interior_faces);
-    // deep_copy CANNOT be used for maps! Unfortunately, trying to do so fails
-    // silently. Instead, the map is manually reconstructed on the device.
-    Kokkos::parallel_for(num_nodes_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
-            auto global_ID = local_to_global_node_IDs(local_ID);
-            global_to_local_node_IDs.insert(global_ID, local_ID);
-    });
-    Kokkos::parallel_for(num_elems_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
-            auto global_ID = local_to_global_elem_IDs(local_ID);
-            global_to_local_elem_IDs.insert(global_ID, local_ID);
-    });
-    Kokkos::parallel_for(num_ifaces_part, [&] KOKKOS_FUNCTION (unsigned local_ID) {
-            auto global_ID = local_to_global_iface_IDs(local_ID);
-            global_to_local_iface_IDs.insert(global_ID, local_ID);
-    });
-}
-
-void Mesh::copy_from_device_to_host() {
-    // Use deep_copy for Views
     Kokkos::deep_copy(num_faces_per_rank_boundary, h_num_faces_per_rank_boundary);
     Kokkos::deep_copy(neighbor_ranks,              h_neighbor_ranks);
     Kokkos::deep_copy(local_to_global_node_IDs,    h_local_to_global_node_IDs);
@@ -657,6 +632,34 @@ void Mesh::copy_from_device_to_host() {
     Kokkos::deep_copy(node_coords,                 h_node_coords);
     Kokkos::deep_copy(elem_to_node_IDs,            h_elem_to_node_IDs);
     Kokkos::deep_copy(interior_faces,              h_interior_faces);
+    // deep_copy CANNOT be used for maps! Unfortunately, trying to do so fails
+    // silently. Instead, the map is manually reconstructed on the device.
+    Kokkos::parallel_for(num_nodes_part, KOKKOS_LAMBDA (unsigned local_ID) {
+            //auto global_ID = local_to_global_node_IDs(local_ID);
+            //global_to_local_node_IDs.insert(global_ID, local_ID);
+            //global_to_local_node_IDs.insert(3, 2);
+            //printf("CAP %u\n", global_to_local_node_IDs.capacity());
+    });
+    //Kokkos::parallel_for(num_elems_part, KOKKOS_LAMBDA (unsigned local_ID) {
+    //        auto global_ID = local_to_global_elem_IDs(local_ID);
+    //        global_to_local_elem_IDs.insert(global_ID, local_ID);
+    //});
+    //Kokkos::parallel_for(num_ifaces_part, KOKKOS_LAMBDA (unsigned local_ID) {
+    //        auto global_ID = local_to_global_iface_IDs(local_ID);
+    //        global_to_local_iface_IDs.insert(global_ID, local_ID);
+    //});
+}
+
+void Mesh::copy_from_device_to_host() {
+    // Use deep_copy for Views
+    Kokkos::deep_copy(h_num_faces_per_rank_boundary, num_faces_per_rank_boundary);
+    Kokkos::deep_copy(h_neighbor_ranks,              neighbor_ranks);
+    Kokkos::deep_copy(h_local_to_global_node_IDs,    local_to_global_node_IDs);
+    Kokkos::deep_copy(h_local_to_global_elem_IDs,    local_to_global_elem_IDs);
+    Kokkos::deep_copy(h_local_to_global_iface_IDs,   local_to_global_iface_IDs);
+    Kokkos::deep_copy(h_node_coords,                 node_coords);
+    Kokkos::deep_copy(h_elem_to_node_IDs,            elem_to_node_IDs);
+    Kokkos::deep_copy(h_interior_faces,              interior_faces);
     // NOTE: The maps are not copied from device to host. This is mainly because
     // it is not needed.
 }

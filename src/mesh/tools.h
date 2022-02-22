@@ -13,11 +13,11 @@ namespace MeshTools {
 		view_type_2D elem_coords);
 
 	KOKKOS_INLINE_FUNCTION
-	void ref_to_phys(Mesh& mesh, const int elem_ID, 
+	void ref_to_phys(Mesh& mesh, const int elem_ID,
 		view_type_2D basis_val, view_type_2D xphys, view_type_2D elem_coords);
 
 	KOKKOS_INLINE_FUNCTION
-	void get_element_volume(Mesh& mesh, const int elem_ID, 
+	void get_element_volume(Mesh& mesh, const int elem_ID,
 		view_type_1D quad_wts, view_type_1D djac, rtype& vol,
 		const member_type& member);
 
