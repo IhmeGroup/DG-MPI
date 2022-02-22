@@ -44,13 +44,8 @@ void MemoryTestSuite::test_1() {
 
     // Left and right states of all local interior faces
     int nq = 2;
-    //Kokkos::View<double***> UqL("UqL", mesh.num_ifaces_part, nq, ns);
-    //Kokkos::View<double***> UqR("UqR", mesh.num_ifaces_part, nq, ns);
-    Kokkos::View<double*> UqL;
-    Kokkos::resize(UqL, 5);
-    printf("fdjska;\n");
-    Kokkos::View<double*> UqR;
-    Kokkos::resize(UqR, 5);
+    Kokkos::View<double***> UqL("UqL", mesh.num_ifaces_part, nq, ns);
+    Kokkos::View<double***> UqR("UqR", mesh.num_ifaces_part, nq, ns);
 
     // Reminder: the interior faces are stored as shape
     // [num_ifaces_part, 8], where the 8 pieces of data are:
@@ -70,9 +65,9 @@ void MemoryTestSuite::test_1() {
                         for (int k = 0; k < ns; k++) {
                             // Set the state
                             if (rank_idx == 0) {
-                                //UqL(i, j, k) = 5;//UqL_i[k];
+                                UqL(i, j, k) = UqL_i[k];
                             } else {
-                                //UqR(i, j, k) = 4;//UqR_i[k];
+                                UqR(i, j, k) = UqR_i[k];
                             }
                         }
                     }
@@ -81,8 +76,11 @@ void MemoryTestSuite::test_1() {
     });
 
     // Perform communication across faces
-    //network.communicate_face_solution(UqL, UqR, mesh);
+    network.communicate_face_solution(UqL, UqR, mesh);
 
     //network.print_view(UqL);
     //network.print_view(UqR);
+
+    // Cleanup
+    mesh.finalize();
 }

@@ -160,9 +160,9 @@ class Mesh {
         Kokkos::View<unsigned*> local_to_global_iface_IDs;
         // Maps that set a mapping from global to local node IDs, element IDs,
         // and interior face IDs
-        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_node_IDs;
-        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_elem_IDs;
-        Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_iface_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_node_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_elem_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_iface_IDs;
         // Jagged array containing the global face IDs of the ghost faces. The
         // first index represents the neighboring rank index, and the second
         // index represents the ghost face index in that neighboring rank.
@@ -198,9 +198,9 @@ class Mesh {
         Kokkos::View<unsigned*>::HostMirror h_local_to_global_node_IDs;
         Kokkos::View<unsigned*>::HostMirror h_local_to_global_elem_IDs;
         Kokkos::View<unsigned*>::HostMirror h_local_to_global_iface_IDs;
-        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_node_IDs;
-        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_elem_IDs;
-        Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_iface_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_node_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_elem_IDs;
+        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_iface_IDs;
         Kokkos::View<rtype**>::HostMirror h_node_coords;
         Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
         Kokkos::View<unsigned**>::HostMirror h_interior_faces;

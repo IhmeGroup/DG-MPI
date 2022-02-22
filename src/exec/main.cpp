@@ -11,6 +11,10 @@
 
 using std::cout, std::endl, std::string;
 
+// Forward declaration
+int main(int argc, char* argv[]);
+void run_solver(toml::value& toml_input, MemoryNetwork& network);
+
 
 int main(int argc, char* argv[]) {
     // Initialize memory network
@@ -28,16 +32,21 @@ int main(int argc, char* argv[]) {
     const int dim = toml::find<int>(toml_input, "Physics", "dim");
     //cout << toml_input.report() << endl;
 
+    // Run solver
+    run_solver(toml_input, network);
 
-    //auto solfile_params = SolutionFileParams(toml_input);
+    // Finalize memory network
+    network.finalize();
+}
 
-    // Create mesh
-    auto gbasis = Basis::Basis();
-    auto mesh = Mesh(toml_input, network, gbasis);
-
+void run_solver(toml::value& toml_input, MemoryNetwork& network) {
+    // TODO
+    int order = 1;
     // Get parameters related to the numerics
-    auto numerics_params = Numerics::NumericsParams(toml_input, mesh.order);
-
+    auto numerics_params = Numerics::NumericsParams(toml_input, order);
+    // Create mesh
+    auto gbasis = Basis::Basis(numerics_params.gbasis, order);
+    auto mesh = Mesh(toml_input, network, gbasis);
 
     // Create solver
     auto solver = Solver(toml_input, mesh, network, numerics_params);
@@ -47,6 +56,4 @@ int main(int argc, char* argv[]) {
 
     // Finalize mesh
     mesh.finalize();
-    // Finalize memory network
-    network.finalize();
 }
