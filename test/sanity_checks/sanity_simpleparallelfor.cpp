@@ -15,12 +15,12 @@ int main(int argc, char* argv[]) {
 
       printf("TEST 2D VIEW\n");
 
-      printf("testing(%u, %u)\n", testing.extent(0), testing.extent(1));
+      printf("testing(%lu, %lu)\n", testing.extent(0), testing.extent(1));
       printf("testing(8, %u)\n", testing.extent(1));
 
 
       printf("TEST 3D VIEW\n");
-      printf("testing(%u, %u, %u)\n", testing.extent(0), testing.extent(1),
+      printf("testing(%lu, %lu, %lu)\n", testing.extent(0), testing.extent(1),
           testing.extent(2));
       printf("testing(%u, 2, 5)\n", testing.extent(0));
       printf("testing(8, %u, 5)\n", testing.extent(1));
