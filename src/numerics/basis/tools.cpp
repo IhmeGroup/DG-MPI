@@ -24,18 +24,15 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 	}
 }
 
-KOKKOS_INLINE_FUNCTION
-void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
-	view_type_3D basis_ref_grad, view_type_3D jac, view_type_1D djac,
-	view_type_3D ijac, const member_type& member){
+
+template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
+void get_element_jacobian(view_type_2D quad_pts,
+	view_type_3D basis_ref_grad, ViewType3D jac, ViewType1D djac,
+	ViewType3D ijac, ViewType2D elem_coords, 
+	const member_type& member){
 
 	const int nq = ijac.extent(0);
-    
-    view_type_2D elem_coords("elem_coords", mesh.num_nodes_per_elem, mesh.dim);
-
-	MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords);
-
-	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), [&] (const int iq) {
+	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), KOKKOS_LAMBDA (const int iq) {
 		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq, 
 			Kokkos::ALL(), Kokkos::ALL());
 		auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
@@ -44,8 +41,10 @@ void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
 		Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
 		Math::det(jac_iq, djac(iq));
 		Math::invA(jac_iq, ijac_iq);
+
 	});
 }
+
 
 inline
 void get_lagrange_basis_val_1D(const rtype &x,

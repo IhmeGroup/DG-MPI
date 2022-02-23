@@ -39,10 +39,11 @@ Outputs:
 	djac: determinant of the jacobian [nq]
 	ijac: inverse of the jacobian [nq, ndims, ndims]
 */
-KOKKOS_INLINE_FUNCTION
-void get_element_jacobian(Mesh& mesh, const int elem_ID, view_type_2D quad_pts,
-	view_type_3D basis_ref_grad, view_type_3D jac, view_type_1D djac,
-	view_type_3D ijac, const member_type& member);
+template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
+void get_element_jacobian(view_type_2D quad_pts,
+	view_type_3D basis_ref_grad, ViewType3D jac, ViewType1D djac,
+	ViewType3D ijac, ViewType2D elem_coords, 
+	const member_type& member);
 
 
 /*
