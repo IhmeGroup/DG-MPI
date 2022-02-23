@@ -22,10 +22,7 @@ void VolumeHelperFunctor::operator()(const member_type& member) const {
 
     if (member.team_rank() == 0 ) {
         MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
-        printf("elem_coords_x:%i\n", elem_coords.extent(0));
-        printf("elem_coords_y:%i\n", elem_coords.extent(1));
     }
-
     member.team_barrier();
 
     // get the determinant of the geometry jacobian and the inverse of
@@ -38,9 +35,14 @@ void VolumeHelperFunctor::operator()(const member_type& member) const {
         Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
 
     // get the physical location of the quadrature points
-    // MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val, 
-    //     Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
-    //     elem_coords, member);
+    MeshTools::ref_to_phys(gbasis_val, 
+        Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
+        elem_coords, member);
+
+    // get the volume of each element
+    MeshTools::get_element_volume(quad_wts,
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+        vol_elems(elem_ID), member);
 
 }
 
@@ -54,6 +56,7 @@ void VolumeHelperFunctor::allocate_views(Mesh& mesh, const int num_elems){
     Kokkos::resize(djac_elems, num_elems, nq);
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(x_elems, num_elems, nq, ndims);
+    Kokkos::resize(vol_elems, num_elems);
 }
 
 void VolumeHelperFunctor::get_quadrature(
