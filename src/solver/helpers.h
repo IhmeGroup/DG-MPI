@@ -53,8 +53,6 @@ struct VolumeHelperFunctor {
 
     view_type_3D x_elems;
     view_type_1D vol_elems;
-
-    view_type_2D elem_coords;
 };
 
 

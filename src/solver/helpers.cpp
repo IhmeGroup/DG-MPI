@@ -20,16 +20,13 @@ void VolumeHelperFunctor::operator()(const member_type& member) const {
     BasisTools::get_element_jacobian(mesh, elem_ID, quad_pts, gbasis_ref_grad,
         Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
-        Kokkos::ALL(), Kokkos::ALL()), member, elem_coords);
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()), 
+        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
+        Kokkos::ALL(), Kokkos::ALL()), member);
 
     // get the physical location of the quadrature points
-    MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val,
-        Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
-        elem_coords);
-
-
+    MeshTools::ref_to_phys(mesh, elem_ID, gbasis_val, 
+        Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()));
 
 }
 
@@ -43,7 +40,6 @@ void VolumeHelperFunctor::allocate_views(Mesh& mesh, const int num_elems){
     Kokkos::resize(djac_elems, num_elems, nq);
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(x_elems, num_elems, nq, ndims);
-    Kokkos::resize(elem_coords, mesh.num_nodes_per_elem, mesh.dim);
 }
 
 void VolumeHelperFunctor::get_quadrature(

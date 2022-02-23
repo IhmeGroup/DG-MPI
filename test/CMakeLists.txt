@@ -70,7 +70,9 @@ add_executable(
 
 # add test_<FILENAME>.cpp files that include tests for various features
 list(APPEND SANITY_SOURCES
-    sanity_checks/sanity_check_1.cpp
+    # sanity_checks/sanity_check_1.cpp
+    # sanity_checks/sanity_scratchspace.cpp
+    sanity_checks/sanity_simpleparallelfor.cpp
 )
 
 target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})

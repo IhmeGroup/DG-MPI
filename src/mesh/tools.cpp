@@ -18,10 +18,13 @@ namespace MeshTools {
 
 	KOKKOS_INLINE_FUNCTION
 	void ref_to_phys(Mesh& mesh, const int elem_ID,
-		view_type_2D basis_val, view_type_2D xphys, view_type_2D elem_coords){
+		view_type_2D basis_val, view_type_2D xphys){
+
+	    view_type_2D elem_coords("elem_coords", mesh.num_nodes_per_elem, mesh.dim);
+		MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords);
 
 		Math::cAxB_to_C(1., basis_val, elem_coords, xphys);
-
+		printf("xphys: %f\n", xphys(1, 1));
 	}
 
 	KOKKOS_INLINE_FUNCTION
