@@ -29,15 +29,15 @@ namespace Math {
 			::invoke(c, A, B, 0., C);
 	}
 
-	template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
-	void cATxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType2& C){
+	template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
+	void cATxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C){
 
 		SerialGemm<Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
 			::invoke(c, A, B, 0., C);
 	}
 
-	template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
-	void cAxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType2& C){
+	template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
+	void cAxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C){
 
 		SerialGemm<Trans::NoTranspose, Trans::NoTranspose, Algo::Gemm::Unblocked>
 			::invoke(c, A, B, 0., C);
