@@ -13,7 +13,7 @@ namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
 
-	VolumeHelperFunctor(Mesh& mesh, Basis::Basis basis);
+	VolumeHelperFunctor(Mesh mesh, Basis::Basis basis);
 
 	KOKKOS_INLINE_FUNCTION
     void operator()(const member_type& member) const;
@@ -27,7 +27,7 @@ struct VolumeHelperFunctor {
 
     void allocate_views(Mesh& mesh, const int num_elems);
 
-    Mesh& mesh;
+    Mesh mesh;
 
     view_type_2D quad_pts;
     view_type_1D quad_wts;
