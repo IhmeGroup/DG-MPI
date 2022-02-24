@@ -10,6 +10,18 @@ namespace Math {
         }
     }
 
+    template<typename ScalarType, typename ViewType> KOKKOS_INLINE_FUNCTION
+    void cA_to_A(const ScalarType c, ViewType A){
+        SerialScale::invoke(c, A);
+    }
+
+
+    template<typename MemberType, typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
+    void team_copy_A_to_B(const ViewType1& A, ViewType2& B, const MemberType& member){
+        TeamCopy<MemberType, Trans::NoTranspose>::invoke(member, A, B);
+    }
+
+
     template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
     void invA(const ViewType1 mat, ViewType2 imat){
 
@@ -20,6 +32,18 @@ namespace Math {
         SerialLU<Algo::Level3::Unblocked>::invoke(mat);
         SerialSolveLU<Trans::NoTranspose, Algo::Level3::Unblocked>
             ::invoke(mat, imat);
+    }
+
+    template<typename MemberType, typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
+    void team_invA(const ViewType1 mat, ViewType2 imat, const MemberType& member){
+
+        assert(mat.extent(0) == mat.extent(1));
+        assert(imat.extent(0) == imat.extent(1));
+        // need to make imat identity prior to solve
+        identity(imat);
+        TeamLU<MemberType, Algo::Level3::Unblocked>::invoke(member, mat);
+        TeamSolveLU<MemberType, Trans::NoTranspose, Algo::Level3::Unblocked>
+            ::invoke(member, mat, imat);
     }
 
     template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
@@ -34,6 +58,13 @@ namespace Math {
 
         SerialGemm<Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
             ::invoke(c, A, B, 0., C);
+    }
+
+    template<typename MemberType, typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
+    void team_cATxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C, const MemberType& member){
+
+        TeamGemm<MemberType, Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
+            ::invoke(member, c, A, B, 0., C);
     }
 
     template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
