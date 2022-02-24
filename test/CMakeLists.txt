@@ -89,7 +89,8 @@ list(APPEND SANITY_SOURCES
     # sanity_checks/sanity_check_1.cpp
     # sanity_checks/sanity_scratchspace.cpp
     # sanity_checks/sanity_simpleparallelfor.cpp
-    sanity_checks/sanity_multiple_operators.cpp
+    # sanity_checks/sanity_multiple_operators.cpp
+    sanity_checks/sanity_mult_view_by_constant.cpp
 )
 
 target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})
