@@ -47,10 +47,45 @@ void get_element_jacobian(view_type_2D quad_pts,
 
 template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
 void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
-    ViewType1D djac, ViewType2D iMM){
+    ViewType1D djac, ViewType2D iMM, const member_type& member){
 
-    printf("calc iMM here");
+	const int nq = djac.extent(0);
+    const int nb = basis_val.extent(1);
 
+    scratch_view_2D_rtype MM(member.team_scratch( 1 ), nb, nb);
+    scratch_view_2D_rtype scratch_basis_val(member.team_scratch( 1 ), nq, nb);
+
+    // printf("MM_shape:%i, %i", MM.extent(0), MM.extent(1));
+    Math::team_copy_A_to_B(basis_val, scratch_basis_val, member);
+
+    member.team_barrier();
+
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), KOKKOS_LAMBDA ( const int iq){
+        auto scratch_basis_val_iq = Kokkos::subview(scratch_basis_val, iq, Kokkos::ALL());
+        Math::cA_to_A(quad_wts(iq) * djac(iq), scratch_basis_val_iq);
+    });
+
+    member.team_barrier();
+    
+    Math::team_cATxB_to_C(1., basis_val, scratch_basis_val, MM, member);
+
+    member.team_barrier();
+
+        for (int i = 0; i < MM.extent(0); i++){
+        for (int j=0; j< MM.extent(1); j++){
+            printf("MM(%i, %i)=%f\n", i, j, MM(i, j));
+        }
+    }
+
+    Math::team_invA(MM, iMM, member);
+
+    member.team_barrier();
+
+        for (int i = 0; i < MM.extent(0); i++){
+        for (int j=0; j< MM.extent(1); j++){
+            printf("iMM(%i, %i)=%f\n", i, j, iMM(i, j));
+        }
+    }
 }
 
 
