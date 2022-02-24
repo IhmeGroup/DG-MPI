@@ -85,7 +85,8 @@ public:
 	Basis() = default;
 	~Basis() = default;
 
-	inline int get_order(){return order;}
+	inline int get_order() const {return order;}
+
 	inline std::string get_name(){return name;}
 	inline int get_num_basis_coeffs(){return nb;}
 

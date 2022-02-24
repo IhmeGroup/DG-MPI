@@ -24,9 +24,21 @@ void Solver::precompute_matrix_helpers() {
 
     // set scratch memory size for volume helpers
     int scratch_size = scratch_view_2D_rtype::shmem_size(mesh.num_nodes_per_elem, mesh.dim);
-
-    Kokkos::parallel_for("volume helpers", team_policy( mesh.num_elems_part, 
-            Kokkos::AUTO ).set_scratch_size( 0,
-            Kokkos::PerThread( scratch_size )), functor);
+    functor.compute_inv_mass_matrices(scratch_size);
+    Kokkos::fence();
+    
+    functor.compute_volume_helpers(scratch_size);
+    Kokkos::fence();
+    // Kokkos::View<rtype**> h_xphys("xphys", mesh.num_elems_part, functor.quad_pts.extent(0), mesh.dim);
+    
+    host_view_type_3D h_xphys = Kokkos::create_mirror_view(functor.x_elems);
+    Kokkos::deep_copy(h_xphys, functor.x_elems);
+    for (int k = 0; k < h_xphys.extent(0); k++){
+    for (int i = 0; i < h_xphys.extent(1); i++){
+        for (int j=0; j< h_xphys.extent(2); j++){
+            printf("xphys(%i, %i, %i)=%f\n", k, i, j, h_xphys(k, i, j));
+        }
+    }
+}
 
 }

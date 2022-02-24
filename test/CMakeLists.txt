@@ -72,7 +72,8 @@ add_executable(
 list(APPEND SANITY_SOURCES
     # sanity_checks/sanity_check_1.cpp
     # sanity_checks/sanity_scratchspace.cpp
-    sanity_checks/sanity_simpleparallelfor.cpp
+    # sanity_checks/sanity_simpleparallelfor.cpp
+    sanity_checks/sanity_multiple_operators.cpp
 )
 
 target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})

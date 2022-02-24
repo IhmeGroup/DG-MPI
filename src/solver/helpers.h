@@ -12,11 +12,20 @@
 namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
+    class VolumeHelperTag {};
+    class iMMHelperTag {};
 
 	VolumeHelperFunctor(Mesh mesh, Basis::Basis basis);
 
+    void compute_volume_helpers(int scratch_size);
+
+    void compute_inv_mass_matrices(int scratch_size);
+
 	KOKKOS_INLINE_FUNCTION
-    void operator()(const member_type& member) const;
+    void operator()(VolumeHelperTag, const member_type& member) const;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(iMMHelperTag, const member_type& member) const;
 
  	void get_quadrature(Basis::Basis basis,
  		const int order);
@@ -28,6 +37,7 @@ struct VolumeHelperFunctor {
     void allocate_views(Mesh& mesh, const int num_elems);
 
     Mesh mesh;
+    Basis::Basis basis;
 
     view_type_2D quad_pts;
     view_type_1D quad_wts;
@@ -53,8 +63,9 @@ struct VolumeHelperFunctor {
 
     view_type_3D x_elems;
     view_type_1D vol_elems;
-};
 
+    view_type_3D iMM_elems;
+};
 
 } // end namespace VolumeHelper
 

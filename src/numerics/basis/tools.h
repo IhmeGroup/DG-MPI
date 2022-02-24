@@ -46,6 +46,12 @@ void get_element_jacobian(view_type_2D quad_pts,
 	const member_type& member);
 
 
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
+	ViewType1D djac, ViewType2D iMM);
+
+	
+
 /*
 Calculates the 1D Lagrange basis value
 

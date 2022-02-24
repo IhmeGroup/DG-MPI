@@ -7,7 +7,7 @@ namespace BasisTools {
 
 inline
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
-	host_view_type_1D &xnodes) {
+	host_view_type_1D& xnodes) {
 
 	if (nnodes <= 1){
 		xnodes(0) = 0.;
@@ -44,6 +44,15 @@ void get_element_jacobian(view_type_2D quad_pts,
 
 	});
 }
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
+	ViewType1D djac, ViewType2D iMM){
+
+	printf("calc iMM here");
+
+}
+
 
 
 inline
