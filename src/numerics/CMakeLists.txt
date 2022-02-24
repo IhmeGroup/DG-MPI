@@ -9,8 +9,10 @@ add_library(numerics STATIC
     quadrature/hexahedron.cpp
     )
 
-
-# target_include_directories(numerics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/basis")
+target_include_directories(numerics
+    PRIVATE ${METIS_INCLUDE_DIRS}
+    PRIVATE ${HDF5_INCLUDE_DIRS}
+)
 
 target_link_libraries(numerics PUBLIC Kokkos::kokkoscore
     PUBLIC Kokkos::kokkoskernels)

@@ -1,6 +1,6 @@
 namespace VolumeHelpers {
 
-VolumeHelperFunctor::VolumeHelperFunctor(Mesh mesh, Basis::Basis basis) 
+VolumeHelperFunctor::VolumeHelperFunctor(Mesh mesh, Basis::Basis basis)
     : mesh{mesh}, basis{basis} {}
 
 
@@ -10,7 +10,7 @@ void VolumeHelperFunctor::compute_volume_helpers(int scratch_size){
     get_reference_data(basis, mesh.gbasis, basis.get_order());
     allocate_views(mesh, mesh.num_elems_part);
 
-    Kokkos::parallel_for("volume helpers", Kokkos::TeamPolicy<VolumeHelperTag>( mesh.num_elems_part, 
+    Kokkos::parallel_for("volume helpers", Kokkos::TeamPolicy<VolumeHelperTag>( mesh.num_elems_part,
             Kokkos::AUTO ).set_scratch_size( 0,
             Kokkos::PerThread( scratch_size )), *this);
 }
@@ -30,7 +30,7 @@ void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size){
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(iMM_elems, num_elems, nq, nb);
 
-    Kokkos::parallel_for("iMM helper", Kokkos::TeamPolicy<iMMHelperTag>( mesh.num_elems_part, 
+    Kokkos::parallel_for("iMM helper", Kokkos::TeamPolicy<iMMHelperTag>( mesh.num_elems_part,
             Kokkos::AUTO ).set_scratch_size( 0,
             Kokkos::PerThread( scratch_size )), *this);
 }
@@ -40,8 +40,8 @@ KOKKOS_INLINE_FUNCTION
 void VolumeHelperFunctor::operator()(VolumeHelperTag, const member_type& member) const {
     // Fetch the index of the calling team within the league
     const int elem_ID = member.league_rank();
-    
-    scratch_view_2D_rtype elem_coords(member.team_scratch( 0 ), 
+
+    scratch_view_2D_rtype elem_coords(member.team_scratch( 0 ),
             mesh.num_nodes_per_elem, mesh.dim);
 
 
@@ -53,7 +53,7 @@ void VolumeHelperFunctor::operator()(VolumeHelperTag, const member_type& member)
         // }
         // }
         // get the physical location of the quadrature points
-        MeshTools::ref_to_phys(gbasis_val, 
+        MeshTools::ref_to_phys(gbasis_val,
             Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
             elem_coords, member);
 
@@ -66,8 +66,8 @@ void VolumeHelperFunctor::operator()(VolumeHelperTag, const member_type& member)
     BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
         Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()), 
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
 
     member.team_barrier();
@@ -101,8 +101,8 @@ KOKKOS_INLINE_FUNCTION
 void VolumeHelperFunctor::operator()(iMMHelperTag, const member_type& member) const {
     // Fetch the index of the calling team within the league
     const int elem_ID = member.league_rank();
-    
-    scratch_view_2D_rtype elem_coords(member.team_scratch( 0 ), 
+
+    scratch_view_2D_rtype elem_coords(member.team_scratch( 0 ),
             mesh.num_nodes_per_elem, mesh.dim);
 
 
@@ -117,11 +117,11 @@ void VolumeHelperFunctor::operator()(iMMHelperTag, const member_type& member) co
     BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
         Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()), 
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(), 
+        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
         Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
 
-    BasisTools::get_inv_mass_matrices(quad_wts, basis_val, 
+    BasisTools::get_inv_mass_matrices(quad_wts, basis_val,
         Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
         Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()));
 

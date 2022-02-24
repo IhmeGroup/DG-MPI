@@ -1,8 +1,13 @@
 add_library(test_mesh STATIC test_mesh.cpp)
 target_include_directories(test_mesh
-    PRIVATE ${HDF5_INCLUDE_DIRS})
+    PRIVATE ${METIS_INCLUDE_DIRS}
+    PRIVATE ${HDF5_INCLUDE_DIRS}
+)
 target_link_libraries(test_mesh
-    PRIVATE mesh io ${HDF5_LIBRARIES})
+    PRIVATE io
+    PRIVATE ${METIS_LIBRARIES}
+    PRIVATE ${HDF5_LIBRARIES}
+)
 
 #set_target_properties(mesh
 #    PROPERTIES

@@ -51,7 +51,7 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // Create solver
     auto solver = Solver(toml_input, mesh, network, numerics_params);
 
-    // Precompute Helpers
+    //// Precompute Helpers
     solver.precompute_matrix_helpers();
 
     // Finalize mesh

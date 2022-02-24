@@ -28,7 +28,8 @@ class MemoryNetwork {
         void barrier() const;
         // Send the left and right states across partition boundaries.
         void communicate_face_solution(Kokkos::View<rtype***> UqL,
-                Kokkos::View<rtype***> UqR, Mesh& mesh);
+                Kokkos::View<rtype***> UqR, Kokkos::View<rtype***>* Uq_local,
+                Kokkos::View<rtype***>* Uq_ghost, Mesh mesh);
         template <class T>
         void print(T data) const;
         template <class T>

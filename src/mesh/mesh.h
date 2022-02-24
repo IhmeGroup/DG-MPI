@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <Kokkos_Core.hpp>
-#include <Kokkos_UnorderedMap.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
 
@@ -33,6 +32,7 @@ class Mesh {
         -------
         input_info - TOML input file
         network - memory network object
+        gbasis - geometric basis
         mesh_file_name - optional name of mesh file. If not specified, looks for
             the name in the input file.
         */
@@ -58,18 +58,55 @@ class Mesh {
         // Copy data in device Views to host mirrors.
         void copy_from_device_to_host();
 
+        // Convert a local node ID to a global node ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_global_node_ID(unsigned local_node_ID) const;
+        // Convert a local elem ID to a global elem ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_global_elem_ID(unsigned local_elem_ID) const;
+        // Convert a local iface ID to a global iface ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_global_iface_ID(unsigned local_iface_ID) const;
+        // Convert a global node ID to a local node ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_local_node_ID(unsigned global_node_ID) const;
+        // Convert a global elem ID to a local elem ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_local_elem_ID(unsigned global_elem_ID) const;
+        // Convert a global iface ID to a local iface ID. Uses the device data.
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_local_iface_ID(unsigned global_iface_ID) const;
+
+        // Convert a local node ID to a global node ID. Uses the host data.
+        unsigned h_get_global_node_ID(unsigned local_node_ID) const;
+        // Convert a local elem ID to a global elem ID. Uses the host data.
+        unsigned h_get_global_elem_ID(unsigned local_elem_ID) const;
+        // Convert a local iface ID to a global iface ID. Uses the host data.
+        unsigned h_get_global_iface_ID(unsigned local_iface_ID) const;
+        // Convert a global node ID to a local node ID. Uses the host data.
+        unsigned h_get_local_node_ID(unsigned global_node_ID) const;
+        // Convert a global elem ID to a local elem ID. Uses the host data.
+        unsigned h_get_local_elem_ID(unsigned global_elem_ID) const;
+        // Convert a global iface ID to a local iface ID. Uses the host data.
+        unsigned h_get_local_iface_ID(unsigned global_iface_ID) const;
+        // Search through a set of local IDs, finding the local ID which matches
+        // the global ID given.
+        template <class T>
+        KOKKOS_INLINE_FUNCTION
+        unsigned search_for_local_ID(unsigned global_ID, T local_to_global_IDs) const;
+
         /*! \brief Report mesh object
          *
          * @return
          */
         std::string report() const;
 
-    private:
         /*! \brief Partition the mesh using METIS
          *
          */
         void partition();
 
+    private:
         /*! \brief Custom manual partitionning method
          *
          */
@@ -118,7 +155,10 @@ class Mesh {
         std::vector<std::vector<int>> elem_to_IF;
         std::vector<int> nBG_in_elem;
         std::vector<std::vector<int>> elem_to_BF;
+        // Memory network object
         const MemoryNetwork& network;
+        // Geometric basis
+        Basis::Basis& gbasis;
     public:
         std::vector<int> eptr; // for metis
         std::vector<int> eind; // for metis
@@ -153,19 +193,10 @@ class Mesh {
         /* For below, 'local' refers to partition-local, wheres 'global'
          * refers to the value for the global mesh. It does not have anything to
          * do with reference vs. physical space. */
-        // Views that set a mapping from local to global node IDs, element IDs,
-        // and interior face IDs
-        Kokkos::View<unsigned*> local_to_global_node_IDs;
-        Kokkos::View<unsigned*> local_to_global_elem_IDs;
-        Kokkos::View<unsigned*> local_to_global_iface_IDs;
-        // Maps that set a mapping from global to local node IDs, element IDs,
-        // and interior face IDs
-        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_node_IDs;
-        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_elem_IDs;
-        //Kokkos::UnorderedMap<unsigned, unsigned> global_to_local_iface_IDs;
-        // Jagged array containing the global face IDs of the ghost faces. The
-        // first index represents the neighboring rank index, and the second
-        // index represents the ghost face index in that neighboring rank.
+        // Jagged array of Views containing the global face IDs of the ghost
+        // faces. The first index represents the neighboring rank index, and the
+        // second index represents the ghost face index in that neighboring
+        // rank.
         /* Example:
          * if neighbor_ranks = {2, 4, 9},
          * and num_faces_per_rank_boundary = {3, 2, 4}, then ghost_faces looks
@@ -179,7 +210,7 @@ class Mesh {
          * are those neighboring rank 2, the second row (with 2 faces) are those
          * neighboring rank 4, and the third row (with 4 faces) are those
          * neighboring rank 9. */
-        unsigned** ghost_faces;
+        Kokkos::View<unsigned*>* ghost_faces;
         // View containing the coordinates for each node on this partition
         Kokkos::View<rtype**> node_coords;
         // View containing the mapping from elements to global node IDs on this
@@ -191,24 +222,33 @@ class Mesh {
         // the rank, element ID, ref. face ID, and orientation on the right.
         Kokkos::View<unsigned**> interior_faces;
 
-        // Everything below is the host mirror version of the data structures
+        // These are the host mirror versions of the data structures
         // above. The same comments from above apply here.
         Kokkos::View<unsigned*>::HostMirror h_num_faces_per_rank_boundary;
         Kokkos::View<unsigned*>::HostMirror h_neighbor_ranks;
-        Kokkos::View<unsigned*>::HostMirror h_local_to_global_node_IDs;
-        Kokkos::View<unsigned*>::HostMirror h_local_to_global_elem_IDs;
-        Kokkos::View<unsigned*>::HostMirror h_local_to_global_iface_IDs;
-        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_node_IDs;
-        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_elem_IDs;
-        //Kokkos::UnorderedMap<unsigned, unsigned>::HostMirror h_global_to_local_iface_IDs;
         Kokkos::View<rtype**>::HostMirror h_node_coords;
         Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
         Kokkos::View<unsigned**>::HostMirror h_interior_faces;
 
-        // Geometric basis
-        Basis::Basis& gbasis;
+    private:
+        // Views that set a mapping from local to global node IDs, element IDs,
+        // and interior face IDs
+        Kokkos::View<unsigned*> local_to_global_node_IDs;
+        Kokkos::View<unsigned*> local_to_global_elem_IDs;
+        Kokkos::View<unsigned*> local_to_global_iface_IDs;
+        // Host mirrors
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_node_IDs;
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_elem_IDs;
+        Kokkos::View<unsigned*>::HostMirror h_local_to_global_iface_IDs;
+
+        // Writer is BFF's with Mesh, since Writer needs to write the
+        // local_to_global arrays to a file later
+        friend class Writer;
+
     private:
         bool partitioned = false; //!< boolean indicating whether the mesh is partitioned
 };
+
+#include "mesh/mesh.cpp"
 
 #endif //DG_MESH_H

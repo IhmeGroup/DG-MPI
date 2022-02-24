@@ -44,8 +44,15 @@ void MemoryTestSuite::test_1() {
 
     // Left and right states of all local interior faces
     int nq = 2;
-    Kokkos::View<double***> UqL("UqL", mesh.num_ifaces_part, nq, ns);
-    Kokkos::View<double***> UqR("UqR", mesh.num_ifaces_part, nq, ns);
+    Kokkos::View<rtype***> UqL("UqL", mesh.num_ifaces_part, nq, ns);
+    Kokkos::View<rtype***> UqR("UqR", mesh.num_ifaces_part, nq, ns);
+    // Face local and ghost states
+    auto Uq_local = new Kokkos::View<rtype***>[mesh.num_neighbor_ranks];
+    auto Uq_ghost = new Kokkos::View<rtype***>[mesh.num_neighbor_ranks];
+    for (unsigned i = 0; i < mesh.num_neighbor_ranks; i++) {
+        Kokkos::resize(Uq_local[i], mesh.h_num_faces_per_rank_boundary(i), nq, ns);
+        Kokkos::resize(Uq_ghost[i], mesh.h_num_faces_per_rank_boundary(i), nq, ns);
+    }
 
     // Reminder: the interior faces are stored as shape
     // [num_ifaces_part, 8], where the 8 pieces of data are:
@@ -54,11 +61,10 @@ void MemoryTestSuite::test_1() {
 
     // Loop through faces, setting the face states to be these, if it's on
     // this rank
-    //Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_LAMBDA(const int& i) {
-    Kokkos::parallel_for(2, KOKKOS_LAMBDA(const int& i) {
+    Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_LAMBDA(const int& i) {
             // Loop over left first, then right
             for (int rank_idx : {0, 4}) {
-                if (0 == 0) {//(mesh.interior_faces(i, rank_idx) == network.rank) {
+                if (mesh.interior_faces(i, rank_idx) == network.rank) {
                     // Loop over quadrature points
                     for (int j = 0; j < nq; j++) {
                         // Loop over state variables
@@ -76,11 +82,21 @@ void MemoryTestSuite::test_1() {
     });
 
     // Perform communication across faces
-    network.communicate_face_solution(UqL, UqR, mesh);
+    network.communicate_face_solution(UqL, UqR, Uq_local, Uq_ghost, mesh);
 
-    //network.print_view(UqL);
-    //network.print_view(UqR);
+    // Copy back to host
+    auto h_UqL = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, UqL);
+    auto h_UqR = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, UqR);
 
     // Cleanup
+    Kokkos::fence();
+    for (unsigned i = 0; i < mesh.num_neighbor_ranks; i++) {
+        // Explicitly destruct inner views to avoid memory leak
+        using Kokkos::View;
+        Uq_local[i].~View<rtype***>();
+        Uq_ghost[i].~View<rtype***>();
+    }
     mesh.finalize();
 }

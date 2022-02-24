@@ -70,6 +70,9 @@ if(NOT APPLE)
     endif()
 endif()
 
+# Trying to make MPI CUDA-aware
+set(MPICH_CXX "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install/bin/nvcc_wrapper")
+
 
 # Set the project info (done after setting compilers to avoid infinite loop)
 project(DG VERSION 1.0)

@@ -28,12 +28,12 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
 void get_element_jacobian(view_type_2D quad_pts,
 	view_type_3D basis_ref_grad, ViewType3D jac, ViewType1D djac,
-	ViewType3D ijac, ViewType2D elem_coords, 
+	ViewType3D ijac, ViewType2D elem_coords,
 	const member_type& member){
 
 	const int nq = ijac.extent(0);
 	Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), KOKKOS_LAMBDA (const int iq) {
-		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq, 
+		auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq,
 			Kokkos::ALL(), Kokkos::ALL());
 		auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
 		auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());

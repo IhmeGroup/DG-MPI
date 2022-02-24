@@ -1,7 +1,14 @@
 add_executable(main main.cpp)
 
 target_link_libraries(main
-    PRIVATE io mesh solver utils numerics)
+    PRIVATE io solver utils numerics)
+
+target_include_directories(main
+    PRIVATE ${METIS_INCLUDE_DIRS}
+    PRIVATE ${HDF5_INCLUDE_DIRS})
+target_link_libraries(main
+    PRIVATE ${METIS_LIBRARIES}
+    PRIVATE ${HDF5_LIBRARIES})
 
 # Only this target links to these libraries
 if (USE_MKL)
@@ -19,7 +26,7 @@ endif()
 # Notes:
 # it is important (I think this is the minimal requirement) that all Kokkos libraries are built as static
 # otherwise they will bring with them at link time the system omp library (see note about omp flags)
-target_link_libraries(main PRIVATE Kokkos::kokkoscore)
+target_link_libraries(main PRIVATE Kokkos::kokkoscore Kokkos::kokkos)
 # prevent from linking to system's OpenMP implementation
 # target_link_options(main PRIVATE "-Wl,--as-needed")
 

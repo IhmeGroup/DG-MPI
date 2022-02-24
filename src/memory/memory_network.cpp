@@ -41,114 +41,108 @@ inline void MemoryNetwork::barrier() const {
 }
 
 inline void MemoryNetwork::communicate_face_solution(
-        Kokkos::View<rtype***> UqL, Kokkos::View<rtype***> UqR, Mesh& mesh) {
+        Kokkos::View<rtype***> UqL, Kokkos::View<rtype***> UqR,
+        Kokkos::View<rtype***>* Uq_local_array,
+        Kokkos::View<rtype***>* Uq_ghost_array, Mesh mesh) {
     // Sizing
     auto nq = UqL.extent(1);
     auto ns = UqL.extent(2);
-
-    // Arrays that need to be communicated
-    double* ghost_Uq[mesh.num_neighbor_ranks];
-    double* neighbor_Uq[mesh.num_neighbor_ranks];
-    // Allocate
-    for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
-            mesh.num_neighbor_ranks; neighbor_rank_idx++) {
-        ghost_Uq[neighbor_rank_idx] = new double[
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx) * nq * ns];
-        neighbor_Uq[neighbor_rank_idx] = new double[
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx) * nq * ns];
-    }
 
     /* Copy face data into dense arrays */
     // Loop over neighboring ranks
     for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
             mesh.num_neighbor_ranks; neighbor_rank_idx++) {
+        auto ghost_faces_view = mesh.ghost_faces[neighbor_rank_idx];
+        auto Uq_local = Uq_local_array[neighbor_rank_idx];
+        auto network_rank = rank;
         // Loop over ghost faces on this rank boundary
-        for (unsigned i = 0; i <
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx); i++) {
+        Kokkos::parallel_for(
+                mesh.h_num_faces_per_rank_boundary(neighbor_rank_idx),
+                KOKKOS_LAMBDA(const unsigned& i) {
             // Get local face ID of this ghost face
-            // TODO
-            //auto idx = mesh.global_to_local_iface_IDs.find(
-            //        mesh.ghost_faces[neighbor_rank_idx][i]);
-            //auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
-            unsigned local_face_ID = 0;
+            unsigned local_face_ID = mesh.get_local_iface_ID(
+                    ghost_faces_view(i));
+
             // Is this rank on the left side?
-            bool is_left = mesh.interior_faces(local_face_ID, 0)
-                    == rank;
+            bool is_left = mesh.interior_faces(local_face_ID, 0) == network_rank;
 
             // Copy data
+            // TODO: Maybe use deep_copy for this?
             if (is_left) {
                 for (unsigned j = 0; j < nq; j++) {
                     for (unsigned k = 0; k < ns; k++) {
-                        ghost_Uq[neighbor_rank_idx][i*nq*ns + j*ns + k] =
-                                UqL(local_face_ID, j, k);
+                        Uq_local(i, j, k) = UqL(local_face_ID, j, k);
                     }
                 }
             } else {
                 for (unsigned j = 0; j < nq; j++) {
                     for (unsigned k = 0; k < ns; k++) {
-                        ghost_Uq[neighbor_rank_idx][i*nq*ns + j*ns + k] =
-                                UqR(local_face_ID, j, k);
+                        Uq_local(i, j, k) = UqR(local_face_ID, j, k);
                     }
                 }
             }
-        }
+        });
     }
+
+    // TODO: Figure out nonblocking communication!!!
 
     /* Send data across ranks using MPI */
     // Loop over neighboring ranks
     for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
             mesh.num_neighbor_ranks; neighbor_rank_idx++) {
+        auto Uq_local = Uq_local_array[neighbor_rank_idx];
+        auto Uq_ghost = Uq_ghost_array[neighbor_rank_idx];
         // Get rank of neighboring rank
-        auto neighbor_rank = mesh.neighbor_ranks(neighbor_rank_idx);
+        auto neighbor_rank = mesh.h_neighbor_ranks(neighbor_rank_idx);
+        // TODO: Figure out CUDA-aware MPI. For now, just copy to the host and
+        // back.
+        auto send_view = Kokkos::create_mirror_view_and_copy(
+                Kokkos::DefaultHostExecutionSpace{}, Uq_local);
+        auto recv_view = Kokkos::create_mirror_view_and_copy(
+                Kokkos::DefaultHostExecutionSpace{}, Uq_ghost);
         // Send ghost data
-        MPI_Send(ghost_Uq[neighbor_rank_idx],
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx) * nq * ns, MPI_RTYPE,
-                neighbor_rank, rank, comm);
+        MPI_Send(send_view.data(), Uq_local.size(),
+                MPI_RTYPE, neighbor_rank, rank, comm);
         // Receive neighbor data
-        MPI_Recv(neighbor_Uq[neighbor_rank_idx],
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx) * nq * ns, MPI_RTYPE,
-                neighbor_rank, neighbor_rank, comm, MPI_STATUS_IGNORE);
+        MPI_Recv(recv_view.data(), Uq_ghost.size(),
+                MPI_RTYPE, neighbor_rank, neighbor_rank, comm,
+                MPI_STATUS_IGNORE);
+        // Send back to device
+        Kokkos::deep_copy(Uq_ghost, recv_view);
     }
 
     /* Copy data from neighbors to local data structures */
     for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
             mesh.num_neighbor_ranks; neighbor_rank_idx++) {
+        auto ghost_faces_view = mesh.ghost_faces[neighbor_rank_idx];
+        auto Uq_local = Uq_local_array[neighbor_rank_idx];
+        auto Uq_ghost = Uq_ghost_array[neighbor_rank_idx];
+        auto network_rank = rank;
         // Loop over ghost faces on this rank boundary
-        for (unsigned i = 0; i <
-                mesh.num_faces_per_rank_boundary(neighbor_rank_idx); i++) {
+        Kokkos::parallel_for(
+                mesh.h_num_faces_per_rank_boundary(neighbor_rank_idx),
+                KOKKOS_LAMBDA(const unsigned& i) {
             // Get local face ID of this ghost face
-            // TODO
-            //auto idx = mesh.global_to_local_iface_IDs.find(
-            //        mesh.ghost_faces[neighbor_rank_idx][i]);
-            //auto local_face_ID = mesh.global_to_local_iface_IDs.value_at(idx);
-            unsigned local_face_ID = 0;
+            unsigned local_face_ID = mesh.get_local_iface_ID(
+                    ghost_faces_view(i));
+
             // Is this rank on the left side?
-            bool is_left = mesh.interior_faces(local_face_ID, 0)
-                    == rank;
+            bool is_left = mesh.interior_faces(local_face_ID, 0) == network_rank;
             // Copy data
             if (is_left) {
                 for (unsigned j = 0; j < nq; j++) {
                     for (unsigned k = 0; k < ns; k++) {
-                        UqR(local_face_ID, j, k) = neighbor_Uq[
-                                neighbor_rank_idx][i*nq*ns + j*ns + k];
+                        UqR(local_face_ID, j, k) = Uq_ghost(i, j, k);
                     }
                 }
             } else {
                 for (unsigned j = 0; j < nq; j++) {
                     for (unsigned k = 0; k < ns; k++) {
-                        UqL(local_face_ID, j, k) = neighbor_Uq[
-                                neighbor_rank_idx][i*nq*ns + j*ns + k];
+                        UqL(local_face_ID, j, k) = Uq_ghost(i, j, k);
                     }
                 }
             }
-        }
-    }
-
-    // Free memory
-    for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
-            mesh.num_neighbor_ranks; neighbor_rank_idx++) {
-        delete [] ghost_Uq[neighbor_rank_idx];
-        delete [] neighbor_Uq[neighbor_rank_idx];
+        });
     }
 }
 

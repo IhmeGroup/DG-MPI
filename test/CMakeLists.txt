@@ -23,6 +23,11 @@ list(APPEND GTEST_SOURCES
 
 target_sources(test_gtest_all PRIVATE ${GTEST_SOURCES})
 
+target_include_directories(test_gtest_all
+    PRIVATE ${METIS_INCLUDE_DIRS}
+    PRIVATE ${HDF5_INCLUDE_DIRS}
+)
+
 # add any directories that contain needed functions
 target_link_libraries(test_gtest_all
     PRIVATE
@@ -34,6 +39,11 @@ target_link_libraries(test_gtest_all
 
 target_link_libraries(test_gtest_all PUBLIC Kokkos::kokkoscore)
 
+set_target_properties(test_gtest_all
+    PROPERTIES
+        ENABLE_EXPORTS ON
+        COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
+
 include(GoogleTest)
 gtest_discover_tests(test_gtest_all)
 
@@ -44,17 +54,23 @@ add_subdirectory(mpi_enabled_tests/memory)
 # Name for the mpi-enabled test executable file
 add_executable(test_mpi_enabled mpi_enabled_tests/main.cpp)
 
-# add any directories that contain needed functions
+target_include_directories(test_mpi_enabled
+    PRIVATE mesh memory
+    PRIVATE ${METIS_INCLUDE_DIRS}
+    PRIVATE ${HDF5_INCLUDE_DIRS}
+)
 target_link_libraries(test_mpi_enabled
-    PRIVATE
-        mesh io
+    PRIVATE ${METIS_LIBRARIES}
+    PRIVATE ${HDF5_LIBRARIES}
+    PUBLIC Kokkos::kokkoscore mpi
+    PRIVATE io
+    PRIVATE test_mesh test_memory
 )
 
-target_include_directories(test_mpi_enabled
-    PRIVATE mesh memory)
-target_link_libraries(test_mpi_enabled
-    PUBLIC Kokkos::kokkoscore mpi
-    PRIVATE test_mesh test_memory)
+set_target_properties(test_mpi_enabled
+    PROPERTIES
+        ENABLE_EXPORTS ON
+        COMPILE_FLAGS ${OpenMP_CXX_FLAGS})
 
 # Create the directories for storing data
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/test/mpi_enabled_tests/mesh/")
