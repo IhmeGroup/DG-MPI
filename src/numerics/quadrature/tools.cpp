@@ -4,8 +4,8 @@ namespace QuadratureTools {
 
 using std::ceil, std::pow;
 
-int get_gausslegendre_quadrature_order(const int order_, 
-		const int NDIMS){
+int get_gausslegendre_quadrature_order(const int order_,
+        const int NDIMS){
 
     // quad rules for even order can integrate one order higher
     int order = order_ + (order_ + 1) % 2;

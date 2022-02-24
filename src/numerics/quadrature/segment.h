@@ -22,7 +22,7 @@ Outputs:
 --------
     wts: view to store quadrature weights
 */
-void get_segment_weights_gl(const int order, 
+void get_segment_weights_gl(const int order,
     Kokkos::View<rtype*>::HostMirror wts);
 
 

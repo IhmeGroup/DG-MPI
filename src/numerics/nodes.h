@@ -10,47 +10,47 @@ namespace Nodes {
 using Kokkos::View;
 
 /* Get the line equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates [order + 1]
+    xref - view to store coordinates [order + 1]
 
 */
-void get_equidistant_nodes_segment(const int order, 
-	View<rtype*> &xref);
+void get_equidistant_nodes_segment(const int order,
+    View<rtype*> &xref);
 
 /* Get the quadrilateral equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates. [order + 1 * order + 1, 2]
+    xref - view to store coordinates. [order + 1 * order + 1, 2]
 
 */
-void get_equidistant_nodes_quadrilateral(const int order, 
-	View<rtype**> &xref);
+void get_equidistant_nodes_quadrilateral(const int order,
+    View<rtype**> &xref);
 
 
 /* Get the hexahedron equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates. [order + 1 * order + 1, 3]
+    xref - view to store coordinates. [order + 1 * order + 1, 3]
 
 */
-void get_equidistant_nodes_hexahedron(const int order, 
-	View<rtype**> &xref);
+void get_equidistant_nodes_hexahedron(const int order,
+    View<rtype**> &xref);
 
 
 /* Get the line Gauss-Legendre nodes in reference space
@@ -63,7 +63,7 @@ Outputs:
 --------
     pts: view to store coordinates
 */
-void get_gauss_legendre_segment_nodes(const int order, 
+void get_gauss_legendre_segment_nodes(const int order,
     View<rtype*>::HostMirror pts);
 
 
@@ -77,7 +77,7 @@ Outputs:
 --------
     pts: view to store coordinates
 */
-void get_gll_segment_nodes(const int order, 
+void get_gll_segment_nodes(const int order,
     View<rtype*> pts);
 } // end namespace Nodes
 

@@ -16,17 +16,17 @@ namespace Physics {
 /*! \brief Base equation class
  *
  */
-template <int dim> 
+template <int dim>
 class PhysicsBase {
   public:
-    /* 
+    /*
     Virtual destructor
-     
+
     This destructor is needed so that the derived class destructors are called when releasing
     a pointer to this base class.
     */
     virtual ~PhysicsBase() = default;
-    
+
     rtype state; // input state array for initial conditions
 
     /*
@@ -37,7 +37,7 @@ class PhysicsBase {
         number of state variables
     */
     virtual int get_NS();
-    
+
     /*
     Compute projected flux
 
@@ -55,10 +55,10 @@ class PhysicsBase {
       Fproj: projected flux values [ns]
     */
     DG_KOKKOS_FUNCTION void get_conv_flux_projected(
-        Kokkos::View<const rtype*> Uq, 
+        Kokkos::View<const rtype*> Uq,
         Kokkos::View<const rtype*> normals,
-        Kokkos::View<rtype*> Fproj); 
-    
+        Kokkos::View<rtype*> Fproj);
+
     enum PhysicsVariables {
         Dummy
     };
@@ -75,7 +75,7 @@ class PhysicsBase {
     Inputs:
     -------
       U: values of the state variables (typically at the quadrature points) [ns]
-    
+
     Outputs:
     --------
       F: flux values [ns, ndims]
@@ -84,10 +84,10 @@ class PhysicsBase {
       Kokkos::View<const rtype*> U,
       Kokkos::View<rtype**> F);
 
-    DG_KOKKOS_FUNCTION rtype compute_variable(std::string str, 
+    DG_KOKKOS_FUNCTION rtype compute_variable(std::string str,
       Kokkos::View<const rtype*> Uq);
-    
-    /* 
+
+    /*
     Get max wave speed
 
     Inputs:

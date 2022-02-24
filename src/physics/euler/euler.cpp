@@ -7,7 +7,7 @@ template<int dim> int Euler<dim>::get_NS(){
 }
 
 template<int dim> inline
-void Euler<dim>::set_physical_params(rtype GasConstant, 
+void Euler<dim>::set_physical_params(rtype GasConstant,
     rtype SpecificHeatRatio){
 
     R = GasConstant;
@@ -27,7 +27,7 @@ rtype Euler<dim>::get_maxwavespeed(Kokkos::View<const rtype*> U) {
     // unpack
     auto mom = Kokkos::subview(U, Kokkos::make_pair(1, dim + 1));
     auto rho1 = 1./U(0);
-    
+
     return KokkosBlas::nrm2(mom) * rho1 + sqrt(gamma * get_pressure(U) * rho1);
 
 }

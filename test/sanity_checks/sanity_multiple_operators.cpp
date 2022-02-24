@@ -47,7 +47,7 @@ struct TeamFunctor {
   }
 };
 
-   
+
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   {
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     functor.compute();
     Kokkos::fence();
 
-    TeamFunctor functor2; 
+    TeamFunctor functor2;
     functor2.compute();
     Kokkos::fence();
   }

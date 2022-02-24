@@ -25,8 +25,8 @@ echo "========================"
 cd ../build_cpu/build_externals/kokkos/build
 
 cmake -DCMAKE_INSTALL_PREFIX=./install \
-	-DKokkos_ENABLE_OPENMP=ON \
-	../../../../externals/kokkos
+    -DKokkos_ENABLE_OPENMP=ON \
+    ../../../../externals/kokkos
 make -j install
 
 echo "========================"
@@ -36,7 +36,7 @@ echo "========================"
 cd ../../kokkos-kernels/build
 
 cmake -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ROOT=../../kokkos/build/install \
-	../../../../externals/kokkos-kernels
+    ../../../../externals/kokkos-kernels
 make -j install
 
 echo "================================"

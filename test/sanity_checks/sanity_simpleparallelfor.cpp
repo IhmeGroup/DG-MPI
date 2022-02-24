@@ -5,7 +5,7 @@ int main(int argc, char* argv[]) {
   {
     int N = argc > 1 ? atoi(argv[1]) : 1000000;
     int R = argc > 2 ? atoi(argv[2]) : 10;
-    
+
     Kokkos::View<unsigned**> testing("testing", 8, 3);
     Kokkos::View<unsigned***> testing2("testing2", 8, 2, 5);
 

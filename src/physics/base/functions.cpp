@@ -15,9 +15,9 @@ Uniform::Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state){
 }
 
 template<int dim> DG_KOKKOS_FUNCTION
-void Uniform::get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t, 
+void Uniform::get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t,
     Kokkos::View<rtype*> Uq){
-    
+
     int NS = physics.get_NS();
     for (int is = 0; is < NS; is++){
         Uq(is) = physics->state[is];
@@ -30,9 +30,9 @@ void Uniform::get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, cons
 namespace BaseConvNumFluxType {
 
 template<int dim> DG_KOKKOS_FUNCTION
-void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics, 
+void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
             Kokkos::View<rtype*> UqL,
-            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> UqR,
             Kokkos::View<rtype*> normals,
             Kokkos::View<rtype*> Fq){
 
@@ -54,7 +54,7 @@ void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
     Kokkos::View<rtype*> FqR("FqR", NS);
     physics.get_conv_flux_projected(UqR, n_hat, FqR);
 
-    // Jump condition    
+    // Jump condition
     // dUq = UqR - UqL -> what the two lines below do
     Kokkos::View<rtype*> dUq("dUq", NS);
     Kokkos::deep_copy(dUq, UqR);
@@ -75,15 +75,15 @@ void LaxFriedrichs::compute_flux(Physics::PhysicsBase<dim> &physics,
     KokkosBlas::scal(Fq, n_mag, dUq);
 };
 
-template void LaxFriedrichs::compute_flux<2>(Physics::PhysicsBase<2> &physics, 
+template void LaxFriedrichs::compute_flux<2>(Physics::PhysicsBase<2> &physics,
             Kokkos::View<rtype*> UqL,
-            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> UqR,
             Kokkos::View<rtype*> normals,
             Kokkos::View<rtype*> Fq);
 
-template void LaxFriedrichs::compute_flux<3>(Physics::PhysicsBase<3> &physics, 
+template void LaxFriedrichs::compute_flux<3>(Physics::PhysicsBase<3> &physics,
             Kokkos::View<rtype*> UqL,
-            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> UqR,
             Kokkos::View<rtype*> normals,
             Kokkos::View<rtype*> Fq);
 

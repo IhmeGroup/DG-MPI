@@ -4,8 +4,8 @@
 
 namespace SegmentQuadrature {
 
-void get_segment_weights_gl(const int order, 
-    Kokkos::View<rtype*>::HostMirror wts){    
+void get_segment_weights_gl(const int order,
+    Kokkos::View<rtype*>::HostMirror wts){
     switch(order){
         case 0 :
         case 1 :
@@ -417,7 +417,7 @@ void get_quadrature_gauss_legendre(
     Kokkos::View<rtype*>::HostMirror& quad_wts) {
 
     Nodes::get_gauss_legendre_segment_nodes(
-    	order, subview(quad_pts, ALL(), 0));
+        order, subview(quad_pts, ALL(), 0));
     get_segment_weights_gl(order, quad_wts);
 }
 

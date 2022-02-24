@@ -19,7 +19,7 @@ Outputs:
     wts: view to store quadrature weights
 */
 KOKKOS_FUNCTION
-void get_segment_weights_gl(const int order, 
+void get_segment_weights_gl(const int order,
     View<rtype*> &wts);
 
 // void get_gaussian_quadrature_1D(

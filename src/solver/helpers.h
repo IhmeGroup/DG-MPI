@@ -15,24 +15,24 @@ struct VolumeHelperFunctor {
     class VolumeHelperTag {};
     class iMMHelperTag {};
 
-	VolumeHelperFunctor(Mesh mesh, Basis::Basis basis);
+    VolumeHelperFunctor(Mesh mesh, Basis::Basis basis);
 
     void compute_volume_helpers(int scratch_size);
 
     void compute_inv_mass_matrices(int scratch_size);
 
-	KOKKOS_INLINE_FUNCTION
+    KOKKOS_INLINE_FUNCTION
     void operator()(VolumeHelperTag, const member_type& member) const;
 
     KOKKOS_INLINE_FUNCTION
     void operator()(iMMHelperTag, const member_type& member) const;
 
- 	void get_quadrature(Basis::Basis basis,
- 		const int order);
+    void get_quadrature(Basis::Basis basis,
+        const int order);
 
- 	void get_reference_data(Basis::Basis basis,
+    void get_reference_data(Basis::Basis basis,
         Basis::Basis gbasis,
- 		const int order);
+        const int order);
 
     void allocate_views(Mesh& mesh, const int num_elems);
 

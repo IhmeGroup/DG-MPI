@@ -50,9 +50,9 @@ class ConvNumFluxBase {
             Fq: numerical flux values [ns]
         */
         template<int dim>
-        void compute_flux(Physics::PhysicsBase<dim> &physics, 
+        void compute_flux(Physics::PhysicsBase<dim> &physics,
             Kokkos::View<rtype*> UqL,
-            Kokkos::View<rtype*> UqR, 
+            Kokkos::View<rtype*> UqR,
             Kokkos::View<rtype*> normals,
             Kokkos::View<rtype*> Fq);
 };
@@ -93,7 +93,7 @@ class ConvNumFluxBase {
 // inline PhysicsType get_physics_type(
 //     const std::string &name)
 //     // const std::string &inv_flux_name,
-//     // const std::string &visc_flux_name) 
+//     // const std::string &visc_flux_name)
 // {
 
 //     if (name == "Euler") {

@@ -80,7 +80,7 @@ class Euler : public PhysicsBase<dim> {
         Inputs:
         -------
             U: solution state [ns]
-        
+
         Outputs:
         --------
             pressure

@@ -18,8 +18,8 @@ conditions, exact solutions, and/or boundary conditions. These
 functions are generalizable to different kinds of physics.
 */
 enum class FcnType {
-	Uniform,
-	None,
+    Uniform,
+    None,
 };
 
 /*
@@ -36,40 +36,40 @@ correspond to the FcnType enum members above.
 This class sets a uniform state.\
 */
 class Uniform: public FcnBase {
-	public:
-		/*
-		Constructor sets read in state
+    public:
+        /*
+        Constructor sets read in state
 
-		Inputs:
-		-------
-			physics: physics object
-		Outpus:
-		-------
-			state: input condition for uniform condition [ns]
-		*/
-	    template<int dim>
-	    Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state);
-	    
-	    /*
-	    Destructor
-	    */
-	    ~Uniform();
+        Inputs:
+        -------
+            physics: physics object
+        Outpus:
+        -------
+            state: input condition for uniform condition [ns]
+        */
+        template<int dim>
+        Uniform(Physics::PhysicsBase<dim> &physics, const rtype *state);
 
-	    /*
-	    Set Uniform state as given x-coordinates and time
+        /*
+        Destructor
+        */
+        ~Uniform();
 
-	    This function takes the stored state from the physics class and sets the values 
-	    in the solvers state
+        /*
+        Set Uniform state as given x-coordinates and time
 
-	    Inputs:
-	    -------
-	    	physics: physics object
-	    	x: coordinates in physical space [ndims]
-	    	t: time
-	    */
-	    template<int dim> DG_KOKKOS_FUNCTION
-	    void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t,
-	    	Kokkos::View<rtype*> Uq);
+        This function takes the stored state from the physics class and sets the values
+        in the solvers state
+
+        Inputs:
+        -------
+            physics: physics object
+            x: coordinates in physical space [ndims]
+            t: time
+        */
+        template<int dim> DG_KOKKOS_FUNCTION
+        void get_state(Physics::PhysicsBase<dim> &physics, const rtype *x, const rtype *t,
+            Kokkos::View<rtype*> Uq);
 };
 
 } // end namespace BaseFcnType
@@ -79,10 +79,10 @@ class Uniform: public FcnBase {
 ------------------------
 Numerical flux functions
 ------------------------
-These classes inherit from the ConvNumFluxBase or DiffNumFluxBase class. 
-See ConvNumFluxBase/DiffNumFluxBase for detailed comments of attributes 
-and methods. Information specific to the corresponding child classes can 
-be found below. These classes should correspond to the ConvNumFluxType 
+These classes inherit from the ConvNumFluxBase or DiffNumFluxBase class.
+See ConvNumFluxBase/DiffNumFluxBase for detailed comments of attributes
+and methods. Information specific to the corresponding child classes can
+be found below. These classes should correspond to the ConvNumFluxType
 or DiffNumFluxType enum members.
 */
 namespace BaseConvNumFluxType {
@@ -92,21 +92,21 @@ Enum class that stores the types of convective numerical fluxes. These
 numerical fluxes are generalizable to different kinds of physics.
 */
 enum class ConvNumFluxType {
-	LaxFriedrichs,
-	None,
+    LaxFriedrichs,
+    None,
 };
 
 /*
 This class corresponds to the local Lax-Friedrichs flux function
 */
 class LaxFriedrichs: public ConvNumFluxBase {
-	public:
-		template<int dim> DG_KOKKOS_FUNCTION
-		void compute_flux(Physics::PhysicsBase<dim> &physics, 
-			Kokkos::View<rtype*> UqL,
-        	Kokkos::View<rtype*> UqR, 
-        	Kokkos::View<rtype*> normals,
-       		Kokkos::View<rtype*> Fq);
+    public:
+        template<int dim> DG_KOKKOS_FUNCTION
+        void compute_flux(Physics::PhysicsBase<dim> &physics,
+            Kokkos::View<rtype*> UqL,
+            Kokkos::View<rtype*> UqR,
+            Kokkos::View<rtype*> normals,
+            Kokkos::View<rtype*> Fq);
 };
 
 } // end namespace BaseConvNumFluxType

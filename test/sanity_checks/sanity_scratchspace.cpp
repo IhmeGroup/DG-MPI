@@ -68,11 +68,11 @@ int main(int argc, char* argv[]) {
 
     int M1 = 4;
     int M2 = 2;
-    int scratch_size = ScratchViewType::shmem_size( M1, M2 ) 
+    int scratch_size = ScratchViewType::shmem_size( M1, M2 )
                       + ScratchViewType2::shmem_size( 10, 5);
 
-    // for this sanity check we loop once and set out team size to one. 
-    Kokkos::parallel_for(team_policy( 1, 1 ).set_scratch_size( 0, 
+    // for this sanity check we loop once and set out team size to one.
+    Kokkos::parallel_for(team_policy( 1, 1 ).set_scratch_size( 0,
         Kokkos::PerThread( scratch_size ) ),
         Functor());
 

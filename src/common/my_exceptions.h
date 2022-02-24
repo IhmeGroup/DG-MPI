@@ -54,7 +54,7 @@ class NotImplementedException : public std::exception {
 };
 
 /*! \brief Exception for improper values for function
- * 
+ *
  */
 class ValueErrorException : public std::exception {
 public:

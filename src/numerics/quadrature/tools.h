@@ -9,11 +9,11 @@
 
 namespace QuadratureTools {
 
-int get_gausslegendre_quadrature_order(const int order_, 
-		const int NDIMS);
+int get_gausslegendre_quadrature_order(const int order_,
+        const int NDIMS);
 
-void get_number_of_quadrature_points(const int order, const int NDIMS, 
-		int& nq_1d, int& nq);
+void get_number_of_quadrature_points(const int order, const int NDIMS,
+        int& nq_1d, int& nq);
 
 } // end namespace QuadratureTools
 

@@ -26,11 +26,11 @@ void Solver::precompute_matrix_helpers() {
     int scratch_size = scratch_view_2D_rtype::shmem_size(mesh.num_nodes_per_elem, mesh.dim);
     functor.compute_inv_mass_matrices(scratch_size);
     Kokkos::fence();
-    
+
     functor.compute_volume_helpers(scratch_size);
     Kokkos::fence();
     // Kokkos::View<rtype**> h_xphys("xphys", mesh.num_elems_part, functor.quad_pts.extent(0), mesh.dim);
-    
+
     host_view_type_3D h_xphys = Kokkos::create_mirror_view(functor.x_elems);
     Kokkos::deep_copy(h_xphys, functor.x_elems);
     for (int k = 0; k < h_xphys.extent(0); k++){

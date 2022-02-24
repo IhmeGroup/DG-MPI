@@ -8,21 +8,21 @@ namespace Nodes {
 
 
 /* Get the line equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates [order + 1]
+    xref - view to store coordinates [order + 1]
 
 */
-void get_equidistant_nodes_segment(const int order, 
-	View<rtype*> &xref) {
+void get_equidistant_nodes_segment(const int order,
+    View<rtype*> &xref) {
     if (order == 0) {
-		resize(xref, 1);
-		xref(0) = 0.;
+        resize(xref, 1);
+        xref(0) = 0.;
         return;
     }
 
@@ -35,21 +35,21 @@ void get_equidistant_nodes_segment(const int order,
 }
 
 /* Get the quadrilateral equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates. [order + 1 * order + 1, 2]
+    xref - view to store coordinates. [order + 1 * order + 1, 2]
 
 */
-void get_equidistant_nodes_quadrilateral(const int order, 
-	View<rtype**> &xref) {
+void get_equidistant_nodes_quadrilateral(const int order,
+    View<rtype**> &xref) {
 
     int nnodes_1d = order + 1;
-	View<rtype*> xref_1d("xref_1d", nnodes_1d);
+    View<rtype*> xref_1d("xref_1d", nnodes_1d);
     get_equidistant_nodes_segment(order, xref_1d);
 
     for (int j = 0; j < nnodes_1d; j++) {
@@ -62,39 +62,39 @@ void get_equidistant_nodes_quadrilateral(const int order,
 
 
 /* Get the hexahedron equidistant nodes in reference space
-	
+
 Inputs:
 -------
-	order: order of polynomial containing nodes
+    order: order of polynomial containing nodes
 
 Outputs:
 --------
-	xref - view to store coordinates. [order + 1 * order + 1, 3]
+    xref - view to store coordinates. [order + 1 * order + 1, 3]
 
 */
-void get_equidistant_nodes_hexahedron(const int order, 
-	View<rtype**> &xref) {
+void get_equidistant_nodes_hexahedron(const int order,
+    View<rtype**> &xref) {
 
     int nnodes_1d = order + 1;
-	View<rtype*> xref_1d("xref_1d", nnodes_1d);
+    View<rtype*> xref_1d("xref_1d", nnodes_1d);
     get_equidistant_nodes_segment(order, xref_1d);
 
     for (int k = 0; k < nnodes_1d; k++){
-    	for (int j = 0; j < nnodes_1d; j++) {
-        	for (int i = 0; i < nnodes_1d; i++) {
-            	xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 0) 
-            		= xref_1d(i);
-            	xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 1) 
-            		= xref_1d(j);
-            	xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 2) 
-            		= xref_1d(k);
-        	}
-    	}
-	}
+        for (int j = 0; j < nnodes_1d; j++) {
+            for (int i = 0; i < nnodes_1d; i++) {
+                xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 0)
+                    = xref_1d(i);
+                xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 1)
+                    = xref_1d(j);
+                xref(k * nnodes_1d * nnodes_1d + j * nnodes_1d + i, 2)
+                    = xref_1d(k);
+            }
+        }
+    }
 }
 
 
-void get_gauss_legendre_segment_nodes(const int order, 
+void get_gauss_legendre_segment_nodes(const int order,
     View<rtype*>::HostMirror pts) {
 
     switch(order){
@@ -502,7 +502,7 @@ void get_gauss_legendre_segment_nodes(const int order,
 }
 
 
-void get_gll_segment_nodes(const int order, 
+void get_gll_segment_nodes(const int order,
     View<rtype*> &pts) {
     // switch(order){
     //     case 0 :
