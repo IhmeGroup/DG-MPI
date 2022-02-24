@@ -22,7 +22,6 @@ namespace MeshTools {
 		const member_type& member){
 
 		Math::cAxB_to_C(1., basis_val, elem_coords, xphys);
-		printf("xphys%f\n:", xphys(0, 0));
 	}
 
 	template<typename ViewType1D> KOKKOS_INLINE_FUNCTION
