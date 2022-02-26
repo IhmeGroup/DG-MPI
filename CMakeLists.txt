@@ -4,8 +4,8 @@
 
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0074 NEW) # use <PackageName>_ROOT over <PackageName>_DIR
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Set the default build type to be debug for now
+set(CMAKE_BUILD_TYPE Debug)
 
 # Set dynamic library name depending on operating system
 if(APPLE)
@@ -16,16 +16,6 @@ endif()
 
 # profile build time
 # set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
-
-# specify build type specific flags
-# TODO: Why does this not add to nvcc_wrapper?
-set(warning_flags "-Wall -Wextra")
-set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
-set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
-set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
-set(CMAKE_C_FLAGS_RELEASE    "-O3 ${warning_flags}")
-set(CMAKE_CXX_FLAGS_RELEASE  "-O3 ${warning_flags}")
-set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
 
 # run path for installed executables
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -61,16 +51,20 @@ endif()
 
 # Use the MPI compilers
 if(NOT APPLE)
-    if(DEFINED ENV{MPI_DIR})
-        set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
-        set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
-    else()
-        set(CMAKE_C_COMPILER "mpicc")
-        set(CMAKE_CXX_COMPILER "mpicxx")
-    endif()
+    set(CMAKE_C_COMPILER "${Kokkos_ROOT}/bin/kokkos_launch_compiler")
+    set(CMAKE_CXX_COMPILER "${Kokkos_ROOT}/bin/kokkos_launch_compiler")
+    #if(DEFINED ENV{MPI_DIR})
+    #    set(CMAKE_C_COMPILER "${MPI_ROOT}/bin/mpicc")
+    #    set(CMAKE_CXX_COMPILER "${MPI_ROOT}/bin/mpicxx")
+    #else()
+    #    set(CMAKE_C_COMPILER "mpicc")
+    #    set(CMAKE_CXX_COMPILER "mpicxx")
+    #endif()
 endif()
 
 # Trying to make MPI CUDA-aware
+# TODO: This doesn't really do anything because MPI needs to be compiled with
+# CUDA awareness
 set(MPICH_CXX "${CMAKE_SOURCE_DIR}/externals/kokkos/build/install/bin/nvcc_wrapper")
 
 
@@ -141,13 +135,21 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 # ----------------------------------------------------------------------------------------------- #
 
-
-
 find_package(Kokkos REQUIRED)
 find_package(KokkosKernels REQUIRED)
 find_package(OpenMP REQUIRED)
 
-
+# Specify compiler information. This has to be done after finding Kokkos, since
+# Kokkos modifies these.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
+set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
+set(CMAKE_C_FLAGS_RELEASE    "-O3 ${warning_flags}")
+set(CMAKE_CXX_FLAGS_RELEASE  "-O3 ${warning_flags}")
+set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
 
 # set preprocessor definitions
 if(USE_DOUBLES)
@@ -207,6 +209,7 @@ message(STATUS "MPI root:            ${MPI_ROOT}")
 # endif()
 
 message(STATUS "")
+message(STATUS "CMAKE_CXX_COMPILER:      ${CMAKE_CXX_COMPILER}")
 message(STATUS "CMAKE_CXX_FLAGS:         ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG:   ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")

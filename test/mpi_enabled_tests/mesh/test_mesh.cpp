@@ -8,11 +8,6 @@
 
 using std::string;
 
-// Mock basis
-namespace Basis {
-    class Basis{};
-}
-
 namespace fs = std::filesystem;
 
 MeshTestSuite::MeshTestSuite() {
@@ -28,13 +23,17 @@ void MeshTestSuite::test_1() {
     // Read input file
     auto toml_input = toml::parse(toml_fname);
 
+    // Create memory network
+    auto network = MemoryNetwork();
+
     // Location of mesh file
     string mesh_file_name = string(PROJECT_ROOT) + "/test/mpi_enabled_tests/mesh/quad_2x2.h5";
     // Create mesh
     auto gbasis = Basis::Basis();
-    auto mesh = Mesh(toml_input, network, gbasis, mesh_file_name);
+    auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
+            network.head_rank, gbasis, mesh_file_name);
     // Create writer
-    auto writer = Writer(mesh);
+    auto writer = Writer(mesh, network);
     // Cleanup
     mesh.finalize();
 };

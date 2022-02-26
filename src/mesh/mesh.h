@@ -7,10 +7,13 @@
 #include <Kokkos_Core.hpp>
 #include "toml11/toml.hpp"
 #include "common/defines.h"
+#include "numerics/basis/basis.h"
 
 // Forward declaration
-class MemoryNetwork;
+// TODO: Uncomment these for object-file build
+/*
 namespace Basis {class Basis;}
+*/
 
 
 /*! \brief Mesh class
@@ -36,12 +39,23 @@ class Mesh {
         mesh_file_name - optional name of mesh file. If not specified, looks for
             the name in the input file.
         */
-        Mesh(const toml::value& input_info, const MemoryNetwork& network,
-                Basis::Basis& gbasis, std::string mesh_file_name = "");
+        Mesh(const toml::value& input_info, unsigned num_ranks, unsigned rank,
+                bool head_rank, Basis::Basis gbasis,
+                std::string mesh_file_name = "");
+        Mesh() = default;
         // Cleanup and deallocate data. Cannot be a destructor, since this
         // should only happen once in program execution, not every time a Mesh
         // object is destructed.
         void finalize();
+
+        // Some basic MPI info. Yes, this is already stored in MemoryNetwork,
+        // but if Mesh needs MemoryNetwork and MemoryNetwork needs Mesh, this
+        // creates a circular dependancy - not a big deal in a typical C++ code,
+        // but for a fully header-only code this is a problem. So, just store
+        // some primitives.
+        unsigned num_ranks;
+        unsigned rank;
+        bool head_rank = false;
 
         /*! \brief Read the HDF5 mesh file directly
          *
@@ -155,10 +169,8 @@ class Mesh {
         std::vector<std::vector<int>> elem_to_IF;
         std::vector<int> nBG_in_elem;
         std::vector<std::vector<int>> elem_to_BF;
-        // Memory network object
-        const MemoryNetwork& network;
         // Geometric basis
-        Basis::Basis& gbasis;
+        Basis::Basis gbasis;
     public:
         std::vector<int> eptr; // for metis
         std::vector<int> eind; // for metis

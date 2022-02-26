@@ -7,7 +7,7 @@
 using std::string, std::vector;
 
 
-Writer::Writer(Mesh& mesh) {
+Writer::Writer(Mesh& mesh, MemoryNetwork& network) {
     std::stringstream stream;
     stream << PROJECT_ROOT << "/build/test/mpi_enabled_tests/mesh/data.h5";
     const string file_name = stream.str();
@@ -16,11 +16,11 @@ Writer::Writer(Mesh& mesh) {
     mesh.copy_from_device_to_host();
 
     // Write some attributes, on the head rank
-    mesh.network.barrier();
-    if (mesh.network.head_rank) {
+    network.barrier();
+    if (network.head_rank) {
         H5::H5File file(file_name, H5F_ACC_TRUNC);
         // Number of ranks
-        write_attribute(mesh.network.num_ranks, "Number of Ranks", file);
+        write_attribute(network.num_ranks, "Number of Ranks", file);
         // Number of dimensions
         write_attribute(mesh.dim, "Number of Dimensions", file);
         // Number of elements
@@ -34,16 +34,16 @@ Writer::Writer(Mesh& mesh) {
     }
 
     // Loop over each rank
-    for (unsigned rank = 0; rank < mesh.network.num_ranks; rank++) {
-        mesh.network.barrier();
+    for (unsigned rank = 0; rank < network.num_ranks; rank++) {
+        network.barrier();
         // Perform this in serial
-        if (rank == mesh.network.rank) {
+        if (rank == network.rank) {
             // Open file
             H5::H5File file(file_name, H5F_ACC_RDWR);
 
             // Create a group for this rank
             auto group = file.createGroup("Rank " +
-                    std::to_string(mesh.network.rank));
+                    std::to_string(network.rank));
 
             vector<hsize_t> dimensions;
             /* -- Node coordinates -- */

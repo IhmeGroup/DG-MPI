@@ -5,10 +5,11 @@
 #include <vector>
 #include "H5Cpp.h"
 #include "mesh/mesh.h"
+#include "memory/memory_network.h"
 
 class Writer {
     public:
-        Writer(Mesh& mesh);
+        Writer(Mesh& mesh, MemoryNetwork& network);
 
     private:
         template <class T>

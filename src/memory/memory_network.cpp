@@ -2,7 +2,6 @@
 #include <string>
 #include <Kokkos_Core.hpp>
 #include "common/defines.h"
-#include "mesh/mesh.h"
 
 using std::cout;
 using std::endl;
@@ -11,12 +10,15 @@ using std::string;
 inline MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
     // If arguments are provided, it is assumed that initializing MPI and Kokkos
     // should be done. Otherwise, it is skipped.
-    if (argc != 0) {
+    bool should_initialize = argc != 0;
+
+    if (should_initialize) {
         // Initialize MPI
         MPI_Init(&argc, &argv);
         // Initialize Kokkos (This needs to be after MPI_Init)
         Kokkos::initialize(argc, argv);
     }
+
     // Default communicator
     comm = MPI_COMM_WORLD;
     // Get the number of processes
@@ -24,9 +26,12 @@ inline MemoryNetwork::MemoryNetwork(int argc, char* argv[]) {
     // Get the current rank
     MPI_Comm_rank(comm, (int*)&rank);
     if (rank == 0) { head_rank = true; }
+
     // Print
-    cout << "Rank " << rank << " / " << num_ranks << " reporting for duty!"
-        << endl;
+    if (should_initialize) {
+        cout << "Rank " << rank << " / " << num_ranks << " reporting for duty!"
+            << endl;
+    }
 }
 
 inline void MemoryNetwork::finalize() {
@@ -43,7 +48,7 @@ inline void MemoryNetwork::barrier() const {
 inline void MemoryNetwork::communicate_face_solution(
         Kokkos::View<rtype***> UqL, Kokkos::View<rtype***> UqR,
         Kokkos::View<rtype***>* Uq_local_array,
-        Kokkos::View<rtype***>* Uq_ghost_array, Mesh mesh) {
+        Kokkos::View<rtype***>* Uq_ghost_array, Mesh& mesh) {
     // Sizing
     auto nq = UqL.extent(1);
     auto ns = UqL.extent(2);

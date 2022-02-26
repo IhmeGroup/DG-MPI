@@ -5,13 +5,10 @@
 #include "mesh/mesh.h"
 #include "../test/mpi_enabled_tests/memory/test_memory_network.h"
 
-using std::string;
 using Kokkos::ALL;
-
-// Mock basis
-namespace Basis {
-    class Basis{};
-}
+using std::cout;
+using std::endl;
+using std::string;
 
 MemoryTestSuite::MemoryTestSuite() {
     // Run tests
@@ -20,6 +17,7 @@ MemoryTestSuite::MemoryTestSuite() {
 
 void MemoryTestSuite::test_1() {
     string test_case_name = "ShouldSendFaceDataForFourQuads";
+    double atol = 1e-8;
 
     // Create memory network
     auto network = MemoryNetwork();
@@ -30,10 +28,12 @@ void MemoryTestSuite::test_1() {
     auto toml_input = toml::parse(toml_fname);
 
     // Location of mesh file
-    string mesh_file_name = string(PROJECT_ROOT) + "/test/mpi_enabled_tests/memory/quad_2x2.h5";
+    //string mesh_file_name = string(PROJECT_ROOT) + "/test/mpi_enabled_tests/memory/quad_2x2.h5";
+    string mesh_file_name = string(PROJECT_ROOT) + "/examples/quad_2x2/some_big_mesh.h5";
     // Create mesh
     auto gbasis = Basis::Basis();
-    auto mesh = Mesh(toml_input, network, gbasis, mesh_file_name);
+    auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
+            network.head_rank, gbasis, mesh_file_name);
 
     // Sample left and right states
     constexpr int ns = 3;
@@ -89,6 +89,30 @@ void MemoryTestSuite::test_1() {
             Kokkos::DefaultHostExecutionSpace{}, UqL);
     auto h_UqR = Kokkos::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace{}, UqR);
+
+    // Check the answer
+    bool passed_test = true;
+    for (int i = 0; i < mesh.num_ifaces_part; i++) {
+        for (int j = 0; j < nq; j++) {
+            for (int k = 0; k < ns; k++) {
+                if (h_UqL(i, j, k) - UqL_i[k] > atol) {
+                    cout << "h_UqL(" << i << ", " << j << ", " << k << ") is wrong!" << endl;
+                    passed_test = false;
+                }
+                if (h_UqR(i, j, k) - UqR_i[k] > atol) {
+                    cout << "h_UqR(" << i << ", " << j << ", " << k << ") is wrong!" << endl;
+                    passed_test = false;
+                }
+            }
+        }
+    }
+
+    // Print final result
+    string result;
+    if (passed_test) { result = "passed"; }
+    else { result = "failed"; }
+    cout << "Test case \"" << test_case_name << "\" " << result << "! (rank "
+            << network.rank << "/" << network.num_ranks << ")" << endl;
 
     // Cleanup
     Kokkos::fence();

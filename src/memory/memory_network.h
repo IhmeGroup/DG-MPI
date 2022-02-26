@@ -4,9 +4,11 @@
 #include <mpi.h>
 #include <Kokkos_Core.hpp>
 #include "common/defines.h"
+#include "mesh/mesh.h"
 
 // Forward declaration
-class Mesh;
+// TODO: Uncomment these for object-file build
+//class Mesh;
 
 /*
 A network consisting of data and its methods on a distributed memory system.
@@ -29,7 +31,7 @@ class MemoryNetwork {
         // Send the left and right states across partition boundaries.
         void communicate_face_solution(Kokkos::View<rtype***> UqL,
                 Kokkos::View<rtype***> UqR, Kokkos::View<rtype***>* Uq_local,
-                Kokkos::View<rtype***>* Uq_ghost, Mesh mesh);
+                Kokkos::View<rtype***>* Uq_ghost, Mesh& mesh);
         template <class T>
         void print(T data) const;
         template <class T>

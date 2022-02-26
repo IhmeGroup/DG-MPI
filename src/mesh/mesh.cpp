@@ -8,7 +8,6 @@
 #include "metis.h"
 #include "toml11/toml.hpp"
 #include "common/my_exceptions.h"
-#include "memory/memory_network.h"
 
 using namespace std;
 using H5::PredType, H5::DataSpace, H5::DataSet;
@@ -26,9 +25,9 @@ static const string DSET_NODE_COORD("NodeCoords");
 static const string DSET_ELEM_TO_NODES("Elem2Nodes");
 static const string DSET_IFACE_DATA("IFaceData");
 
-inline Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
-        Basis::Basis& gbasis, string mesh_file_name) : network{network},
-        gbasis{gbasis} {
+inline Mesh::Mesh(const toml::value &input_info, unsigned num_ranks, unsigned
+        rank, bool head_rank, Basis::Basis gbasis, string mesh_file_name) :
+        gbasis{gbasis}, num_ranks{num_ranks}, rank{rank}, head_rank{head_rank} {
     auto mesh_info = toml::find(input_info, "Mesh");
     // If the mesh file name is not specified, then read it from the input file
     if (mesh_file_name == "") {
@@ -40,7 +39,7 @@ inline Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
         num_partitions = toml::find<int>(mesh_info, "npartitions");
     // Otherwise, the number of ranks is used
     } else {
-        num_partitions = network.num_ranks;
+        num_partitions = num_ranks;
     }
 
     // TODO figure out boundaries from the HDF5 file directly (Kihiro 2021/03/04)
@@ -57,7 +56,7 @@ inline Mesh::Mesh(const toml::value &input_info, const MemoryNetwork& network,
     // partition the mesh using METIS
     partition();
     // Print report on the head rank
-    if (network.head_rank) {
+    if (head_rank) {
         cout << report() << endl;
     }
 }
@@ -351,19 +350,19 @@ inline void Mesh::partition() {
     for (auto it = elem_partition.begin(); it != elem_partition.end(); it++) {
         elem_partition_size[*it]++;
     }
-    num_elems_part = elem_partition_size[network.rank];
+    num_elems_part = elem_partition_size[rank];
 
     // Count how many nodes are contained within each partition
     std::vector<int> node_partition_size(num_partitions, 0);
     for (auto it = node_partition.begin(); it != node_partition.end(); it++) {
         node_partition_size[*it]++;
     }
-    num_nodes_part = node_partition_size[network.rank];
+    num_nodes_part = node_partition_size[rank];
 
     // Count how many interior faces are contained within each partition
     std::vector<int> iface_partition_size(num_partitions, 0);
     std::vector<int> ghost_faces_vector;
-    std::vector<std::unordered_set<int> > sets_of_neighbor_ranks(network.num_ranks);
+    std::vector<std::unordered_set<int> > sets_of_neighbor_ranks(num_ranks);
     for (unsigned i = 0; i < nIF; i++) {
         // Get left element ID
         auto elem_ID = IF_to_elem[i][0];
@@ -389,8 +388,8 @@ inline void Mesh::partition() {
             sets_of_neighbor_ranks[right_rank].insert(left_rank);
         }
     }
-    num_ifaces_part = iface_partition_size[network.rank];
-    num_neighbor_ranks = sets_of_neighbor_ranks[network.rank].size();
+    num_ifaces_part = iface_partition_size[rank];
+    num_neighbor_ranks = sets_of_neighbor_ranks[rank].size();
 
     // Size views accordingly
     Kokkos::resize(local_to_global_elem_IDs, num_elems_part);
@@ -413,7 +412,7 @@ inline void Mesh::partition() {
 
     // Set neighbor ranks
     unsigned counter = 0;
-    for (auto rank : sets_of_neighbor_ranks[network.rank]) {
+    for (auto rank : sets_of_neighbor_ranks[rank]) {
         h_neighbor_ranks(counter) = rank;
         counter++;
     }
@@ -421,8 +420,8 @@ inline void Mesh::partition() {
     // Store the element IDs and elem_to_node_IDs on each partition
     counter = 0;
     for (unsigned i = 0; i < num_elems; i++) {
-        auto rank = (unsigned)elem_partition[i];
-        if (network.rank == rank) {
+        auto rank_i = (unsigned)elem_partition[i];
+        if (rank == rank_i) {
             // Mapping from local to global, and back
             h_local_to_global_elem_IDs(counter) = i;
             // Node IDs of each element on this partition
@@ -436,8 +435,8 @@ inline void Mesh::partition() {
     // Store the node IDs and node coordinates on each partition
     counter = 0;
     for (unsigned i = 0; i < num_nodes; i++) {
-        auto rank = (unsigned)node_partition[i];
-        if (network.rank == rank) {
+        auto rank_i = (unsigned)node_partition[i];
+        if (rank == rank_i) {
             // Mapping from local to global, and back
             h_local_to_global_node_IDs(counter) = i;
             // Node coordinates of each node on this partition
@@ -455,7 +454,7 @@ inline void Mesh::partition() {
         // Element rank on the left and right
         auto left_rank = (unsigned)elem_partition[IF_to_elem[i][0]];
         auto right_rank = (unsigned)elem_partition[IF_to_elem[i][3]];
-        if (network.rank == left_rank or network.rank == right_rank) {
+        if (rank == left_rank or rank == right_rank) {
             // Mapping from local to global, and back
             h_local_to_global_iface_IDs(counter) = i;
             // Set rank on left and right
@@ -489,7 +488,7 @@ inline void Mesh::partition() {
 
             // If this rank is on the left, then count this ghost face on the
             // right rank's index
-            if (network.rank == rank_L) {
+            if (rank == rank_L) {
                 // Get the rank neighbor index
                 int index;
                 for (unsigned j = 0; j < num_neighbor_ranks; j++) {
@@ -502,7 +501,7 @@ inline void Mesh::partition() {
                 h_num_faces_per_rank_boundary(index)++;
             // If this rank is on the right, then count this ghost face on the
             // left rank's index
-            } else if (network.rank == rank_R) {
+            } else if (rank == rank_R) {
                 // Get the rank neighbor index
                 int index;
                 for (unsigned j = 0; j < num_neighbor_ranks; j++) {
@@ -539,7 +538,7 @@ inline void Mesh::partition() {
             // If this rank is on the left, then add this ghost face to the
             // right rank's index
             int index;
-            if (network.rank == rank_L) {
+            if (rank == rank_L) {
                 // Get the rank neighbor index
                 for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_R) {
@@ -549,7 +548,7 @@ inline void Mesh::partition() {
                 }
             // If this rank is on the right, then add this ghost face to the
             // left rank's index
-            } else if (network.rank == rank_R) {
+            } else if (rank == rank_R) {
                 // Get the rank neighbor index
                 for (unsigned j = 0; j < num_neighbor_ranks; j++) {
                     if (h_neighbor_ranks(j) == rank_L) {
@@ -570,7 +569,7 @@ inline void Mesh::partition() {
         }
     }
 
-    cout << "Ghost faces of rank " << network.rank << ":" << endl;
+    cout << "Ghost faces of rank " << rank << ":" << endl;
     for (unsigned i = 0; i < num_neighbor_ranks; i++) {
         auto ghost_faces_view = ghost_faces[i];
         Kokkos::parallel_for(h_num_faces_per_rank_boundary(i),
@@ -591,17 +590,17 @@ inline void Mesh::partition() {
     cout << "END CHECK VIEW" << endl;
 
     // Print
-    for (unsigned rank = 0; rank < network.num_ranks; rank++) {
-        if (rank == network.rank) {
-            cout << "Rank " << network.rank << " has elements:" << endl;
+    for (unsigned rank_i = 0; rank_i < num_ranks; rank_i++) {
+        if (rank == rank_i) {
+            cout << "Rank " << rank << " has elements:" << endl;
             for (unsigned i = 0; i < num_elems_part; i++) {
                 cout << h_local_to_global_elem_IDs(i) << endl;
             }
-            cout << "Rank " << network.rank << " has nodes:" << endl;
+            cout << "Rank " << rank << " has nodes:" << endl;
             for (unsigned i = 0; i < num_nodes_part; i++) {
                 cout << h_local_to_global_node_IDs(i) << endl;
             }
-            cout << "Rank " << network.rank << " has interior faces:" << endl;
+            cout << "Rank " << rank << " has interior faces:" << endl;
             for (unsigned i = 0; i < num_ifaces_part; i++) {
                 cout << h_local_to_global_iface_IDs(i) << endl;
             }
@@ -656,11 +655,6 @@ unsigned Mesh::search_for_local_ID(unsigned global_ID, T local_to_global_IDs) co
             local_ID = i;
             break;
         }
-    }
-    // Check to see if it was found or not
-    if (local_ID == UINT_MAX) {
-        printf("ERROR: global_ID = %u not found in rank %u",
-                global_ID, network.rank);
     }
     return local_ID;
 }
@@ -743,7 +737,7 @@ inline string Mesh::report() const {
     if (partitioned) {
         msg << "--> Mesh is partitioned: " << endl;
         for (int part = 0; part < num_partitions; part++) {
-            msg << "Elements in partition " << network.rank << ": " << num_elems_part << endl;
+            msg << "Elements in partition " << rank << ": " << num_elems_part << endl;
         }
     }
     else {
