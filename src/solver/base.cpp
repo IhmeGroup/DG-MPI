@@ -20,7 +20,7 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
 
 void Solver::precompute_matrix_helpers() {
 
-    VolumeHelperFunctor functor(mesh, basis);
+    VolumeHelperFunctor functor;
 
     // need to get the sizes of things to pass into scratch memory
     int nb = basis.get_num_basis_coeffs();
@@ -38,11 +38,11 @@ void Solver::precompute_matrix_helpers() {
 
     printf("scratch_iMM=%i\n", scratch_size_iMM);
     printf("scratch_vol=%i\n", scratch_size_vol);
-    functor.compute_inv_mass_matrices(scratch_size_iMM);
+    functor.compute_inv_mass_matrices(scratch_size_iMM, mesh, basis);
     Kokkos::fence();
 
 
-    functor.compute_volume_helpers(scratch_size_vol);
+    functor.compute_volume_helpers(scratch_size_vol, mesh, basis);
     Kokkos::fence();
 
     host_view_type_3D h_xphys = Kokkos::create_mirror_view(functor.x_elems);

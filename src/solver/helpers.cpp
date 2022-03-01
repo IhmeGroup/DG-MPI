@@ -1,21 +1,57 @@
 namespace VolumeHelpers {
 
-VolumeHelperFunctor::VolumeHelperFunctor(Mesh mesh, Basis::Basis basis)
-    : mesh{mesh}, basis{basis} {}
 
-
-void VolumeHelperFunctor::compute_volume_helpers(int scratch_size){
+void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
+    Mesh& mesh, Basis::Basis& basis){
 
     get_quadrature(basis, basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
-    allocate_views(mesh, mesh.num_elems_part);
+    allocate_views(mesh.num_elems_part);
 
-    Kokkos::parallel_for("volume helpers", Kokkos::TeamPolicy<VolumeHelperTag>( mesh.num_elems_part,
-            Kokkos::AUTO ).set_scratch_size( 0,
-            Kokkos::PerThread( scratch_size )), *this);
+    parallel_for("volume helpers", Kokkos::TeamPolicy<>( mesh.num_elems_part, 
+        Kokkos::AUTO).set_scratch_size( 1, 
+        Kokkos::PerTeam( scratch_size )), 
+        KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
+
+        const int elem_ID = member.league_rank();
+
+        scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
+                mesh.num_nodes_per_elem, mesh.dim);
+
+
+        if (member.team_rank() == 0 ) {
+            MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
+
+            // get the physical location of the quadrature points
+            MeshTools::ref_to_phys(gbasis_val,
+                Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
+                elem_coords, member);
+
+        }
+
+        member.team_barrier();
+
+        // get the determinant of the geometry jacobian and the inverse of
+        // the jacobian for each element and store it on the device
+        BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
+            Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
+            Kokkos::ALL(), Kokkos::ALL()),
+            Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+            Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
+            Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
+
+        member.team_barrier();
+
+        // get the volume of each element
+        MeshTools::get_element_volume(quad_wts,
+            Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+            vol_elems(elem_ID), member);
+    });
+
 }
 
-void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size){
+void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size, 
+    Mesh& mesh, Basis::Basis& basis){
 
     get_quadrature(basis, 2 * basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
@@ -30,83 +66,38 @@ void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size){
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(iMM_elems, num_elems, nb, nb);
 
-    Kokkos::parallel_for("iMM helper", Kokkos::TeamPolicy<iMMHelperTag>( mesh.num_elems_part,
-            Kokkos::AUTO ).set_scratch_size( 1,
-            Kokkos::PerTeam( scratch_size )), *this);
+    parallel_for("iMM_helper", Kokkos::TeamPolicy<>( mesh.num_elems_part, 
+        Kokkos::AUTO).set_scratch_size( 1, 
+        Kokkos::PerTeam( scratch_size )), 
+        KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
+
+                const int elem_ID = member.league_rank();
+
+                scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
+                    mesh.num_nodes_per_elem, mesh.dim);
+
+                if (member.team_rank() == 0 ) {
+                    MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
+                }
+                member.team_barrier();
+
+                // get the determinant of the geometry jacobian and the inverse of
+                // the jacobian for each element and store it on the device
+                BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
+                    Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
+                    Kokkos::ALL(), Kokkos::ALL()),
+                    Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+                    Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
+                    Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
+
+                BasisTools::get_inv_mass_matrices(quad_wts, basis_val,
+                    Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
+                    Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);               
+
+    });
 }
 
-
-KOKKOS_INLINE_FUNCTION
-void VolumeHelperFunctor::operator()(VolumeHelperTag, const member_type& member) const {
-    // Fetch the index of the calling team within the league
-    const int elem_ID = member.league_rank();
-
-    scratch_view_2D_rtype elem_coords(member.team_scratch( 0 ),
-            mesh.num_nodes_per_elem, mesh.dim);
-
-
-    if (member.team_rank() == 0 ) {
-        MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
-
-        // get the physical location of the quadrature points
-        MeshTools::ref_to_phys(gbasis_val,
-            Kokkos::subview(x_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
-            elem_coords, member);
-
-    }
-
-    member.team_barrier();
-
-    // get the determinant of the geometry jacobian and the inverse of
-    // the jacobian for each element and store it on the device
-    BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
-        Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
-        Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
-        Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
-
-    member.team_barrier();
-
-    // get the volume of each element
-    MeshTools::get_element_volume(quad_wts,
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-        vol_elems(elem_ID), member);
-
-}
-
-
-KOKKOS_INLINE_FUNCTION
-void VolumeHelperFunctor::operator()(iMMHelperTag, const member_type& member) const {
-    // Fetch the index of the calling team within the league
-    const int elem_ID = member.league_rank();
-
-    scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
-            mesh.num_nodes_per_elem, mesh.dim);
-
-
-    if (member.team_rank() == 0 ) {
-        MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
-    }
-    member.team_barrier();
-
-    // get the determinant of the geometry jacobian and the inverse of
-    // the jacobian for each element and store it on the device
-    BasisTools::get_element_jacobian(quad_pts, gbasis_ref_grad,
-        Kokkos::subview(jac_elems, elem_ID, Kokkos::ALL(),
-        Kokkos::ALL(), Kokkos::ALL()),
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-        Kokkos::subview(ijac_elems, elem_ID, Kokkos::ALL(),
-        Kokkos::ALL(), Kokkos::ALL()), elem_coords, member);
-
-    BasisTools::get_inv_mass_matrices(quad_wts, basis_val,
-        Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-        Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);
-
-
-}
-
-void VolumeHelperFunctor::allocate_views(Mesh& mesh, const int num_elems){
+void VolumeHelperFunctor::allocate_views(const int num_elems){
 
     const int nq = quad_pts.extent(0);
     const int ndims = quad_pts.extent(1);
@@ -183,7 +174,5 @@ void VolumeHelperFunctor::get_reference_data(
     Kokkos::deep_copy(gbasis_ref_grad, h_gbasis_ref_grad);
 
 }
-
-
 
 } // end namespace VolumeHelper
