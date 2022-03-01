@@ -38,6 +38,7 @@ cd ../build_gpu/build_externals/kokkos/build
 
 $cmake  -DCMAKE_INSTALL_PREFIX=./install -DKokkos_ENABLE_OPENMP=ON \
     -DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON \
+    -DKokkos_CXX_STANDARD=17 \
     -DCMAKE_CXX_COMPILER=${PWD}/../../../../externals/kokkos/bin/nvcc_wrapper \
     ../../../../externals/kokkos
 make -j install
@@ -50,6 +51,7 @@ cd ../../kokkos-kernels/build
 
 $cmake -DCMAKE_INSTALL_PREFIX=./install \
     -DKokkos_ROOT=../../kokkos/build/install \
+    -DKokkos_CXX_STANDARD=17 \
     -DCMAKE_CXX_COMPILER=${PWD}/../../kokkos/build/install/bin/nvcc_wrapper \
     -DKokkosKernels_REQUIRE_DEVICES=CUDA \
     ../../../../externals/kokkos-kernels
