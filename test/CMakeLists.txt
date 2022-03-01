@@ -50,6 +50,7 @@ gtest_discover_tests(test_gtest_all)
 # -- MPI-enabled tests -- #
 add_subdirectory(mpi_enabled_tests/mesh)
 add_subdirectory(mpi_enabled_tests/memory)
+add_subdirectory(mpi_enabled_tests/solver)
 
 # Name for the mpi-enabled test executable file
 add_executable(test_mpi_enabled mpi_enabled_tests/main.cpp)
@@ -64,7 +65,7 @@ target_link_libraries(test_mpi_enabled
     PRIVATE ${HDF5_LIBRARIES}
     PUBLIC Kokkos::kokkoscore mpi
     PRIVATE io
-    PRIVATE test_mesh test_memory
+    PRIVATE test_mesh test_memory test_solver
 )
 
 set_target_properties(test_mpi_enabled
@@ -90,7 +91,8 @@ list(APPEND SANITY_SOURCES
     # sanity_checks/sanity_scratchspace.cpp
     # sanity_checks/sanity_simpleparallelfor.cpp
     # sanity_checks/sanity_multiple_operators.cpp
-    sanity_checks/sanity_mult_view_by_constant.cpp
+    # sanity_checks/sanity_mult_view_by_constant.cpp
+    sanity_checks/sanity_passintofunctor.cpp
 )
 
 target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})
