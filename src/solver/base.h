@@ -7,6 +7,7 @@
 #include "numerics/numerics_data.h"
 #include "mesh/mesh.h"
 #include "numerics/basis/basis.h"
+#include "solver/helpers.h"
 
 class Solver {
     public:
@@ -26,6 +27,10 @@ class Solver {
 
         // Basis class
         Basis::Basis basis;
+
+        // Volume Helper class
+        VolumeHelpers::VolumeHelperFunctor vol_helpers;
+        
         int nb;
         int order;
 };

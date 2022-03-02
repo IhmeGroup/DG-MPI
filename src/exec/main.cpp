@@ -49,6 +49,9 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis);
 
+    // Create physics
+    
+
     // Create solver
     auto solver = Solver(toml_input, mesh, network, numerics_params);
 

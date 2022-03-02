@@ -1,6 +1,7 @@
 namespace VolumeHelpers {
 
 
+inline
 void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
     Mesh& mesh, Basis::Basis& basis){
 
@@ -50,6 +51,7 @@ void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
 
 }
 
+inline
 void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size, 
     Mesh& mesh, Basis::Basis& basis){
 
@@ -97,6 +99,7 @@ void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size,
     });
 }
 
+inline
 void VolumeHelperFunctor::allocate_views(const int num_elems){
 
     const int nq = quad_pts.extent(0);
@@ -109,6 +112,8 @@ void VolumeHelperFunctor::allocate_views(const int num_elems){
     Kokkos::resize(vol_elems, num_elems);
 }
 
+
+inline
 void VolumeHelperFunctor::get_quadrature(
     Basis::Basis basis, const int order){
 
@@ -134,6 +139,8 @@ void VolumeHelperFunctor::get_quadrature(
 
 }
 
+
+inline
 void VolumeHelperFunctor::get_reference_data(
         Basis::Basis basis, Basis::Basis gbasis, const int order){
     // unpack

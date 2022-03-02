@@ -9,18 +9,20 @@ using namespace VolumeHelpers;
 Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network,
     Numerics::NumericsParams& params)
     : input_file{input_file}, mesh{mesh}, network{network}, params{params} {
-    // Size views
-    // Kokkos::resize(Uc, mesh.num_elems_part, 2, 2);
-    // Kokkos::resize(U_face, mesh.num_ifaces_part, 2, 2);
 
     order = toml::find<int>(input_file, "Numerics", "order");
     basis = Basis::Basis(params.basis, order);
+
+
+    // need to get physics.NUM_STATE_VARS set (compile time constant?)
+    Kokkos::resize(Uc, mesh.num_elems_part, basis.get_num_basis_coeffs(), 4);
+    Kokkos::resize(U_face, mesh.num_ifaces_part, basis.get_num_basis_coeffs(), 4);
 }
 
 
 void Solver::precompute_matrix_helpers() {
 
-    VolumeHelperFunctor functor;
+    // VolumeHelperFunctor functor;
 
     // need to get the sizes of things to pass into scratch memory
     int nb = basis.get_num_basis_coeffs();
@@ -38,18 +40,18 @@ void Solver::precompute_matrix_helpers() {
 
     printf("scratch_iMM=%i\n", scratch_size_iMM);
     printf("scratch_vol=%i\n", scratch_size_vol);
-    functor.compute_inv_mass_matrices(scratch_size_iMM, mesh, basis);
+    vol_helpers.compute_inv_mass_matrices(scratch_size_iMM, mesh, basis);
     Kokkos::fence();
 
 
-    functor.compute_volume_helpers(scratch_size_vol, mesh, basis);
+    vol_helpers.compute_volume_helpers(scratch_size_vol, mesh, basis);
     Kokkos::fence();
 
-    host_view_type_3D h_xphys = Kokkos::create_mirror_view(functor.x_elems);
-    host_view_type_3D h_iMM_elems = Kokkos::create_mirror_view(functor.iMM_elems);
+    host_view_type_3D h_xphys = Kokkos::create_mirror_view(vol_helpers.x_elems);
+    host_view_type_3D h_iMM_elems = Kokkos::create_mirror_view(vol_helpers.iMM_elems);
 
-    Kokkos::deep_copy(h_xphys, functor.x_elems);
-    Kokkos::deep_copy(h_iMM_elems, functor.iMM_elems);
+    Kokkos::deep_copy(h_xphys, vol_helpers.x_elems);
+    Kokkos::deep_copy(h_iMM_elems, vol_helpers.iMM_elems);
 
     for (int k = 0; k < h_xphys.extent(0); k++){
     for (int i = 0; i < h_xphys.extent(1); i++){

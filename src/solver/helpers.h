@@ -17,19 +17,24 @@ struct VolumeHelperFunctor {
 
     VolumeHelperFunctor() = default;
 
+    inline
     void compute_volume_helpers(int scratch_size, Mesh& mesh,
         Basis::Basis& basis);
 
+    inline
     void compute_inv_mass_matrices(int scratch_size, Mesh& mesh,
         Basis::Basis& basis);
 
+    inline
     void get_quadrature(Basis::Basis basis,
         const int order);
 
+    inline
     void get_reference_data(Basis::Basis basis,
         Basis::Basis gbasis,
         const int order);
 
+    inline
     void allocate_views(const int num_elems);
 
     view_type_2D quad_pts;
