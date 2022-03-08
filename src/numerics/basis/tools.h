@@ -45,6 +45,12 @@ void get_element_jacobian(view_type_2D quad_pts,
     ViewType3D ijac, ViewType2D elem_coords,
     const member_type& member);
 
+template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
+void get_element_jacobian(view_type_2D quad_pts,
+    view_type_3D basis_ref_grad, ViewType3D jac, ViewType1D djac,
+    ViewType2D elem_coords,
+    const member_type& member);
+
 
 template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
 void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,

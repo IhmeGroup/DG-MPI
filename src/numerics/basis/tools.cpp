@@ -45,6 +45,23 @@ void get_element_jacobian(view_type_2D quad_pts,
     });
 }
 
+template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
+void get_element_jacobian(view_type_2D quad_pts,
+    view_type_3D basis_ref_grad, ViewType3D jac, ViewType1D djac, 
+    ViewType2D elem_coords,
+    const member_type& member){
+
+    const int nq = jac.extent(0);
+    Kokkos::parallel_for(Kokkos::TeamThreadRange(member, nq), KOKKOS_LAMBDA (const int iq) {
+        auto basis_ref_grad_iq = Kokkos::subview(basis_ref_grad, iq,
+            Kokkos::ALL(), Kokkos::ALL());
+        auto jac_iq = Kokkos::subview(jac, iq, Kokkos::ALL(), Kokkos::ALL());
+
+        Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
+        Math::det(jac_iq, djac(iq));
+    });
+}
+
 template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
 void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
     ViewType1D djac, ViewType2D iMM, const member_type& member){
@@ -55,8 +72,7 @@ void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
     scratch_view_2D_rtype MM(member.team_scratch( 1 ), nb, nb);
     scratch_view_2D_rtype scratch_basis_val(member.team_scratch( 1 ), nq, nb);
 
-    // printf("MM_shape:%i, %i", MM.extent(0), MM.extent(1));
-    Math::team_copy_A_to_B(basis_val, scratch_basis_val, member);
+    Math::copy_A_to_B(basis_val, scratch_basis_val, member);
 
     member.team_barrier();
 
@@ -64,28 +80,13 @@ void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
         auto scratch_basis_val_iq = Kokkos::subview(scratch_basis_val, iq, Kokkos::ALL());
         Math::cA_to_A(quad_wts(iq) * djac(iq), scratch_basis_val_iq);
     });
-
     member.team_barrier();
     
-    Math::team_cATxB_to_C(1., basis_val, scratch_basis_val, MM, member);
-
+    Math::cATxB_to_C(1., basis_val, scratch_basis_val, MM, member);
     member.team_barrier();
-
-        for (int i = 0; i < MM.extent(0); i++){
-        for (int j=0; j< MM.extent(1); j++){
-            printf("MM(%i, %i)=%f\n", i, j, MM(i, j));
-        }
-    }
-
-    Math::team_invA(MM, iMM, member);
-
+    
+    Math::invA(MM, iMM, member);
     member.team_barrier();
-
-        for (int i = 0; i < MM.extent(0); i++){
-        for (int j=0; j< MM.extent(1); j++){
-            printf("iMM(%i, %i)=%f\n", i, j, iMM(i, j));
-        }
-    }
 }
 
 
