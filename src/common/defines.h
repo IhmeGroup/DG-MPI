@@ -14,6 +14,7 @@ constexpr auto MPI_RTYPE = MPI_FLOAT;
 #endif
 
 constexpr auto INIT_EX_PARAMS_MAX = 10;
+constexpr auto INIT_NAME_MAX_CHARS = 30;
 
 constexpr auto N_BASIS_MAX = 300;  //!< maximum number of basis function
 constexpr auto N_STATE_MAX = 20; //!< maximum number of state variables
@@ -41,6 +42,14 @@ using view_type_4D = Kokkos::View<rtype****>;
 using host_view_type_4D = view_type_4D::HostMirror;
 
 using scratch_view_2D_rtype = Kokkos::View<rtype**,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+using scratch_view_3D_rtype = Kokkos::View<rtype***,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+using scratch_view_1D_rtype = Kokkos::View<rtype*,
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
