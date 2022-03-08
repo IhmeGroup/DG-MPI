@@ -53,6 +53,28 @@ T enum_from_string(std::string str) {
     return T(index);
 }
 
+enum PhysicsType {
+    Euler,
+    NavierStokes
+};
+template <>
+inline std::vector<std::string> get_enum_to_string_array<PhysicsType> () {
+    return std::vector<std::string> {
+        "Euler",
+        "NavierStokes"
+    };
+}
+
+enum ICType {
+    Uniform,
+};
+template <>
+inline std::vector<std::string> get_enum_to_string_array<ICType> () {
+    return std::vector<std::string> {
+        "Uniform",
+    };
+}
+
 enum BasisType {
     LagrangeSeg,
     LagrangeQuad,
