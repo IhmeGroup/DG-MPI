@@ -2,104 +2,141 @@
 #define DG_PHYSICS_BASE_H
 
 #include <string>
+#include <vector>
 #include "common/defines.h"
 #include "common/my_exceptions.h"
-
+#include "common/enums.h"
+#include <map>
 // #include "equations/equation_data.h"
 // #include "physics/physics_data.h"
 // #include "math/ode.h"
 
-#include <KokkosBlas2_gemv.hpp>
+#include <Kokkos_Core.hpp>
+// #include <KokkosBlas2_gemv.hpp>
+
+
 
 namespace Physics {
 
-/*! \brief Base equation class
- *
- */
-template <int dim>
-class PhysicsBase {
-  public:
-    /*
-    Virtual destructor
+class Physics {
 
-    This destructor is needed so that the derived class destructors are called when releasing
-    a pointer to this base class.
-    */
-    virtual ~PhysicsBase() = default;
+public:
 
-    rtype state; // input state array for initial conditions
+    inline
+    Physics(PhysicsType physics_type, const int dim, std::string _IC_name);
+    Physics() = default;
+    // ~Physics() = default;
+    inline int get_NS(){return NUM_STATE_VARS;}
 
-    /*
-    Get the number of state variables
+    // void (*set_IC)(Physics& physics, const std::string IC_name);
+    template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+    void call_IC(ViewTypeX x, const rtype t,
+        ViewTypeUq Uq) const;
 
-    Outputs:
-    --------
-        number of state variables
-    */
-    virtual int get_NS();
+    // void (*set_state)(const Physics& physics, scratch_view_1D_rtype x, const rtype t, 
+    //     scratch_view_1D_rtype f);
 
-    /*
-    Compute projected flux
+    // mutable void (*set_state)();
+    ICType IC_type;
+    view_type_1D IC_data;
+    int NUM_STATE_VARS; // QUESTION: Should this be compile time constant?
 
-    This method computes the convective analytical flux projected in a
-    given direction.
+};
 
-    Inputs:
-    -------
-      Uq: values of the state variables (typically at the quadrature
-        points) [ns]
-      normals: directions in which to project flux [ndims]
 
-    Outputs:
-    --------
-      Fproj: projected flux values [ns]
-    */
-    DG_KOKKOS_FUNCTION void get_conv_flux_projected(
-        Kokkos::View<const rtype*> Uq,
-        Kokkos::View<const rtype*> normals,
-        Kokkos::View<rtype*> Fproj);
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_state_uniform_2D(const Physics* physics, ViewTypeX x, const rtype t,
+        ViewTypeUq Uq);
 
-    enum PhysicsVariables {
-        Dummy
-    };
-    inline PhysicsVariables get_physical_variable(const std::string var_name) {
-        if (var_name == "Dummy") {
-            return PhysicsVariables::Dummy;
-        }
-    }
-    PhysicsVariables var;
 
-    /*
-    Compute convective physical flux function
 
-    Inputs:
-    -------
-      U: values of the state variables (typically at the quadrature points) [ns]
+// /*! \brief Base equation class
+//  *
+//  */
+// template <int dim>
+// class PhysicsBase {
+//   public:
+//     /*
+//     Virtual destructor
 
-    Outputs:
-    --------
-      F: flux values [ns, ndims]
-    */
-    DG_KOKKOS_FUNCTION virtual void conv_flux_physical(
-      Kokkos::View<const rtype*> U,
-      Kokkos::View<rtype**> F);
+//     This destructor is needed so that the derived class destructors are called when releasing
+//     a pointer to this base class.
+//     */
+//     virtual ~PhysicsBase() = default;
 
-    DG_KOKKOS_FUNCTION rtype compute_variable(std::string str,
-      Kokkos::View<const rtype*> Uq);
+//     rtype state; // input state array for initial conditions
 
-    /*
-    Get max wave speed
+//     /*
+//     Get the number of state variables
 
-    Inputs:
-    -------
-        U: solution state [ns]
+//     Outputs:
+//     --------
+//         number of state variables
+//     */
+//     virtual int get_NS();
 
-    Outputs:
-    --------
-        max wave speed
-    */
-    virtual DG_KOKKOS_FUNCTION rtype get_maxwavespeed(
-        Kokkos::View<const rtype*> U);
+//     /*
+//     Compute projected flux
+
+//     This method computes the convective analytical flux projected in a
+//     given direction.
+
+//     Inputs:
+//     -------
+//       Uq: values of the state variables (typically at the quadrature
+//         points) [ns]
+//       normals: directions in which to project flux [ndims]
+
+//     Outputs:
+//     --------
+//       Fproj: projected flux values [ns]
+//     */
+//     DG_KOKKOS_FUNCTION void get_conv_flux_projected(
+//         Kokkos::View<const rtype*> Uq,
+//         Kokkos::View<const rtype*> normals,
+//         Kokkos::View<rtype*> Fproj);
+
+//     enum PhysicsVariables {
+//         Dummy
+//     };
+//     inline PhysicsVariables get_physical_variable(const std::string var_name) {
+//         if (var_name == "Dummy") {
+//             return PhysicsVariables::Dummy;
+//         }
+//     }
+//     PhysicsVariables var;
+
+//     /*
+//     Compute convective physical flux function
+
+//     Inputs:
+//     -------
+//       U: values of the state variables (typically at the quadrature points) [ns]
+
+//     Outputs:
+//     --------
+//       F: flux values [ns, ndims]
+//     */
+//     DG_KOKKOS_FUNCTION virtual void conv_flux_physical(
+//       Kokkos::View<const rtype*> U,
+//       Kokkos::View<rtype**> F);
+
+//     DG_KOKKOS_FUNCTION rtype compute_variable(std::string str,
+//       Kokkos::View<const rtype*> Uq);
+
+//     /*
+//     Get max wave speed
+
+//     Inputs:
+//     -------
+//         U: solution state [ns]
+
+//     Outputs:
+//     --------
+//         max wave speed
+//     */
+//     virtual DG_KOKKOS_FUNCTION rtype get_maxwavespeed(
+//         Kokkos::View<const rtype*> U);
 
     /*! \brief Compute an analytic state at one point / state
      *
@@ -507,8 +544,10 @@ class PhysicsBase {
 //     const rtype *U, const rtype *gU, const rtype *N, rtype *F, rtype *gF) {
 
 //     equation->get_weakprescribedisothermalvelwall_boundary_fluxes(input, bdata, U, gU, N, F, gF);
-};
 
 } // namespace Physics
+
+#include "physics/base/base.cpp"
+
 
 #endif //DG_PHYSICS_BASE_H
