@@ -9,7 +9,7 @@ using std::string, std::vector;
 
 Writer::Writer(Mesh& mesh, MemoryNetwork& network) {
     std::stringstream stream;
-    stream << PROJECT_ROOT << "/build/test/mpi_enabled_tests/mesh/data.h5";
+    stream << PROJECT_ROOT << "/build_gpu/test/mpi_enabled_tests/mesh/data.h5";
     const string file_name = stream.str();
 
     // Copy everything to the host from the device
