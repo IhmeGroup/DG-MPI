@@ -7,13 +7,16 @@
 #include "numerics/numerics_data.h"
 #include "mesh/mesh.h"
 #include "numerics/basis/basis.h"
+#include "physics/base/base.h"
 #include "solver/helpers.h"
 
 class Solver {
     public:
-        Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network,
-            Numerics::NumericsParams& params);
+        Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network, 
+            Numerics::NumericsParams& params, PhysicsType physics_type);
         void precompute_matrix_helpers();
+
+        void init_state_from_fcn(Mesh& mesh_local);
     public:
         // Solution coefficients
         Kokkos::View<rtype***> Uc;
@@ -25,6 +28,8 @@ class Solver {
         MemoryNetwork& network;
         Numerics::NumericsParams& params;
 
+        // Physics class
+        Physics::Physics physics;
         // Basis class
         Basis::Basis basis;
 
@@ -33,6 +38,8 @@ class Solver {
         
         int nb;
         int order;
+
+        rtype time;
 };
 
 #endif // DG_SOLVER_H
