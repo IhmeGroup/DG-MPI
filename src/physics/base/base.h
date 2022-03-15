@@ -33,12 +33,17 @@ public:
     void call_IC(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
 
+    template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+    void call_exact_solution(ViewTypeX x, const rtype t,
+        ViewTypeUq Uq) const;
+
     // void (*set_state)(const Physics& physics, scratch_view_1D_rtype x, const rtype t, 
     //     scratch_view_1D_rtype f);
 
     // mutable void (*set_state)();
     ICType IC_type;
     view_type_1D IC_data;
+
     int NUM_STATE_VARS; // QUESTION: Should this be compile time constant?
 
 };
@@ -46,6 +51,14 @@ public:
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
 void set_state_uniform_2D(const Physics* physics, ViewTypeX x, const rtype t,
+        ViewTypeUq Uq);
+
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_gaussian_state_2D(const Physics* physics, ViewTypeX x, const rtype t,
+        ViewTypeUq Uq);
+
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_smooth_sphere(const Physics* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq);
 
 
