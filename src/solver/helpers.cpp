@@ -19,7 +19,6 @@ void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
         scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
                 mesh.num_nodes_per_elem, mesh.dim);
 
-
         if (member.team_rank() == 0 ) {
             MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
 
@@ -55,6 +54,7 @@ inline
 void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size, 
     Mesh& mesh, Basis::Basis& basis){
 
+    // to correctly compute iMM we need 2*p for quadrature rules
     get_quadrature(basis, 2 * basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
 
@@ -197,3 +197,51 @@ void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, Vi
 
 }
 } // end namespace VolumeHelper
+
+
+
+namespace InteriorFaceHelpers {
+
+void InteriorFaceHelperFunctor::compute_interior_face_helpers(int scratch_size, Mesh& mesh,
+    Basis::Basis& basis){
+
+    get_quadrature(basis, basis.get_order());
+
+    for (unsigned long i = 0; i < h_quad_pts.extent(0); i++){
+        for (unsigned long j = 0; j < h_quad_pts.extent(1); j++){
+        printf("qpts(%i, %i)=%f\n", i, j, h_quad_pts(i, j));
+    }
+
+    }
+}
+
+inline
+void InteriorFaceHelperFunctor::get_quadrature(
+    Basis::Basis basis, const int order){
+
+    // unpack
+    int NDIMS = basis.face_shape.get_NDIMS();
+    int nq_1d; int nq;
+    int qorder = basis.face_shape.get_quadrature_order(order);
+
+    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
+            nq_1d, nq);
+
+    printf("face qorder=%i", qorder);
+    // need to establish an initial size for views prior
+    // to resizing inside of get_quadrature_data
+    Kokkos::resize(quad_pts, nq, NDIMS);
+    Kokkos::resize(quad_wts, nq);
+
+    h_quad_pts = Kokkos::create_mirror_view(quad_pts);
+    h_quad_wts = Kokkos::create_mirror_view(quad_wts);
+
+    basis.face_shape.get_quadrature_data(qorder, nq_1d, h_quad_pts, h_quad_wts);
+
+    Kokkos::deep_copy(quad_pts, h_quad_pts);
+    Kokkos::deep_copy(quad_wts, h_quad_wts);
+
+}
+
+} // end namespace InteriorFaceHelpers
+

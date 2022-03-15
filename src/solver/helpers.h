@@ -14,8 +14,6 @@
 namespace VolumeHelpers {
 
 struct VolumeHelperFunctor {
-    class VolumeHelperTag {};
-    class iMMHelperTag {};
 
     VolumeHelperFunctor() = default;
 
@@ -72,6 +70,48 @@ void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, Vi
 
 } // end namespace VolumeHelper
 
+namespace InteriorFaceHelpers {
+
+struct InteriorFaceHelperFunctor{
+
+    InteriorFaceHelperFunctor() = default;
+
+    inline
+    void compute_interior_face_helpers(int scratch_size, Mesh& mesh,
+        Basis::Basis& basis);
+
+    inline
+    void get_quadrature(Basis::Basis basis,
+        const int order);
+
+    // inline
+    // void get_reference_data(Basis::Basis basis,
+    //     Basis::Basis gbasis,
+    //     const int order);
+
+    // inline
+    // void allocate_views(const int num_elems);
+
+    view_type_2D quad_pts;
+    view_type_1D quad_wts;
+
+    host_view_type_2D h_quad_pts;
+    host_view_type_1D h_quad_wts;
+
+    view_type_2D basis_val;
+    view_type_3D basis_ref_grad;
+
+    host_view_type_2D h_basis_val;
+    host_view_type_3D h_basis_ref_grad;
+
+    view_type_2D gbasis_val;
+    view_type_3D gbasis_ref_grad;
+
+    host_view_type_2D h_gbasis_val;
+    host_view_type_3D h_gbasis_ref_grad;
+};
+
+} // end interior face helper namespace
 #include "solver/helpers.cpp"
 
 #endif // DG_SOLVER_HELPERS_H
