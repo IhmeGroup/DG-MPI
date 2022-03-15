@@ -44,6 +44,7 @@ class Solver {
 
         // Volume Helper class
         VolumeHelpers::VolumeHelperFunctor vol_helpers;
+        InteriorFaceHelpers::InteriorFaceHelperFunctor iface_helpers;
         
         int nb;
         int order;

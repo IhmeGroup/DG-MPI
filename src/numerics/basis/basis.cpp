@@ -245,36 +245,45 @@ Basis::Basis(BasisType basis_type, const int order){
         get_grads_pointer = get_grads_lagrangeseg;
         name = "LagrangeSeg";
         shape = Shape(enum_from_string<ShapeType>("Segment"));
+        // Note: No face_shape as 1D is not supported
     }
     if (basis_type == BasisType::LagrangeQuad){
         get_values_pointer = get_values_lagrangequad;
         get_grads_pointer = get_grads_lagrangequad;
         name = "LagrangeQuad";
         shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
+        face_shape = Shape(enum_from_string<ShapeType>("Segment"));
     }
     if (basis_type == BasisType::LagrangeHex){
         get_values_pointer = get_values_lagrangehex;
         get_grads_pointer = get_grads_lagrangehex;
         name = "LagrangeHex";
         shape = Shape(enum_from_string<ShapeType>("Hexahedron"));
+        face_shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
+
     }
     if (basis_type == BasisType::LegendreSeg){
         get_values_pointer = get_values_legendreseg;
         get_grads_pointer = get_grads_legendreseg;
         name = "LegendreSeg";
         shape = Shape(enum_from_string<ShapeType>("Segment"));
+        // Note: No face_shape as 1D is not supported
     }
     if (basis_type == BasisType::LegendreQuad){
         get_values_pointer = get_values_legendrequad;
         get_grads_pointer = get_grads_legendrequad;
         name = "LegendreQuad";
         shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
+        face_shape = Shape(enum_from_string<ShapeType>("Segment"));
+
     }
     if (basis_type == BasisType::LegendreHex){
         get_values_pointer = get_values_legendrehex;
         get_grads_pointer = get_grads_legendrehex;
         name = "LegendreHex";
         shape = Shape(enum_from_string<ShapeType>("Hexahedron"));
+        face_shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
+
     }
 
     this->nb = shape.get_num_basis_coeff(order);

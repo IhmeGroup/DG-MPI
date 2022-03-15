@@ -113,6 +113,7 @@ private:
 
 public:
     Shape shape;
+    Shape face_shape;
 protected:
     std::string name; // name of basis
     int nb; //number of polynomial coefficients

@@ -62,8 +62,13 @@ void Solver::precompute_matrix_helpers() {
     Kokkos::fence();
 
     // ---------------------------------------------------------------------------------------
-    //                          Face Helpers
+    //                          Interior Face Helpers
     // ---------------------------------------------------------------------------------------
+    
+    int scratch_size = 0;
+
+    iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis);
+
 
 }
 
