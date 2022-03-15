@@ -574,7 +574,7 @@ inline void Mesh::partition() {
         auto ghost_faces_view = ghost_faces[i];
         Kokkos::parallel_for(h_num_faces_per_rank_boundary(i),
                 KOKKOS_LAMBDA(const int& j) {
-                printf("%u\n", ghost_faces_view(j));
+                // printf("%u\n", ghost_faces_view(j));
         });
         cout << endl;
     }
@@ -589,23 +589,23 @@ inline void Mesh::partition() {
     }
     cout << "END CHECK VIEW" << endl;
 
-    // Print
-    for (unsigned rank_i = 0; rank_i < num_ranks; rank_i++) {
-        if (rank == rank_i) {
-            cout << "Rank " << rank << " has elements:" << endl;
-            for (unsigned i = 0; i < num_elems_part; i++) {
-                cout << h_local_to_global_elem_IDs(i) << endl;
-            }
-            cout << "Rank " << rank << " has nodes:" << endl;
-            for (unsigned i = 0; i < num_nodes_part; i++) {
-                cout << h_local_to_global_node_IDs(i) << endl;
-            }
-            cout << "Rank " << rank << " has interior faces:" << endl;
-            for (unsigned i = 0; i < num_ifaces_part; i++) {
-                cout << h_local_to_global_iface_IDs(i) << endl;
-            }
-        }
-    }
+    // // Print
+    // for (unsigned rank_i = 0; rank_i < num_ranks; rank_i++) {
+    //     if (rank == rank_i) {
+    //         cout << "Rank " << rank << " has elements:" << endl;
+    //         for (unsigned i = 0; i < num_elems_part; i++) {
+    //             cout << h_local_to_global_elem_IDs(i) << endl;
+    //         }
+    //         cout << "Rank " << rank << " has nodes:" << endl;
+    //         for (unsigned i = 0; i < num_nodes_part; i++) {
+    //             cout << h_local_to_global_node_IDs(i) << endl;
+    //         }
+    //         cout << "Rank " << rank << " has interior faces:" << endl;
+    //         for (unsigned i = 0; i < num_ifaces_part; i++) {
+    //             cout << h_local_to_global_iface_IDs(i) << endl;
+    //         }
+    //     }
+    // }
 
     // Deallocate global mesh data
     vector<int>().swap(eind);
