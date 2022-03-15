@@ -143,7 +143,11 @@ find_package(OpenMP REQUIRED)
 # Kokkos modifies these.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(warning_flags "-Wall -Wextra")# -Wno-deprecated-gpu-targets")
+if(GPU_BUILD)
+    set(warning_flags "-Wall -Wextra -Wno-deprecated-gpu-targets")
+else()
+    set(warning_flags "-Wall -Wextra")
+endif()
 set(CMAKE_C_FLAGS_DEBUG      "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CXX_FLAGS_DEBUG    "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
@@ -182,11 +186,10 @@ add_subdirectory(src/memory)
 add_subdirectory(src/numerics)
 add_subdirectory(src/physics)
 add_subdirectory(src/mesh)
-# TODO: commented since they're not currently compiling on GPUs
 add_subdirectory(src/solver)
 add_subdirectory(src/utils)
 add_subdirectory(test)
-
+add_subdirectory(src/post)
 # executables
 add_subdirectory(src/exec)
 
