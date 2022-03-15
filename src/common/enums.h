@@ -67,11 +67,15 @@ inline std::vector<std::string> get_enum_to_string_array<PhysicsType> () {
 
 enum ICType {
     Uniform,
+    Gaussian,
+    Sphere,
 };
 template <>
 inline std::vector<std::string> get_enum_to_string_array<ICType> () {
     return std::vector<std::string> {
         "Uniform",
+        "Gaussian",
+        "Sphere",
     };
 }
 
@@ -171,7 +175,6 @@ enum DGSchemeType {
     LegendreStruct,
     ColocatedGL,
     ColocatedGLL,
-    None
 };
 template <>
 inline std::vector<std::string> get_enum_to_string_array<DGSchemeType> () {
@@ -181,7 +184,6 @@ inline std::vector<std::string> get_enum_to_string_array<DGSchemeType> () {
         "LegendreStruct",
         "ColocatedGL",
         "ColocatedGLL",
-        "None"
     };
 }
 
