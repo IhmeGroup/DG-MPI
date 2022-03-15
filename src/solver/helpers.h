@@ -8,6 +8,8 @@
 #include "numerics/basis/tools.h"
 #include "numerics/quadrature/tools.h"
 #include <Kokkos_Core.hpp>
+#include "KokkosBlas3_gemm.hpp"
+
 
 namespace VolumeHelpers {
 
@@ -64,6 +66,9 @@ struct VolumeHelperFunctor {
 
     view_type_3D iMM_elems;
 };
+
+template<typename ViewType2D, typename ViewType3D> inline
+void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, ViewType3D Uq);
 
 } // end namespace VolumeHelper
 

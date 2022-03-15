@@ -1,6 +1,7 @@
 #ifndef DG_SOLVER_H
 #define DG_SOLVER_H
 
+#include <string>
 #include <Kokkos_Core.hpp>
 #include "toml11/toml.hpp"
 #include "memory/memory_network.h"
@@ -17,12 +18,20 @@ class Solver {
         void precompute_matrix_helpers();
 
         void init_state_from_fcn(Mesh& mesh_local);
+
+        void copy_from_device_to_host();
+
+        void read_in_coefficients(const std::string& filename);
+
     public:
         // Solution coefficients
         Kokkos::View<rtype***> Uc;
+        host_view_type_3D h_Uc;
+
         // Solution evaluated at the face quadrature points. This has shape
         // (nIF, nqf, ns)
         Kokkos::View<rtype***> U_face;
+
         const toml::value& input_file;
         Mesh& mesh;
         MemoryNetwork& network;

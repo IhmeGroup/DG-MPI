@@ -119,8 +119,8 @@ void VolumeHelperFunctor::get_quadrature(
 
     // unpack
     int NDIMS = basis.shape.get_NDIMS();
-    int qorder = basis.shape.get_quadrature_order(order);
     int nq_1d; int nq;
+    int qorder = basis.shape.get_quadrature_order(order);
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
 
@@ -182,4 +182,18 @@ void VolumeHelperFunctor::get_reference_data(
 
 }
 
+template<typename ViewType2D, typename ViewType3D> inline
+void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, ViewType3D Uq){
+    
+    Kokkos::parallel_for("eval state", Kokkos::TeamPolicy<>( num_elems,
+        Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
+        const int elem_ID = member.league_rank();
+        auto Uq_elem = Kokkos::subview(Uq, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        auto Uc_elem = Kokkos::subview(Uc, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        
+        Math::cAxB_to_C(1., basis_val, Uc_elem, Uq_elem, member);
+        member.team_barrier();
+    });
+
+}
 } // end namespace VolumeHelper
