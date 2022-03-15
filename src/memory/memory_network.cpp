@@ -45,6 +45,12 @@ inline void MemoryNetwork::barrier() const {
     MPI_Barrier(comm);
 }
 
+template<class T> 
+inline void MemoryNetwork::allgather(T send_data, T& recv_data) {
+    MPI_Allgather(&send_data, 1, MPI_RTYPE, &recv_data, 1, MPI_RTYPE,
+                MPI_COMM_WORLD);
+}
+
 inline void MemoryNetwork::communicate_face_solution(
         Kokkos::View<rtype***> UqL, Kokkos::View<rtype***> UqR,
         Kokkos::View<rtype***>* Uq_local_array,
