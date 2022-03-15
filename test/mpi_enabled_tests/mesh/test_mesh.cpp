@@ -32,8 +32,10 @@ void MeshTestSuite::test_1() {
     auto gbasis = Basis::Basis();
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis, mesh_file_name);
+
+    // TODO: Update this writer after adding solver to it
     // Create writer
-    auto writer = Writer(mesh, network);
+    // auto writer = Writer(mesh, network);
     // Cleanup
     mesh.finalize();
 };
