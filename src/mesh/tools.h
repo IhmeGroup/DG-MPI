@@ -11,15 +11,18 @@ namespace MeshTools {
     KOKKOS_INLINE_FUNCTION
     void elem_coords_from_elem_ID(const Mesh& mesh, const int elem_ID,
         scratch_view_2D_rtype elem_coords,
-        const member_type& member);
+        const membertype& member);
 
     template<typename ScratchViewType2D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
     void ref_to_phys(view_type_2D basis_val, ViewType2D xphys,
-        ScratchViewType2D elem_coords, const member_type& member);
+        ScratchViewType2D elem_coords, const membertype& member);
 
     template<typename ViewType1D> KOKKOS_INLINE_FUNCTION
     void get_element_volume(view_type_1D quad_wts, ViewType1D djac, rtype& vol,
-        const member_type& member);
+        const membertype& member);
+
+    template<typename ViewType1D> inline
+    rtype get_total_volume(const int num_elems_part, ViewType1D& vol_elems);
 
 
 } // end namespace MeshTools

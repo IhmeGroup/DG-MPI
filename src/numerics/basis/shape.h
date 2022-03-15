@@ -46,6 +46,7 @@ private:
 protected:
     std::string name; // name of basis
     int NDIMS; // number of dimensions
+    
 };
 /*
 This is a Mixin class used to represent a shape. Supported shapes include

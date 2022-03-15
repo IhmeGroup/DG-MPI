@@ -8,7 +8,7 @@ typename ViewType1D_quadwts, typename ViewType2D_f, typename ViewType2D_state>
 KOKKOS_INLINE_FUNCTION
 void L2_projection(ViewType_iMM iMM, ViewType2D basis_val, ViewType1D_djac djac,
     ViewType1D_quadwts quad_wts, ViewType2D_f f, ViewType2D_state U,
-    const member_type& member){
+    const membertype& member){
 
     const int nq = basis_val.extent(0);
     const int nb = basis_val.extent(1); 
@@ -53,11 +53,11 @@ void L2_projection(ViewType_iMM iMM, ViewType2D basis_val, ViewType1D_djac djac,
     //         printf("rhs(%i, %i, %i)=%f\n", member.league_rank(), i, j, rhs(i, j));
     //     }
     // }
-    for (int is = 0; is < 4; is++){
-        for (int ib = 0; ib < 4; ib++){
-            printf("U(%i, %i, %i)=%f\n", member.league_rank(),  ib, is, U(ib, is));
-        }
-    }
+    // for (int is = 0; is < 4; is++){
+    //     for (int ib = 0; ib < 4; ib++){
+    //         printf("U(%i, %i, %i)=%f\n", member.league_rank(),  ib, is, U(ib, is));
+    //     }
+    // }
     member.team_barrier();
 }
 
