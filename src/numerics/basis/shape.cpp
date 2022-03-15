@@ -19,7 +19,7 @@ Shape::Shape(ShapeType shape_type){
     if (shape_type == ShapeType::Segment){
         get_num_basis_coeff = get_num_basis_coeff_segment;
         get_quadrature_order_pointer =
-            QuadratureTools::get_gausslegendre_quadrature_order;
+            SegmentQuadrature::get_gausslegendre_quadrature_order;
         get_quadrature_data =
             SegmentQuadrature::get_quadrature_gauss_legendre;
         NDIMS = 1;
@@ -28,7 +28,7 @@ Shape::Shape(ShapeType shape_type){
     if (shape_type == ShapeType::Quadrilateral){
         get_num_basis_coeff = get_num_basis_coeff_quadrilateral;
         get_quadrature_order_pointer =
-            QuadratureTools::get_gausslegendre_quadrature_order;
+            QuadrilateralQuadrature::get_gausslegendre_quadrature_order;
         get_quadrature_data =
             QuadrilateralQuadrature::get_quadrature_gauss_legendre;
         NDIMS = 2;

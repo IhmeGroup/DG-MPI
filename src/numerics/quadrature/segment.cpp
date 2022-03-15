@@ -421,5 +421,10 @@ void get_quadrature_gauss_legendre(
     get_segment_weights_gl(order, quad_wts);
 }
 
+int get_gausslegendre_quadrature_order(const int order_, const int NDIMS){
+    return 2*(order_) + 1;
+}
 
-} // end namespace Quadrature
+
+
+} // end namespace SegmentQuadrature

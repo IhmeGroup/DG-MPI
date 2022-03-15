@@ -1,4 +1,5 @@
 #include "numerics/quadrature/quadrilateral.h"
+#include "numerics/quadrature/segment.h"
 #include "numerics/nodes.h"
 
 namespace QuadrilateralQuadrature {
@@ -34,6 +35,13 @@ void get_quadrature_gauss_legendre(
                 * h_quad_wts_1d(j);
         }
     }
+}
+
+int get_gausslegendre_quadrature_order(const int order_,
+    const int NDIMS){
+
+    int qorder = SegmentQuadrature::get_gausslegendre_quadrature_order(order_, NDIMS);
+    return qorder + 2; // add two for the non-constant jacobian that could exist
 }
 
 } // end namespace QuadrilateralQuadrature

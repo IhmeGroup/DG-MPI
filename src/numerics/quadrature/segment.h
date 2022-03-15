@@ -46,6 +46,8 @@ void get_quadrature_gauss_legendre(
     Kokkos::View<rtype**>::HostMirror& quad_pts,
     Kokkos::View<rtype*>::HostMirror& quad_wts);
 
+int get_gausslegendre_quadrature_order(const int order_,
+    const int NDIMS);
 
 } // end namespace SegmentQuadrature
 
