@@ -54,6 +54,6 @@ using scratch_view_1D_rtype = Kokkos::View<rtype*,
         Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
 using team_policy = Kokkos::TeamPolicy<>;
-using member_type = Kokkos::TeamPolicy<>::member_type;
+using membertype = Kokkos::TeamPolicy<>::member_type;
 
 #endif //DG_DEFINES_H
