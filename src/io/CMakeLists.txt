@@ -7,7 +7,7 @@ target_include_directories(io
 )
 
 target_link_libraries(io
-    #PUBLIC physics
+    PUBLIC solver
     PRIVATE ${METIS_LIBRARIES}
     PRIVATE ${HDF5_LIBRARIES}
     PUBLIC Kokkos::kokkoscore
