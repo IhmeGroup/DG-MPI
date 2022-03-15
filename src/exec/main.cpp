@@ -4,6 +4,7 @@
 #include "toml11/toml.hpp"
 #include "mesh/mesh.h"
 #include "utils/utils.h"
+#include "io/writer.h"
 #include "memory/memory_network.h"
 #include "numerics/basis/basis.h"
 #include "physics/base/base.h"
@@ -43,7 +44,7 @@ int main(int argc, char* argv[]) {
 }
 
 void run_solver(toml::value& toml_input, MemoryNetwork& network) {
-    // TODO
+    // TODO: Add gorder from mesh file
     int order = 1;
     // Get parameters related to the numerics
     auto numerics_params = Numerics::NumericsParams(toml_input, order);
@@ -52,18 +53,13 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis);
 
-    // Create physics
+    // Get physics type -> NOTE: physics object is constructed in solver constructor
     std::string phys = toml::find<std::string>(toml_input, "Physics", "name");
     auto physics_type = enum_from_string<PhysicsType>(phys.c_str());
-    // auto physics_type = PhysicsType::Euler;
-    // auto physics = Physics::Physics(physics_type, mesh.dim);
 
     // Create solver
     auto solver = Solver(toml_input, mesh, network, numerics_params,
         physics_type);
-
-    const auto IC_name = toml::find<std::string>(toml_input, "InitialCondition", "name");
-    // const auto IC_data = toml::find<rtype[10]>(toml_input, "InitialCondition", "data");
 
     // Read in InitialCondition data and copy it to the physics.IC_data view
     std::vector<rtype> IC_data_vec=toml::find<std::vector<rtype>>(toml_input, "InitialCondition", "data");
@@ -71,24 +67,25 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
 
     Kokkos::resize(solver.physics.IC_data, IC_data_vec.size());
     host_view_type_1D h_IC_data = Kokkos::create_mirror_view(solver.physics.IC_data);
-
+    // place initial condition data in host mirror view
     for (int i = 0; i<IC_data_vec.size(); i++){
         h_IC_data(i) = IC_data_vec[i];
     }
+    // copy the initial condition data to the device
     Kokkos::deep_copy(solver.physics.IC_data, h_IC_data);
-
-    // solver.physics.IC_name = IC_name.c_str();
-    // Set the initial condition function
-    // solver.physics.set_IC(solver.physics, IC_name);
 
     // Precompute Helpers
     solver.precompute_matrix_helpers();
-
-
+    printf("Matrix helpers completed\n");
     // Initialize the solution from the IC function.
     solver.init_state_from_fcn(mesh);
+    printf("Solution state initialized\n");
 
     // ... we actually do the DG solve here
+
+    // TODO: make this write a parallel hdf5 write
+    auto writer = Writer(mesh, network, solver);
+    printf("Solution written to disk\n");
 
     // Finalize mesh
     mesh.finalize();
