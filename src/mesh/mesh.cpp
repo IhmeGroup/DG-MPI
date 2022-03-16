@@ -4,6 +4,7 @@
 #include <numeric>
 #include <string>
 #include <unordered_set>
+#include <set>
 #include "H5Cpp.h"
 #include "metis.h"
 #include "toml11/toml.hpp"
@@ -331,6 +332,8 @@ inline void Mesh::partition() {
             node_partition - vector of size num_nodes that stores the partition
                 vector for the nodes
         */
+        // TODO: The node partition is never actually used. It should be
+        // removed.
         int ierr = METIS_PartMeshDual(&ne, &nn, eptr.data(), eind.data(),
                 NULL, NULL, &num_common, &num_partitions, NULL, options, &objval,
                 elem_partition.data(), node_partition.data());
@@ -352,12 +355,25 @@ inline void Mesh::partition() {
     }
     num_elems_part = elem_partition_size[rank];
 
+    // TODO: Remove the node partition stuff from earlier, this is the new way
     // Count how many nodes are contained within each partition
-    std::vector<int> node_partition_size(num_partitions, 0);
-    for (auto it = node_partition.begin(); it != node_partition.end(); it++) {
-        node_partition_size[*it]++;
+    std::set<int> global_node_IDs;
+    for (unsigned i = 0; i < num_elems; i++) {
+        auto rank_i = (unsigned)elem_partition[i];
+        if (rank == rank_i) {
+            // Loop over nodes on this element
+            for (unsigned j = 0; j < num_nodes_per_elem; j++) {
+                // Get global ID of this node
+                auto global_node_ID = eind[i * num_nodes_per_elem + j];
+                // If this partition doesn't already contain this node
+                if (not global_node_IDs.count(global_node_ID)) {
+                    // Add this node to the partition
+                    global_node_IDs.insert(global_node_ID);
+                }
+            }
+        }
     }
-    num_nodes_part = node_partition_size[rank];
+    num_nodes_part = global_node_IDs.size();
 
     // Count how many interior faces are contained within each partition
     std::vector<int> iface_partition_size(num_partitions, 0);
@@ -422,7 +438,7 @@ inline void Mesh::partition() {
     for (unsigned i = 0; i < num_elems; i++) {
         auto rank_i = (unsigned)elem_partition[i];
         if (rank == rank_i) {
-            // Mapping from local to global, and back
+            // Mapping from local to global
             h_local_to_global_elem_IDs(counter) = i;
             // Node IDs of each element on this partition
             for (unsigned j = 0; j < num_nodes_per_elem; j++) {
@@ -434,17 +450,16 @@ inline void Mesh::partition() {
 
     // Store the node IDs and node coordinates on each partition
     counter = 0;
-    for (unsigned i = 0; i < num_nodes; i++) {
-        auto rank_i = (unsigned)node_partition[i];
-        if (rank == rank_i) {
-            // Mapping from local to global, and back
-            h_local_to_global_node_IDs(counter) = i;
-            // Node coordinates of each node on this partition
-            for (unsigned j = 0; j < dim; j++) {
-                h_node_coords(counter, j) = coord[i][j];
-            }
-            counter++;
+    for (auto it = global_node_IDs.begin(); it != global_node_IDs.end(); it++) {
+        // Global node ID of this node
+        auto global_node_ID = *it;
+        // Mapping from local to global
+        h_local_to_global_node_IDs(counter) = global_node_ID;
+        // Node coordinates of this node
+        for (unsigned k = 0; k < dim; k++) {
+            h_node_coords(counter, k) = coord[global_node_ID][k];
         }
+        counter++;
     }
 
     // Store the interior face information on each partition
@@ -455,7 +470,7 @@ inline void Mesh::partition() {
         auto left_rank = (unsigned)elem_partition[IF_to_elem[i][0]];
         auto right_rank = (unsigned)elem_partition[IF_to_elem[i][3]];
         if (rank == left_rank or rank == right_rank) {
-            // Mapping from local to global, and back
+            // Mapping from local to global
             h_local_to_global_iface_IDs(counter) = i;
             // Set rank on left and right
             h_interior_faces(counter, 0) = left_rank;
@@ -589,23 +604,23 @@ inline void Mesh::partition() {
     }
     cout << "END CHECK VIEW" << endl;
 
-    // // Print
-    // for (unsigned rank_i = 0; rank_i < num_ranks; rank_i++) {
-    //     if (rank == rank_i) {
-    //         cout << "Rank " << rank << " has elements:" << endl;
-    //         for (unsigned i = 0; i < num_elems_part; i++) {
-    //             cout << h_local_to_global_elem_IDs(i) << endl;
-    //         }
-    //         cout << "Rank " << rank << " has nodes:" << endl;
-    //         for (unsigned i = 0; i < num_nodes_part; i++) {
-    //             cout << h_local_to_global_node_IDs(i) << endl;
-    //         }
-    //         cout << "Rank " << rank << " has interior faces:" << endl;
-    //         for (unsigned i = 0; i < num_ifaces_part; i++) {
-    //             cout << h_local_to_global_iface_IDs(i) << endl;
-    //         }
-    //     }
-    // }
+    // Print
+    for (unsigned rank_i = 0; rank_i < num_ranks; rank_i++) {
+        if (rank == rank_i) {
+            cout << "Rank " << rank << " has elements:" << endl;
+            for (unsigned i = 0; i < num_elems_part; i++) {
+                cout << h_local_to_global_elem_IDs(i) << endl;
+            }
+            cout << "Rank " << rank << " has nodes:" << endl;
+            for (unsigned i = 0; i < num_nodes_part; i++) {
+                cout << h_local_to_global_node_IDs(i) << endl;
+            }
+            cout << "Rank " << rank << " has interior faces:" << endl;
+            for (unsigned i = 0; i < num_ifaces_part; i++) {
+                cout << h_local_to_global_iface_IDs(i) << endl;
+            }
+        }
+    }
 
     // Deallocate global mesh data
     vector<int>().swap(eind);
