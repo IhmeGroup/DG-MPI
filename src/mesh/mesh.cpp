@@ -442,7 +442,8 @@ inline void Mesh::partition() {
             h_local_to_global_elem_IDs(counter) = i;
             // Node IDs of each element on this partition
             for (unsigned j = 0; j < num_nodes_per_elem; j++) {
-                h_elem_to_node_IDs(counter, j) = eind[i * num_nodes_per_elem + j];
+                h_elem_to_node_IDs(counter, j) = std::distance(global_node_IDs.begin(),
+                    global_node_IDs.find(eind[i * num_nodes_per_elem + j]));
             }
             counter++;
         }

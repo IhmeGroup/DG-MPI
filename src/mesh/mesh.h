@@ -225,7 +225,7 @@ class Mesh {
         Kokkos::View<unsigned*>* ghost_faces;
         // View containing the coordinates for each node on this partition
         Kokkos::View<rtype**> node_coords;
-        // View containing the mapping from elements to global node IDs on this
+        // View containing the mapping from elements to local node IDs on this
         // partition
         Kokkos::View<unsigned**> elem_to_node_IDs;
         // View containing the interior face information, of shape
