@@ -56,11 +56,6 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
 
-    // int nq_1d = 4;//basis.shape.get_quadrature_order(2*order);
-    // int nq_1d;
-    // int nq = pow(nq_1d, NDIMS);
-    // QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
-    //         nq_1d, nq);
     printf("nq(post)=%i\n", nq);
     view_type_2D quad_pts("quad_pts", nq, NDIMS);
     view_type_1D quad_wts("quad_wts", nq);
@@ -165,6 +160,9 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
 
         });
 
+
+        network.barrier();
+
         rtype error_per_rank[physics.get_NS()] = {}; // init to zero
         for (unsigned is = 0; is < physics.get_NS(); is++){
             Kokkos::parallel_reduce("sum element errors", mesh.num_elems_part, 
@@ -176,12 +174,13 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
         // do an mpi gather here for both error_per_rank and tot_vol_rank
         rtype total_volume;
         rtype total_error[physics.get_NS()];
-        network.allgather(tot_vol_part, total_volume);
+        network.allreduce(tot_vol_part, total_volume);
         network.barrier();
 
         for (unsigned is = 0; is < physics.get_NS(); is++){
-            network.allgather(error_per_rank[is], total_error[is]);
+            network.allreduce(error_per_rank[is], total_error[is]);
             network.barrier();
+        
             total_error[is] = pow(total_error[is] / total_volume, 1./ord); 
             printf("norm_total_error(%i)=%.*e\n", is, DECIMAL_DIG, total_error[is]);
         }

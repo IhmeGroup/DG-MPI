@@ -30,7 +30,7 @@ class MemoryNetwork {
         void barrier() const;
         // Conduct an MPI gather all
         template<class T>
-        void allgather(T send_data, T& recv_data);
+        void allreduce(T send_data, T& recv_data);
         // Send the left and right states across partition boundaries.
         void communicate_face_solution(Kokkos::View<rtype***> UqL,
                 Kokkos::View<rtype***> UqR, Kokkos::View<rtype***>* Uq_local,
