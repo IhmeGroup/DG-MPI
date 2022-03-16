@@ -13,9 +13,17 @@
 
 namespace Basis {
 
+
+
 int get_num_basis_coeff_segment(int p);
+
 int get_num_basis_coeff_quadrilateral(int p);
 
+void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
+        const Kokkos::View<rtype**>::HostMirror face_pts,
+        Kokkos::View<rtype**>::HostMirror elem_pts);
+
+int get_num_basis_coeff_hexahedron(int p);
 
 class Shape {
 
@@ -34,10 +42,15 @@ public:
     int (*get_num_basis_coeff)(int p);
 
     int get_quadrature_order(const int order);
-
+    inline int get_num_faces_per_elem() const {return NFACES;}
+    inline int get_num_orient_per_face() const {return NUM_ORIENT_PER_FACE;};
     void (*get_quadrature_data)(const int order, const int nq_1d,
         Kokkos::View<rtype**>::HostMirror& quad_pts,
         Kokkos::View<rtype*>::HostMirror& quad_wts);
+
+    void (*get_points_on_face)(const int face_id, const int orient, const int np,
+        const Kokkos::View<rtype**>::HostMirror face_pts,
+        Kokkos::View<rtype**>::HostMirror elem_pts);
 
 private:
     int (*get_quadrature_order_pointer)(const int order,
@@ -46,95 +59,12 @@ private:
 protected:
     std::string name; // name of basis
     int NDIMS; // number of dimensions
+    int NFACES; // number of faces
+    int NCORNERS; // number of shape corners
+    int NUM_ORIENT_PER_FACE; // number of orientations per face
     
 };
-/*
-This is a Mixin class used to represent a shape. Supported shapes include
-point, segment, quadrilateral, triangle, hexahedron, tetrahedron, and prism
-*/
-class ShapeBase {
-public:
-    /*
-    Virtual destructor
-    */
-    virtual ~ShapeBase() = default;
 
-    /*
-    Sets the number of basis coefficients given a polynomial order
-
-    Inputs:
-    -------
-        p: order of polynomial space
-
-    Outputs:
-    --------
-        nb: number of basis coefficients
-    */
-    virtual int get_num_basis_coeff(int p);
-
-    inline int get_NFACES(){return NFACES;}
-
-    inline int get_NDIMS(){return NDIMS;}
-
-protected:
-    int NDIMS; // number of dimensions
-    int NFACES; // number of faces for shape type
-};
-
-class PointShape : public ShapeBase {
-public:
-    /*
-    Class Constructor
-    */
-    PointShape();
-
-    int get_num_basis_coeff(int p) override;
-};
-
-class SegShape : public ShapeBase {
-public:
-    /*
-    Class constructor
-    */
-    SegShape();
-
-    int get_num_basis_coeff(int p) override;
-
-
-    // Gets local IDs of principal nodes on face
-
-    // Inputs:
-    // -------
-    //  p: order of polynomial space
-    //  face_ID: reference element face value
-
-    // Outputs:
-    // --------
-    //  fnode_nums: local IDs of principal nodes on face
-
-    // void get_local_face_principal_node_nums(int p, int face_ID,
-    //  Kokkos::View<rtype*> fnode_nums);
-};
-
-class QuadShape : public ShapeBase {
-public:
-    /*
-    Class constructor
-    */
-    QuadShape();
-
-    int get_num_basis_coeff(int p) override;
-};
-
-class HexShape : public ShapeBase {
-public:
-    /*
-    Class constructor
-    */
-    HexShape();
-
-    int get_num_basis_coeff(int p) override;
-};
 
 } // end namespace Basis
 

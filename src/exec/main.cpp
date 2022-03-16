@@ -77,6 +77,7 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // Precompute Helpers
     solver.precompute_matrix_helpers();
     printf("Matrix helpers completed\n");
+
     // Initialize the solution from the IC function.
     solver.init_state_from_fcn(mesh);
     printf("Solution state initialized\n");
