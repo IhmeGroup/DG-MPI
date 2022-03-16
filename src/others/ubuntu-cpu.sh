@@ -26,6 +26,7 @@ cd ../build_cpu/build_externals/kokkos/build
 
 cmake -DCMAKE_INSTALL_PREFIX=./install \
     -DKokkos_ENABLE_OPENMP=ON \
+    -DKokkos_CXX_STANDARD=17 \
     ../../../../externals/kokkos
 make -j install
 
