@@ -207,12 +207,15 @@ void InteriorFaceHelperFunctor::compute_interior_face_helpers(int scratch_size, 
 
     get_quadrature(basis, basis.get_order());
 
-    for (unsigned long i = 0; i < h_quad_pts.extent(0); i++){
-        for (unsigned long j = 0; j < h_quad_pts.extent(1); j++){
-        printf("qpts(%i, %i)=%f\n", i, j, h_quad_pts(i, j));
-    }
-
-    }
+    // for (unsigned long ifa = 0; ifa < basis.shape.get_num_faces_per_elem(); ifa++){
+    // for (unsigned long ior = 0; ior < basis.shape.get_num_orient_per_face(); ior++){
+    // for (unsigned long i = 0; i < h_quad_pts.extent(0); i++){
+    //     for (unsigned long j = 0; j < h_quad_pts.extent(1); j++){
+    //     printf("qpts(%i, %i, %i, %i)=%f\n", ifa, ior, i, j, h_quad_pts(ifa, ior, i, j));
+    //     }
+    // }
+    // }
+    // }
 }
 
 inline
@@ -220,23 +223,46 @@ void InteriorFaceHelperFunctor::get_quadrature(
     Basis::Basis basis, const int order){
 
     // unpack
-    int NDIMS = basis.face_shape.get_NDIMS();
+    const unsigned NFACE = basis.shape.get_num_faces_per_elem();
+    const unsigned NUM_ORIENT_PER_FACE = basis.shape.get_num_orient_per_face();
+    const unsigned NDIMS_FACE = basis.face_shape.get_NDIMS();
+    const unsigned NDIMS = basis.shape.get_NDIMS();
+
     int nq_1d; int nq;
     int qorder = basis.face_shape.get_quadrature_order(order);
-
-    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
+    QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS_FACE,
             nq_1d, nq);
 
-    printf("face qorder=%i", qorder);
-    // need to establish an initial size for views prior
-    // to resizing inside of get_quadrature_data
-    Kokkos::resize(quad_pts, nq, NDIMS);
+    // quad_wts is the same for all faces (i.e. orientation and specific face doesn't matter)
     Kokkos::resize(quad_wts, nq);
-
-    h_quad_pts = Kokkos::create_mirror_view(quad_pts);
     h_quad_wts = Kokkos::create_mirror_view(quad_wts);
 
-    basis.face_shape.get_quadrature_data(qorder, nq_1d, h_quad_pts, h_quad_wts);
+    // quad_pts needs to know orientation and specific face
+    view_type_2D local_quad_pts("local quad_pts", nq, NDIMS_FACE);
+    host_view_type_2D h_local_quad_pts = Kokkos::create_mirror_view(local_quad_pts);
+    // get the quad_pts / quad_wts for a reference face 
+    basis.face_shape.get_quadrature_data(qorder, nq_1d, h_local_quad_pts, h_quad_wts);
+
+    Kokkos::resize(quad_pts, NFACE, NUM_ORIENT_PER_FACE, nq, NDIMS);
+    h_quad_pts = Kokkos::create_mirror_view(quad_pts);
+
+    for (unsigned ifa = 0; ifa < NFACE; ifa++){
+        for (unsigned ior = 0; ior < NUM_ORIENT_PER_FACE; ior++){
+                basis.shape.get_points_on_face(ifa, ior, nq, h_local_quad_pts,
+                    Kokkos::subview(h_quad_pts, ifa, ior, Kokkos::ALL(), Kokkos::ALL()));
+        }
+    }
+
+    // for (unsigned ifa = 0; ifa < NFACE; ifa++){
+    //     for (unsigned ior = 0; ior < NUM_ORIENT_PER_FACE; ior++){
+    //         for (unsigned iq = 0; iq < h_quad_pts.extent(2); iq++){
+    //             for (unsigned i = 0; i < h_quad_pts.extent(3); i++){
+    //             printf("h_quad_pts(%i, %i, %i, %i)=%f\n", ifa, ior, iq, i, h_quad_pts(ifa, ior, iq, i));
+    //         }
+    //     }
+    //     }
+    // }
+
 
     Kokkos::deep_copy(quad_pts, h_quad_pts);
     Kokkos::deep_copy(quad_wts, h_quad_wts);

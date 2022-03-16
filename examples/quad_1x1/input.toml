@@ -7,7 +7,7 @@ checkpoint_interval = 100
 file = "quad_1x1.h5"
 
 [Numerics]
-order = 2
+order = 1
 basis = "LagrangeQuad"
 
 [Stepper]
@@ -17,14 +17,17 @@ timestep = 1e-3
 type = "SSPRK3"
 
 [Physics]
-name = "IdealGas"
+name = "Euler"
 dim = 2
 gamma = 1.4
 
 [Equation]
 name = "Euler"
 inviscid_flux = "HLLC"
-init_type = "IsentropicVortex"
+
+[InitialCondition]
+name = "Uniform"
+data = [1.0, 0.0, 0.0, 2.5]
 
 [Output]
 prefix = "solutions/vortex"

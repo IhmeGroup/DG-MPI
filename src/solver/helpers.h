@@ -92,10 +92,10 @@ struct InteriorFaceHelperFunctor{
     // inline
     // void allocate_views(const int num_elems);
 
-    view_type_2D quad_pts;
+    view_type_4D quad_pts;
     view_type_1D quad_wts;
 
-    host_view_type_2D h_quad_pts;
+    host_view_type_4D h_quad_pts;
     host_view_type_1D h_quad_wts;
 
     view_type_2D basis_val;

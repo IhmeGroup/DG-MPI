@@ -170,6 +170,7 @@ void Solver::init_state_from_fcn(Mesh& mesh_local){
                 jac, djac, elem_coords, member);
             member.team_barrier();
 
+
             // L2 projection
             SolverTools::L2_projection(
                 Kokkos::subview(vol_helpers.iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()),
@@ -177,6 +178,15 @@ void Solver::init_state_from_fcn(Mesh& mesh_local){
                 Kokkos::subview(Uc, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);
 
         });
+
+
+    // for (unsigned long i=0; i<Uc.extent(0); i++){
+    //     for (unsigned long j=0; j<Uc.extent(1); j++){
+    //         for (unsigned long k=0; k<Uc.extent(2); k++){
+    //             printf("Uc(%i, %i, %i)=%f\n", i, j, k, Uc(i,j,k));
+    //         }
+    //     }
+    // }
 }
 
 void Solver::copy_from_device_to_host(){
