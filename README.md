@@ -3,7 +3,7 @@
 This repository is currently in development.
 
 # How to Build
-First, get the dependancies. This is done by running
+First, get the dependencies. This is done by running
     ```
     git submodule init
     ```
