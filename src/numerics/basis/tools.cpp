@@ -129,9 +129,9 @@ void get_lagrange_basis_grad_1D(const rtype &x,
 }
 
 inline
-void get_lagrange_basis_val_2D(host_view_type_2D quad_pts,
+void get_lagrange_basis_val_2D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_2D basis_val) {
+    int p, host_view_type_2D_ls basis_val) {
 
     // get shape of basis_val
     const int nq = quad_pts.extent(0);
@@ -157,9 +157,9 @@ void get_lagrange_basis_val_2D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts,
+void get_lagrange_basis_grad_2D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_3D basis_ref_grad) {
+    int p, host_view_type_3D_ls basis_ref_grad) {
     // get shape of basis_ref_grad
     const int nq = quad_pts.extent(0);
     const int nb = basis_ref_grad.extent(1);
@@ -193,9 +193,9 @@ void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_lagrange_basis_val_3D(host_view_type_2D quad_pts,
+void get_lagrange_basis_val_3D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_2D basis_val) {
+    int p, host_view_type_2D_ls basis_val) {
 
     // get shape of basis_val
     const int nq = quad_pts.extent(0);
@@ -227,9 +227,9 @@ void get_lagrange_basis_val_3D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts,
+void get_lagrange_basis_grad_3D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_3D basis_ref_grad) {
+    int p, host_view_type_3D_ls basis_ref_grad) {
     // get shape of basis_ref_grad
     const int nq = quad_pts.extent(0);
     const int nb = basis_ref_grad.extent(1);
@@ -346,8 +346,8 @@ void get_legendre_basis_grad_1D(const rtype &x, const int p,
 }
 
 inline
-void get_legendre_basis_val_2D(host_view_type_2D quad_pts,
-        const int p, host_view_type_2D basis_val){
+void get_legendre_basis_val_2D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_2D_ls basis_val){
     // get shape of basis_val
     const int nq = quad_pts.extent(0);
     const int nb = basis_val.extent(1);
@@ -372,8 +372,8 @@ void get_legendre_basis_val_2D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
-        const int p, host_view_type_3D basis_ref_grad){
+void get_legendre_basis_grad_2D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_3D_ls basis_ref_grad){
     // get shape of basis_ref_grad
     const int nq = quad_pts.extent(0);
     const int nb = basis_ref_grad.extent(1);
@@ -407,8 +407,8 @@ void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
-    const int p, host_view_type_2D basis_val){
+void get_legendre_basis_val_3D(host_view_type_2D_ls quad_pts,
+    const int p, host_view_type_2D_ls basis_val){
     // get shape of basis_val
     const int nq = quad_pts.extent(0);
     const int nb = basis_val.extent(1);
@@ -440,8 +440,8 @@ void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
 }
 
 inline
-void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
-    const int p, host_view_type_3D basis_ref_grad){
+void get_legendre_basis_grad_3D(host_view_type_2D_ls quad_pts,
+    const int p, host_view_type_3D_ls basis_ref_grad){
     // get shape of basis_ref_grad
     const int nq = quad_pts.extent(0);
     const int nb = basis_ref_grad.extent(1);
@@ -483,6 +483,32 @@ void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
 
                 }
             }
+        }
+    }
+}
+
+
+void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
+        Kokkos::View<int*> pts_order) {
+    printf("in orientation quad");
+    assert(npts == (int) pts_order.extent(0));
+    switch (orient) {
+        case 0: {
+            for (int i=0; i<npts; i++) {
+                pts_order(i) = i;
+            }
+            break;
+        }
+
+        case 1: {
+            for (int i=0; i<npts; i++) {
+                pts_order(i) = npts - 1 - i;
+            }
+            break;
+        }
+
+        default: {
+            printf("FATAL EXCEPTION IN 'get_face_pts_order_wrt_orient0_quadrilateral'");
         }
     }
 }

@@ -102,9 +102,9 @@ Outputs:
 --------
     basis_val: evaluated basis [nq, nb]
 */
-void get_lagrange_basis_val_2D(host_view_type_2D quad_pts,
+void get_lagrange_basis_val_2D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_2D basis_val);
+    int p, host_view_type_2D_ls basis_val);
 
 /*
 Calculates the 2D Lagrange basis gradient
@@ -118,9 +118,9 @@ Outputs:
 --------
     basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
 */
-void get_lagrange_basis_grad_2D(host_view_type_2D quad_pts,
+void get_lagrange_basis_grad_2D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_3D basis_ref_grad);
+    int p, host_view_type_3D_ls basis_ref_grad);
 
 /*
 Calculates the 3D Lagrange basis value
@@ -134,9 +134,9 @@ Outputs:
 --------
     basis_val: evaluated basis [nq, nb]
 */
-void get_lagrange_basis_val_3D(host_view_type_2D quad_pts,
+void get_lagrange_basis_val_3D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_2D basis_val);
+    int p, host_view_type_2D_ls basis_val);
 
 /*
 Calculates the 3D Lagrange basis gradient
@@ -150,9 +150,9 @@ Outputs:
 --------
     basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
 */
-void get_lagrange_basis_grad_3D(host_view_type_2D quad_pts,
+void get_lagrange_basis_grad_3D(host_view_type_2D_ls quad_pts,
     host_view_type_1D xnodes,
-    int p, host_view_type_3D basis_ref_grad);
+    int p, host_view_type_3D_ls basis_ref_grad);
 
 /*
 Calculates the 1D Legendre basis value
@@ -196,8 +196,8 @@ Outputs:
 --------
     basis_val: evaluated basis [nq, nb]
 */
-void get_legendre_basis_val_2D(host_view_type_2D quad_pts,
-        const int p, host_view_type_2D basis_val);
+void get_legendre_basis_val_2D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_2D_ls basis_val);
 
 /*
 Calculates the 2D Legendre basis gradient
@@ -211,8 +211,8 @@ Outputs:
 --------
     basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
 */
-void get_legendre_basis_grad_2D(host_view_type_2D quad_pts,
-        const int p, host_view_type_3D basis_ref_grad);
+void get_legendre_basis_grad_2D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_3D_ls basis_ref_grad);
 
 /*
 Calculates the 3D Legendre basis value
@@ -226,8 +226,8 @@ Outputs:
 --------
     basis_val: evaluated basis [nq, nb]
 */
-void get_legendre_basis_val_3D(host_view_type_2D quad_pts,
-        const int p, host_view_type_2D basis_val);
+void get_legendre_basis_val_3D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_2D_ls basis_val);
 
 /*
 Calculates the 3D Legendre basis gradient
@@ -241,9 +241,13 @@ Outputs:
 --------
     basis_ref_grad: evaluated gradient of basis [nq, nb, ndims]
 */
-void get_legendre_basis_grad_3D(host_view_type_2D quad_pts,
-        const int p, host_view_type_3D basis_ref_grad);
+void get_legendre_basis_grad_3D(host_view_type_2D_ls quad_pts,
+        const int p, host_view_type_3D_ls basis_ref_grad);
 
+
+KOKKOS_INLINE_FUNCTION
+void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
+        Kokkos::View<int*> pts_order);
 
 } // end namespace BasisTools
 
