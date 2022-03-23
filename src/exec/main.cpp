@@ -76,17 +76,24 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
 
     // Precompute Helpers
     solver.precompute_matrix_helpers();
+    printf("###################################################################\n");
     printf("Matrix helpers completed\n");
+    printf("###################################################################\n");
+
 
     // Initialize the solution from the IC function.
     solver.init_state_from_fcn(mesh);
+    printf("###################################################################\n");
     printf("Solution state initialized\n");
+    printf("###################################################################\n");
 
     // ... we actually do the DG solve here
 
     // TODO: make this write a parallel hdf5 write
     auto writer = Writer(mesh, network, solver);
+    printf("###################################################################\n");
     printf("Solution written to disk\n");
+    printf("###################################################################\n");
 
     // Finalize mesh
     mesh.finalize();
