@@ -377,7 +377,7 @@ void Shape::get_face_pts_order_wrt_orient0(const int orient, const int npts,
         get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);
     }
     else if (type == ShapeType::Hexahedron){
-        get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);    
+        get_face_pts_order_wrt_orient0_hexahedron(orient, npts, pts_order);    
     } else {
         printf("Not Implemented Error"); // TODO: Figure out GPU throws
     }
