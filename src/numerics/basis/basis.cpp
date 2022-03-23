@@ -6,11 +6,12 @@ namespace Basis {
 /* --------------------------------------
     LagrangeSeg Method Definitions
 ----------------------------------------*/
-void get_values_lagrangeseg(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangeseg(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &)){
 
+    printf("in the lagrange seg call\n");
     int nq = quad_pts.extent(0);
 
     if (order == 0){
@@ -28,8 +29,8 @@ void get_values_lagrangeseg(host_view_type_2D quad_pts,
 
 }
 
-void get_grads_lagrangeseg(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangeseg(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -48,11 +49,12 @@ void get_grads_lagrangeseg(host_view_type_2D quad_pts,
 /* --------------------------------------
     LagrangeQuad Method Definitions
 ----------------------------------------*/
-void get_values_lagrangequad(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangequad(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
+    printf("in the lagrange quad call\n");
     int nq = quad_pts.extent(0);
 
     if (order == 0){
@@ -69,8 +71,8 @@ void get_values_lagrangequad(host_view_type_2D quad_pts,
 
 }
 
-void get_grads_lagrangequad(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangequad(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -90,8 +92,8 @@ void get_grads_lagrangequad(host_view_type_2D quad_pts,
 /* --------------------------------------
     LagrangeHex Method Definitions
 ----------------------------------------*/
-void get_values_lagrangehex(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangehex(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -110,8 +112,8 @@ void get_values_lagrangehex(host_view_type_2D quad_pts,
     }
 }
 
-void get_grads_lagrangehex(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangehex(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -131,8 +133,8 @@ void get_grads_lagrangehex(host_view_type_2D quad_pts,
 /* --------------------------------------
     LegendreSeg Method Definitions
 ----------------------------------------*/
-void get_values_legendreseg(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendreseg(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -150,8 +152,8 @@ void get_values_legendreseg(host_view_type_2D quad_pts,
 
 }
 
-void get_grads_legendreseg(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendreseg(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -169,8 +171,8 @@ void get_grads_legendreseg(host_view_type_2D quad_pts,
 /* --------------------------------------
     LegendreQuad Method Definitions
 ----------------------------------------*/
-void get_values_legendrequad(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendrequad(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -186,8 +188,8 @@ void get_values_legendrequad(host_view_type_2D quad_pts,
 }
 
 
-void get_grads_legendrequad(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendrequad(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -202,8 +204,8 @@ void get_grads_legendrequad(host_view_type_2D quad_pts,
 /* --------------------------------------
     LegendreHex Method Definitions
 ----------------------------------------*/
-void get_values_legendrehex(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendrehex(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -219,8 +221,8 @@ void get_values_legendrehex(host_view_type_2D quad_pts,
 }
 
 
-void get_grads_legendrehex(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendrehex(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
@@ -290,15 +292,15 @@ Basis::Basis(BasisType basis_type, const int order){
 
 }
 
-void Basis::get_values(host_view_type_2D quad_pts,
-    host_view_type_2D basis_val) {
+void Basis::get_values(host_view_type_2D_ls quad_pts,
+    host_view_type_2D_ls basis_val) {
 
     get_values_pointer(quad_pts, basis_val,
         order, get_1d_nodes);
 }
 
-void Basis::get_grads(host_view_type_2D quad_pts,
-    host_view_type_3D basis_ref_grad) {
+void Basis::get_grads(host_view_type_2D_ls quad_pts,
+    host_view_type_3D_ls basis_ref_grad) {
 
     get_grads_pointer(quad_pts, basis_ref_grad,
         order, get_1d_nodes);

@@ -13,64 +13,64 @@
 namespace Basis {
 
 
-void get_values_lagrangeseg(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangeseg(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
-void get_grads_lagrangeseg(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangeseg(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
-void get_values_lagrangequad(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangequad(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_grads_lagrangequad(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangequad(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_values_lagrangehex(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_lagrangehex(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_grads_lagrangehex(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_lagrangehex(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
 
-void get_values_legendreseg(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendreseg(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
-void get_grads_legendreseg(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendreseg(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
-void get_values_legendrequad(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendrequad(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_grads_legendrequad(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendrequad(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_values_legendrehex(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+void get_values_legendrehex(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
-void get_grads_legendrehex(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+void get_grads_legendrehex(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
@@ -93,21 +93,21 @@ public:
     void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes);
 
-    void get_values(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val);
+    void get_values(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val);
 
-    void get_grads(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad);
+    void get_grads(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad);
 
 private:
 
-    void (*get_values_pointer)(host_view_type_2D quad_pts,
-        host_view_type_2D basis_val, const int order,
+    void (*get_values_pointer)(host_view_type_2D_ls quad_pts,
+        host_view_type_2D_ls basis_val, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
-    void (*get_grads_pointer)(host_view_type_2D quad_pts,
-        host_view_type_3D basis_ref_grad, const int order,
+    void (*get_grads_pointer)(host_view_type_2D_ls quad_pts,
+        host_view_type_3D_ls basis_ref_grad, const int order,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &));
 
