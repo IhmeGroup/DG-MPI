@@ -100,23 +100,23 @@ struct InteriorFaceHelperFunctor{
     // inline
     // void allocate_views(const int num_elems);
 
-    view_type_4D quad_pts;
+    view_type_3D quad_pts;
     view_type_1D quad_wts;
 
-    host_view_type_4D h_quad_pts;
+    host_view_type_3D h_quad_pts;
     host_view_type_1D h_quad_wts;
 
-    view_type_4D basis_val;
-    view_type_5D basis_ref_grad;
+    view_type_3D basis_val;
+    view_type_4D basis_ref_grad;
 
-    host_view_type_4D h_basis_val;
-    host_view_type_5D h_basis_ref_grad;
+    host_view_type_3D h_basis_val;
+    host_view_type_4D h_basis_ref_grad;
 
-    view_type_4D gbasis_val;
-    view_type_5D gbasis_ref_grad;
+    view_type_3D gbasis_val;
+    view_type_4D gbasis_ref_grad;
 
-    host_view_type_4D h_gbasis_val;
-    host_view_type_5D h_gbasis_ref_grad;
+    host_view_type_3D h_gbasis_val;
+    host_view_type_4D h_gbasis_ref_grad;
 
     Kokkos::View<int**> quad_idx_L;
     Kokkos::View<int**> quad_idx_R;
