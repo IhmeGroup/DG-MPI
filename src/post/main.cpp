@@ -57,8 +57,8 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
             nq_1d, nq);
 
     printf("nq(post)=%i\n", nq);
-    view_type_2D quad_pts("quad_pts", nq, NDIMS);
-    view_type_1D quad_wts("quad_wts", nq);
+    view_type_2D quad_pts("quad_pts_post", nq, NDIMS);
+    view_type_1D quad_wts("quad_wts_post", nq);
     host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(quad_pts);
     host_view_type_1D h_quad_wts = Kokkos::create_mirror_view(quad_wts);
 
@@ -69,8 +69,8 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
 
     // Get the basis values evaluated at the 
     // overintegrated quadrature points
-    view_type_2D basis_val("basis_val", nq, nb);
-    view_type_2D gbasis_val("gbasis_val", nq, nb);
+    view_type_2D basis_val("basis_val_post", nq, nb);
+    view_type_2D gbasis_val("gbasis_val_post", nq, nb);
     host_view_type_2D h_basis_val = Kokkos::create_mirror_view(basis_val);
     host_view_type_2D h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
 
@@ -82,7 +82,7 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
 
     // Get the geometric basis ref gradient evaluated
     // at the overintegrated quadrature points
-    view_type_3D gbasis_ref_grad("gbasis_ref_grad", nq, nb, NDIMS);
+    view_type_3D gbasis_ref_grad("gbasis_ref_grad_post", nq, nb, NDIMS);
     host_view_type_3D h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
 
     mesh.gbasis.get_grads(h_quad_pts, h_gbasis_ref_grad);
