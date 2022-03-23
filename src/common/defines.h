@@ -34,9 +34,12 @@ using host_view_type_1D = view_type_1D::HostMirror;
 
 using view_type_2D = Kokkos::View<rtype**>;
 using host_view_type_2D = view_type_2D::HostMirror;
+using host_view_type_2D_ls = Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror;
 
 using view_type_3D = Kokkos::View<rtype***>;
 using host_view_type_3D = view_type_3D::HostMirror;
+using host_view_type_3D_ls = Kokkos::View<rtype***, Kokkos::LayoutStride>::HostMirror;
+
 
 using view_type_4D = Kokkos::View<rtype****>;
 using host_view_type_4D = view_type_4D::HostMirror;
