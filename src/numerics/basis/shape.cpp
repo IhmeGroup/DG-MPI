@@ -1,4 +1,3 @@
-#include "numerics/basis/shape.h"
 #include <vector>
 
 namespace Basis {
@@ -6,6 +5,7 @@ namespace Basis {
 /* --------------------------------------
         Segment Shape Definitions
 ----------------------------------------*/
+inline
 int get_num_basis_coeff_segment(int p){
     return p + 1;
 }
@@ -14,13 +14,15 @@ int get_num_basis_coeff_segment(int p){
 /* --------------------------------------
         Quadrilateral Shape Definitions
 ----------------------------------------*/
+inline
 int get_num_basis_coeff_quadrilateral(int p){
     return (p + 1) * (p + 1);
 }
 
+KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
         Kokkos::View<int*> pts_order) {
-
+    printf("in orientation quad");
     assert(npts == (int) pts_order.extent(0));
     switch (orient) {
         case 0: {
@@ -43,10 +45,10 @@ void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int np
     }
 }
 
-
+inline
 void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
-        Kokkos::View<rtype**>::HostMirror elem_pts){
+        Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts){
 
     // Positions of all nodes
     const std::vector<rtype> xref_nodes{-1, 1., -1, 1.};
@@ -102,10 +104,114 @@ void get_points_on_face_quadrilateral(const int face_id, const int orient, const
 /* --------------------------------------
         Hexahedron Shape Definitions
 ----------------------------------------*/
+inline
 int get_num_basis_coeff_hexahedron(int p){
     return (p + 1) * (p + 1) * (p + 1);
 }
 
+inline
+void get_points_on_face_hexahedron(const int face_id, const int orient, const int np,
+        const Kokkos::View<rtype**>::HostMirror face_pts,
+        Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts){
+
+    // All nodes in element
+    const std::vector<rtype> xref_nodes{-1., 1.,-1., 1.,-1., 1.,-1., 1.};
+    const std::vector<rtype> yref_nodes{-1.,-1., 1., 1.,-1.,-1., 1., 1.};
+    const std::vector<rtype> zref_nodes{-1.,-1.,-1.,-1., 1., 1., 1., 1.};
+    std::vector<int> node_temp(4, 0);
+    std::vector<int> node(4, 0);
+
+    switch (face_id) {
+        case 0:
+            node_temp[0] = 0;
+            node_temp[1] = 2;
+            node_temp[2] = 3;
+            node_temp[3] = 1;
+            break;
+        case 1:
+            node_temp[0] = 0;
+            node_temp[1] = 1;
+            node_temp[2] = 5;
+            node_temp[3] = 4;
+            break;
+        case 2:
+            node_temp[0] = 1;
+            node_temp[1] = 3;
+            node_temp[2] = 7;
+            node_temp[3] = 5;
+            break;
+        case 3:
+            node_temp[0] = 3;
+            node_temp[1] = 2;
+            node_temp[2] = 6;
+            node_temp[3] = 7;
+            break;
+        case 4:
+            node_temp[0] = 2;
+            node_temp[1] = 0;
+            node_temp[2] = 4;
+            node_temp[3] = 6;
+            break;
+        case 5:
+            node_temp[0] = 4;
+            node_temp[1] = 5;
+            node_temp[2] = 7;
+            node_temp[3] = 6;
+            break;
+        default:
+            std::string error_message = "Face ID ";
+            error_message += std::to_string(face_id);
+            error_message += " not available for hexahedron";
+            throw std::runtime_error(error_message);
+    }
+
+    int cycle, flip;
+    cycle = orient%4;
+    flip = orient/4;
+
+    // Orient nodes correctly
+    for (int j = 0; j < 4; j++) {
+        node[j] = node_temp[(j+cycle)%4];
+    }
+    if (flip >= 1) {
+        std::swap(node[1],node[3]);
+    }
+
+    std::vector<rtype> xelem(4,0.0);
+    std::vector<rtype> yelem(4,0.0);
+    std::vector<rtype> zelem(4,0.0);
+    std::vector<rtype> b(4,0.0);
+    rtype xface_bar, yface_bar;
+
+    for (int j = 0; j < 4; j++) {
+        xelem[j] = xref_nodes[node[j]];
+        yelem[j] = yref_nodes[node[j]];
+        zelem[j] = zref_nodes[node[j]];
+    }
+
+    for (int i = 0; i < np; i++) {
+        // barycentric coordinates
+        xface_bar = (face_pts(i, 0) + 1.)/2.;
+        yface_bar = (face_pts(i, 1) + 1.)/2.;
+
+        b[0] = (1.-xface_bar)*(1.-yface_bar);
+        b[1] = xface_bar*(1.-yface_bar);
+        b[2] = xface_bar*yface_bar;
+        b[3] = (1.-xface_bar)*yface_bar;
+
+        elem_pts(i, 0) = 0.0;
+        elem_pts(i, 1) = 0.0;
+        elem_pts(i, 2) = 0.0;
+
+        for (int j = 0; j < 4; j++){
+            elem_pts(i, 0) += b[j]*xelem[j];
+            elem_pts(i, 1) += b[j]*yelem[j];
+            elem_pts(i, 2) += b[j]*zelem[j];
+        }
+    }
+}
+
+inline
 Shape::Shape(ShapeType shape_type){
     if (shape_type == ShapeType::Segment){
         // set methods
@@ -120,8 +226,8 @@ Shape::Shape(ShapeType shape_type){
         NFACES = 2;
         NCORNERS = 2;
         NUM_ORIENT_PER_FACE = 1;
-
         name = "Segment";
+        type = ShapeType::Segment;
     }
     if (shape_type == ShapeType::Quadrilateral){
         // set methods
@@ -131,7 +237,6 @@ Shape::Shape(ShapeType shape_type){
         get_quadrature_data =
             QuadrilateralQuadrature::get_quadrature_gauss_legendre;
         get_points_on_face = get_points_on_face_quadrilateral;
-        get_face_pts_order_wrt_orient0 = get_face_pts_order_wrt_orient0_quadrilateral;
 
         // set constants
         NDIMS = 2;
@@ -139,6 +244,7 @@ Shape::Shape(ShapeType shape_type){
         NCORNERS = 4;
         NUM_ORIENT_PER_FACE = 2;
         name = "Quadrilateral";
+        type = ShapeType::Quadrilateral;
     }
     if (shape_type == ShapeType::Hexahedron){
         // set methods
@@ -154,9 +260,24 @@ Shape::Shape(ShapeType shape_type){
         NFACES = 6;
         NUM_ORIENT_PER_FACE = 8;
         name = "Hexahedron";
+        type = ShapeType::Hexahedron;
+
     }
 }
 
+KOKKOS_INLINE_FUNCTION
+void Shape::get_face_pts_order_wrt_orient0(const int orient, const int npts,
+        Kokkos::View<int*> pts_order) const {
+    if (type == ShapeType::Quadrilateral){
+        printf("Comparing it worked\n");
+        get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);
+    }
+    else if (type == ShapeType::Hexahedron){
+        printf("have not implemented");
+    }
+}
+
+inline
 int Shape::get_quadrature_order(const int order_) {
     return get_quadrature_order_pointer(order_, NDIMS);
 }

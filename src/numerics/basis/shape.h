@@ -17,6 +17,7 @@ namespace Basis {
 /* --------------------------------------
         Segment Shape Definitions
 ----------------------------------------*/
+inline
 int get_num_basis_coeff_segment(int p);
 
 
@@ -31,12 +32,15 @@ int get_num_basis_coeff_segment(int p);
  *      n0----n1
  *         f0
  */
+inline
 int get_num_basis_coeff_quadrilateral(int p);
 
+inline
 void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
-        Kokkos::View<rtype**>::HostMirror elem_pts);
+        Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
+KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
         Kokkos::View<int*> pts_order);
 
@@ -70,7 +74,13 @@ void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int np
  *      n0----n2    n1----n0    n3----n1    n2----n3
  *
  */
+inline
 int get_num_basis_coeff_hexahedron(int p);
+
+inline
+void get_points_on_face_hexahedron(const int face_id, const int orient, const int np,
+        const Kokkos::View<rtype**>::HostMirror face_pts,
+        Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
 class Shape {
 
@@ -79,6 +89,7 @@ public:
     /*
     Constructor
     */
+    inline
     Shape(ShapeType shape_type);
     Shape() = default;
     ~Shape() = default;
@@ -88,6 +99,7 @@ public:
 
     int (*get_num_basis_coeff)(int p);
 
+    inline
     int get_quadrature_order(const int order);
     inline int get_num_faces_per_elem() const {return NFACES;}
     inline int get_num_orient_per_face() const {return NUM_ORIENT_PER_FACE;};
@@ -97,17 +109,19 @@ public:
 
     void (*get_points_on_face)(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
-        Kokkos::View<rtype**>::HostMirror elem_pts);
+        Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
-    void (*get_face_pts_order_wrt_orient0)(const int orient, const int npts,
-        Kokkos::View<int*> pts_order);
+    KOKKOS_INLINE_FUNCTION
+    void get_face_pts_order_wrt_orient0(const int orient, const int npts,
+        Kokkos::View<int*> pts_order) const;
 
 private:
     int (*get_quadrature_order_pointer)(const int order,
         const int NDIMS_);
 
 protected:
-    std::string name; // name of basis
+    ShapeType type; // name of shape type
+    std::string name; // name of shape
     int NDIMS; // number of dimensions
     int NFACES; // number of faces
     int NCORNERS; // number of shape corners
@@ -117,5 +131,7 @@ protected:
 
 
 } // end namespace Basis
+
+#include "numerics/basis/shape.cpp"
 
 #endif // DG_NUMERICS_SHAPE_H

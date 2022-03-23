@@ -2,7 +2,6 @@ add_library(numerics STATIC
     numerics_data.cpp
     nodes.cpp
     basis/basis.cpp
-    basis/shape.cpp
     quadrature/tools.cpp
     quadrature/segment.cpp
     quadrature/quadrilateral.cpp
