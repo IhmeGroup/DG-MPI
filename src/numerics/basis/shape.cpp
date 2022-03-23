@@ -217,7 +217,7 @@ void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
 
     assert(npts == (int) pts_order.extent(0));
     assert(npts > 0);
-    const int n1D = sqrt(npts);
+    const int n1D = Kokkos::Experimental::sqrt(npts);
     assert(n1D*n1D == npts); // a hexahedron's face is a quadrilateral
     const int nptsp1 = npts + 1;
 
@@ -274,7 +274,7 @@ void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
             unsigned k = 0;
             for (unsigned i=0; i<(unsigned)n1D; i++) {
                 for (unsigned j=0; j<(unsigned)n1D; j++) {
-                    pts_order(i) = curr;
+                    pts_order(k) = curr;
                     curr -= 1;
                     k += 1;
                 }
@@ -300,7 +300,7 @@ void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
             unsigned k = 0;
             for (unsigned i=0; i<(unsigned)n1D; i++) {
                 for (unsigned j=0; j<(unsigned)n1D; j++) {
-                    pts_order(i) = curr;
+                    pts_order(k) = curr;
                     curr += 1;
                     k += 1;
                 }
