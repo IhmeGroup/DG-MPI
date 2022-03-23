@@ -84,6 +84,14 @@ struct InteriorFaceHelperFunctor{
     void get_quadrature(Basis::Basis basis,
         const int order);
 
+    inline
+    void get_reference_data(Basis::Basis basis, 
+        Basis::Basis gbasis, const int order);
+
+    inline
+    void precompute_facequadrature_lookup(Mesh& mesh,
+        Basis::Basis basis);
+
     // inline
     // void get_reference_data(Basis::Basis basis,
     //     Basis::Basis gbasis,
@@ -98,17 +106,21 @@ struct InteriorFaceHelperFunctor{
     host_view_type_4D h_quad_pts;
     host_view_type_1D h_quad_wts;
 
-    view_type_2D basis_val;
-    view_type_3D basis_ref_grad;
+    view_type_4D basis_val;
+    view_type_5D basis_ref_grad;
 
-    host_view_type_2D h_basis_val;
-    host_view_type_3D h_basis_ref_grad;
+    host_view_type_4D h_basis_val;
+    host_view_type_5D h_basis_ref_grad;
 
-    view_type_2D gbasis_val;
-    view_type_3D gbasis_ref_grad;
+    view_type_4D gbasis_val;
+    view_type_5D gbasis_ref_grad;
 
-    host_view_type_2D h_gbasis_val;
-    host_view_type_3D h_gbasis_ref_grad;
+    host_view_type_4D h_gbasis_val;
+    host_view_type_5D h_gbasis_ref_grad;
+
+    Kokkos::View<int**> quad_idx_L;
+    Kokkos::View<int**> quad_idx_R;
+
 };
 
 } // end interior face helper namespace

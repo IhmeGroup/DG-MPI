@@ -18,6 +18,32 @@ int get_num_basis_coeff_quadrilateral(int p){
     return (p + 1) * (p + 1);
 }
 
+void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
+        Kokkos::View<int*> pts_order) {
+
+    assert(npts == (int) pts_order.extent(0));
+    switch (orient) {
+        case 0: {
+            for (int i=0; i<npts; i++) {
+                pts_order(i) = i;
+            }
+            break;
+        }
+
+        case 1: {
+            for (int i=0; i<npts; i++) {
+                pts_order(i) = npts - 1 - i;
+            }
+            break;
+        }
+
+        default: {
+            printf("FATAL EXCEPTION IN 'get_face_pts_order_wrt_orient0_quadrilateral'");
+        }
+    }
+}
+
+
 void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**>::HostMirror elem_pts){
@@ -105,6 +131,7 @@ Shape::Shape(ShapeType shape_type){
         get_quadrature_data =
             QuadrilateralQuadrature::get_quadrature_gauss_legendre;
         get_points_on_face = get_points_on_face_quadrilateral;
+        get_face_pts_order_wrt_orient0 = get_face_pts_order_wrt_orient0_quadrilateral;
 
         // set constants
         NDIMS = 2;

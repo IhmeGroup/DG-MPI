@@ -206,6 +206,9 @@ void InteriorFaceHelperFunctor::compute_interior_face_helpers(int scratch_size, 
     Basis::Basis& basis){
 
     get_quadrature(basis, basis.get_order());
+    get_reference_data(basis, mesh.gbasis, basis.get_order());
+
+    precompute_facequadrature_lookup(mesh, basis);
 
     // for (unsigned long ifa = 0; ifa < basis.shape.get_num_faces_per_elem(); ifa++){
     // for (unsigned long ior = 0; ior < basis.shape.get_num_orient_per_face(); ior++){
@@ -246,6 +249,8 @@ void InteriorFaceHelperFunctor::get_quadrature(
     Kokkos::resize(quad_pts, NFACE, NUM_ORIENT_PER_FACE, nq, NDIMS);
     h_quad_pts = Kokkos::create_mirror_view(quad_pts);
 
+    // loop over shape faces and orientations per face and get the points on that face
+    // for a given shape object
     for (unsigned ifa = 0; ifa < NFACE; ifa++){
         for (unsigned ior = 0; ior < NUM_ORIENT_PER_FACE; ior++){
                 basis.shape.get_points_on_face(ifa, ior, nq, h_local_quad_pts,
@@ -269,5 +274,107 @@ void InteriorFaceHelperFunctor::get_quadrature(
 
 }
 
+inline
+void InteriorFaceHelperFunctor::get_reference_data(
+        Basis::Basis basis, Basis::Basis gbasis, const int order){
+
+    // unpack
+    const unsigned NFACE = basis.shape.get_num_faces_per_elem();
+    const unsigned NUM_ORIENT_PER_FACE = basis.shape.get_num_orient_per_face();
+    const unsigned NDIMS_FACE = basis.face_shape.get_NDIMS();
+    const unsigned NDIMS = basis.shape.get_NDIMS();
+
+    int nb = basis.shape.get_num_basis_coeff(order);
+    int gnb = gbasis.shape.get_num_basis_coeff(gbasis.get_order());
+    int nq = quad_pts.extent(2);
+
+    // need to establish an initial size for views
+    Kokkos::resize(basis_val, NFACE, NUM_ORIENT_PER_FACE, nq, nb);
+    Kokkos::resize(basis_ref_grad, NFACE, NUM_ORIENT_PER_FACE, nq, nb, NDIMS);
+    Kokkos::resize(gbasis_val, NFACE, NUM_ORIENT_PER_FACE, nq, gnb);
+    Kokkos::resize(gbasis_ref_grad, NFACE, NUM_ORIENT_PER_FACE, nq, gnb, NDIMS);
+
+    h_basis_val = Kokkos::create_mirror_view(basis_val);
+    h_basis_ref_grad = Kokkos::create_mirror_view(basis_ref_grad);
+    h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
+    h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
+
+    
+    for (unsigned ifa = 0; ifa < NFACE; ifa++){
+        for (unsigned ior = 0; ior < NUM_ORIENT_PER_FACE; ior++){
+
+            
+            // get subviews prior to passing into get_values and get_grads
+            auto h_quad_pts_ = Kokkos::subview(h_quad_pts, ifa, ior, Kokkos::ALL(), Kokkos::ALL());
+            auto h_basis_val_ = Kokkos::subview(h_basis_val, ifa, ior, Kokkos::ALL(), Kokkos::ALL());
+            auto h_gbasis_val_ = Kokkos::subview(h_gbasis_val, ifa, ior, Kokkos::ALL(), Kokkos::ALL());
+            auto h_basis_ref_grad_ = Kokkos::subview(h_basis_ref_grad, ifa, ior, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+            auto h_gbasis_ref_grad_ = Kokkos::subview(h_gbasis_ref_grad, ifa, ior, Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+
+            basis.get_values(h_quad_pts_, h_basis_val_);
+            gbasis.get_values(h_quad_pts_, h_gbasis_val_);
+
+            basis.get_grads(h_quad_pts_, h_basis_ref_grad_);
+            gbasis.get_grads(h_quad_pts_, h_gbasis_ref_grad_);
+
+
+            // for (unsigned i = 0; i < h_basis_val_.extent(0); i++){
+            // for (unsigned j = 0; j < h_basis_val_.extent(1); j++){
+            //     printf("ifa: %i, ior: %i, phi(%i, %i)=%f\n", ifa, ior, i, j, h_basis_val(ifa, ior, i, j));
+            // }
+            // }
+
+            // for (unsigned i = 0; i < h_gbasis_val_.extent(0); i++){
+            // for (unsigned j = 0; j < h_gbasis_val_.extent(1); j++){
+            //     printf("ifa: %i, ior: %i, gphi(%i, %i)=%f\n", ifa, ior, i, j, h_gbasis_val(ifa, ior, i, j));
+            // }
+            // }
+
+        }
+    }
+
+    Kokkos::deep_copy(basis_val, h_basis_val);
+    Kokkos::deep_copy(basis_ref_grad, h_basis_ref_grad);
+
+    Kokkos::deep_copy(gbasis_val, h_gbasis_val);
+    Kokkos::deep_copy(gbasis_ref_grad, h_gbasis_ref_grad);
+
+}
+
+
+inline
+void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh, 
+    Basis::Basis basis){
+
+    const int nqf = quad_pts.extent(2);
+    Kokkos::View<int*> orderL("orderL", nqf);
+    Kokkos::View<int*> orderR("orderR", nqf);
+
+    Kokkos::resize(quad_idx_L, mesh.num_ifaces_part, nqf);
+    Kokkos::resize(quad_idx_R, mesh.num_ifaces_part, nqf);
+
+    Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_CLASS_LAMBDA(const int& iface){
+
+        const unsigned orientL = mesh.get_orientL(iface);
+        const unsigned orientR = mesh.get_orientR(iface);
+
+        printf("oL=%i\n", orientL);
+        printf("oR=%i\n", orientR);
+
+        basis.shape.get_face_pts_order_wrt_orient0(orientL, nqf, orderL);
+        basis.shape.get_face_pts_order_wrt_orient0(orientR, nqf, orderR);
+
+        for (unsigned iq = 0; iq < nqf; iq++){
+            quad_idx_L(iface, iq) = orderL(iq);
+            quad_idx_R(iface, iq) = orderR(iq);
+
+            printf("quad_idx_L(%i, %i)=%i\n", iface, iq, orderL(iq));
+            printf("quad_idx_R(%i, %i)=%i\n", iface, iq, orderR(iq));
+
+        }
+    });
+
+
+}
 } // end namespace InteriorFaceHelpers
 

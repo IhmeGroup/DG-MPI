@@ -14,15 +14,62 @@
 namespace Basis {
 
 
-
+/* --------------------------------------
+        Segment Shape Definitions
+----------------------------------------*/
 int get_num_basis_coeff_segment(int p);
 
+
+
+/* --------------------------------------
+        Quadrilateral Shape Definitions
+----------------------------------------
+ *
+ *         f2
+ *      n3----n2
+ *  f3  |      | f1
+ *      n0----n1
+ *         f0
+ */
 int get_num_basis_coeff_quadrilateral(int p);
 
 void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**>::HostMirror elem_pts);
 
+void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
+        Kokkos::View<int*> pts_order);
+
+
+/* --------------------------------------
+        Hexahedron Shape Definitions
+-----------------------------------------
+ *         n2----n3
+ *        / |    /|
+ *       / n0---/n1
+ *      n6----n7 /
+ *      |/     |/
+ *      n4----n5
+ *
+ * Faces:
+ *  - 0 : 0, 2, 3, 1
+ *  - 1 : 0, 1, 5, 4
+ *  - 2 : 1, 3, 7, 5
+ *  - 3 : 3, 2, 6, 7
+ *  - 4 : 2, 0, 4, 6
+ *  - 5 : 4, 5, 7, 6
+ *
+ *  Face Orientations:
+ *
+ *      n2----n3    n0----n2    n1----n0    n3----n1
+ *      |   0  |    |   1  |    |   2  |    |   3  |
+ *      n0----n1    n1----n3    n3----n2    n2----n0
+ *
+ *      n1----n3    n3----n2    n2----n0    n0----n1
+ *      |   4  |    |   5  |    |   6  |    |   7  |
+ *      n0----n2    n1----n0    n3----n1    n2----n3
+ *
+ */
 int get_num_basis_coeff_hexahedron(int p);
 
 class Shape {
@@ -51,6 +98,9 @@ public:
     void (*get_points_on_face)(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**>::HostMirror elem_pts);
+
+    void (*get_face_pts_order_wrt_orient0)(const int orient, const int npts,
+        Kokkos::View<int*> pts_order);
 
 private:
     int (*get_quadrature_order_pointer)(const int order,

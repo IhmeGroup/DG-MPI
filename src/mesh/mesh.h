@@ -109,6 +109,14 @@ class Mesh {
         KOKKOS_INLINE_FUNCTION
         unsigned search_for_local_ID(unsigned global_ID, T local_to_global_IDs) const;
 
+        // Get the left orientation for an interior face
+        KOKKOS_INLINE_FUNCTION
+        const unsigned get_orientL(const int& iface) const {return interior_faces(iface, 3);}
+
+        // Get the right orientation for an interior face
+        KOKKOS_INLINE_FUNCTION
+        const unsigned get_orientR(const int& iface) const {return interior_faces(iface, 7);}
+
         /*! \brief Report mesh object
          *
          * @return

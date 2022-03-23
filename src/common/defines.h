@@ -41,6 +41,9 @@ using host_view_type_3D = view_type_3D::HostMirror;
 using view_type_4D = Kokkos::View<rtype****>;
 using host_view_type_4D = view_type_4D::HostMirror;
 
+using view_type_5D = Kokkos::View<rtype*****>;
+using host_view_type_5D = view_type_5D::HostMirror;
+
 using scratch_view_2D_rtype = Kokkos::View<rtype**,
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
