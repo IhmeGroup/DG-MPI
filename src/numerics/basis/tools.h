@@ -245,10 +245,6 @@ void get_legendre_basis_grad_3D(host_view_type_2D_ls quad_pts,
         const int p, host_view_type_3D_ls basis_ref_grad);
 
 
-KOKKOS_INLINE_FUNCTION
-void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
-        Kokkos::View<int*> pts_order);
-
 } // end namespace BasisTools
 
 #include "numerics/basis/tools.cpp"

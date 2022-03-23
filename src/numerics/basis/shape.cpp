@@ -211,6 +211,110 @@ void get_points_on_face_hexahedron(const int face_id, const int orient, const in
     }
 }
 
+KOKKOS_INLINE_FUNCTION
+void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
+        Kokkos::View<int*> pts_order) {
+
+    assert(npts == (int) pts_order.extent(0));
+    assert(npts > 0);
+    const int n1D = sqrt(npts);
+    assert(n1D*n1D == npts); // a hexahedron's face is a quadrilateral
+    const int nptsp1 = npts + 1;
+
+    switch (orient) {
+        case 0: {
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = i;
+            }
+            break;
+        }
+
+        case 1: {
+            int curr = n1D - 1;
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = curr;
+                curr = (curr + n1D) % nptsp1;
+            }
+            break;
+        }
+
+        case 2: {
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = npts-1-i;
+            }
+            break;
+        }
+
+        case 3: {
+            int curr = npts - n1D;
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = curr;
+                curr -= n1D;
+                if (curr < 0) {
+                    curr += nptsp1;
+                }
+            }
+            break;
+        }
+
+        case 4: {
+            int curr = 0;
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = curr;
+                curr += n1D;
+                if (curr >= npts) {
+                    curr -= npts - 1;
+                }
+            }
+            break;
+        }
+
+        case 5: {
+            int curr = n1D - 1;
+            unsigned k = 0;
+            for (unsigned i=0; i<(unsigned)n1D; i++) {
+                for (unsigned j=0; j<(unsigned)n1D; j++) {
+                    pts_order(i) = curr;
+                    curr -= 1;
+                    k += 1;
+                }
+                curr += 2*n1D;
+            }
+            break;
+        }
+
+        case 6: {
+            int curr = npts - 1;
+            for (unsigned i=0; i<(unsigned)npts; i++) {
+                pts_order(i) = curr;
+                curr -= n1D;
+                if (curr < 0) {
+                    curr += npts-1;
+                }
+            }
+            break;
+        }
+
+        case 7: {
+            int curr = npts - n1D;
+            unsigned k = 0;
+            for (unsigned i=0; i<(unsigned)n1D; i++) {
+                for (unsigned j=0; j<(unsigned)n1D; j++) {
+                    pts_order(i) = curr;
+                    curr += 1;
+                    k += 1;
+                }
+                curr -= 2*n1D;
+            }
+            break;
+        }
+
+        default: {
+            printf("FATAL EXCEPTION");
+        }
+    }
+}
+
 inline
 Shape::Shape(ShapeType shape_type){
     if (shape_type == ShapeType::Segment){
@@ -253,7 +357,8 @@ Shape::Shape(ShapeType shape_type){
             QuadratureTools::get_gausslegendre_quadrature_order;
         get_quadrature_data =
             HexahedronQuadrature::get_quadrature_gauss_legendre;
-        
+        get_points_on_face = get_points_on_face_hexahedron;
+
         // set constants
         NDIMS = 3;
         NCORNERS = 8;
@@ -269,11 +374,12 @@ KOKKOS_INLINE_FUNCTION
 void Shape::get_face_pts_order_wrt_orient0(const int orient, const int npts,
         Kokkos::View<int*> pts_order) const {
     if (type == ShapeType::Quadrilateral){
-        printf("Comparing it worked\n");
         get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);
     }
     else if (type == ShapeType::Hexahedron){
-        printf("have not implemented");
+        get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);    
+    } else {
+        printf("Not Implemented Error"); // TODO: Figure out GPU throws
     }
 }
 

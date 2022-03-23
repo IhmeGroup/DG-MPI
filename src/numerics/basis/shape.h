@@ -82,6 +82,10 @@ void get_points_on_face_hexahedron(const int face_id, const int orient, const in
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
+KOKKOS_INLINE_FUNCTION
+void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
+        Kokkos::View<int*> pts_order);
+
 class Shape {
 
 public:

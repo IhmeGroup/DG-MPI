@@ -488,30 +488,4 @@ void get_legendre_basis_grad_3D(host_view_type_2D_ls quad_pts,
 }
 
 
-void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
-        Kokkos::View<int*> pts_order) {
-    printf("in orientation quad");
-    assert(npts == (int) pts_order.extent(0));
-    switch (orient) {
-        case 0: {
-            for (int i=0; i<npts; i++) {
-                pts_order(i) = i;
-            }
-            break;
-        }
-
-        case 1: {
-            for (int i=0; i<npts; i++) {
-                pts_order(i) = npts - 1 - i;
-            }
-            break;
-        }
-
-        default: {
-            printf("FATAL EXCEPTION IN 'get_face_pts_order_wrt_orient0_quadrilateral'");
-        }
-    }
-}
-
-
 } // end namespace BasisTools
