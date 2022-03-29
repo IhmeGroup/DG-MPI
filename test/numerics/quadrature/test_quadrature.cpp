@@ -4,6 +4,7 @@
 #include "common/defines.h"
 #include "numerics/nodes.h"
 #include "numerics/basis/basis.h"
+#include "numerics/basis/shape.h"
 #include "numerics/quadrature/segment.h"
 #include "numerics/quadrature/quadrilateral.h"
 #include "numerics/quadrature/hexahedron.h"
@@ -17,59 +18,107 @@ Tests the implementation of equidistant segments
 KOKKOS_FUNCTION
 TEST(quadrature_test_suite, test_weights_sum_to_area){
 	
-	int nq;
+    int nq;
+	int nq_1d;
 	rtype segment_length = 2.0;
 	rtype quadrilateral_area = 4.0;
 	rtype hexahedron_area = 8.0;
+    
+    // 1D Line Segment
+    // instantiate the shape
+    auto shape = Basis::Shape(ShapeType::Segment);
+    int NDIMS = 1;
 
 	for (int order = 1; order < 20; order++){
 
 		View<rtype**> d_quad_pts("quad_pts", 1, 1);
 		View<rtype*> d_quad_wts("quad_wts", 1);
-	
-		host_view_type_2D quad_pts = Kokkos::create_mirror_view(d_quad_pts);
-    	host_view_type_1D quad_wts = Kokkos::create_mirror_view(d_quad_wts);
 
+        int qorder = shape.get_quadrature_order(order);
+        QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS, nq_1d, nq);
 
-		// 1D Line Segment
-		SegmentQuadrature::get_quadrature_gauss_legendre(order,
-    		nq, quad_pts, quad_wts);
+        Kokkos::resize(d_quad_pts, nq, NDIMS);
+        Kokkos::resize(d_quad_wts, nq);
 
-		int nwts = quad_wts.extent(0);
+        host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(d_quad_pts);
+        host_view_type_1D h_quad_wts = Kokkos::create_mirror_view(d_quad_wts);
+
+		shape.get_quadrature_data(qorder,
+    		nq_1d, h_quad_pts, h_quad_wts);
+
+		int nwts = h_quad_wts.extent(0);
 
 		rtype segment_sum = 0.;
 		for (int i = 0; i < nwts; i++){
-			segment_sum += quad_wts(i);
+			segment_sum += h_quad_wts(i);
 		}
 
 		EXPECT_NEAR(segment_sum, segment_length, DOUBLE_TOL);
+    }
 
-		// 2D Quadrilateral
-		// QuadrilateralQuadrature::get_quadrature_gauss_legendre(order,
-  //   		nq, quad_pts, quad_wts);
+    // 2D Quadrilateral
+    // instantiate the shape
+    shape = Basis::Shape(ShapeType::Quadrilateral);
+    NDIMS = 2;
 
-		// nwts = quad_wts.extent(0);
+    for (int order = 1; order < 20; order++){
 
-		// rtype quadrilateral_sum = 0.;
-		// for (int i = 0; i < nwts; i++){
-		// 	quadrilateral_sum += quad_wts(i);
-		// }
-		// EXPECT_NEAR(quadrilateral_sum, quadrilateral_area, DOUBLE_TOL);
+        View<rtype**> d_quad_pts("quad_pts", 1, 1);
+        View<rtype*> d_quad_wts("quad_wts", 1);
 
-		// // 3D Hexahedron
-		// HexahedronQuadrature::get_quadrature_gauss_legendre(order,
-  //   		nq, quad_pts, quad_wts);
+        int qorder = shape.get_quadrature_order(order);
+        QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS, nq_1d, nq);
 
-		// nwts = quad_wts.extent(0);
-		
-		// rtype hexahedron_sum = 0.;
-		// for (int i = 0; i < nwts; i++){
-		// 	hexahedron_sum += quad_wts(i);
-		// }
-		// EXPECT_NEAR(hexahedron_sum, hexahedron_area, DOUBLE_TOL);
+        Kokkos::resize(d_quad_pts, nq, NDIMS);
+        Kokkos::resize(d_quad_wts, nq);
 
+        host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(d_quad_pts);
+        host_view_type_1D h_quad_wts = Kokkos::create_mirror_view(d_quad_wts);
 
-	}
+        shape.get_quadrature_data(qorder,
+            nq_1d, h_quad_pts, h_quad_wts);
+
+        int nwts = h_quad_wts.extent(0);
+
+        rtype quad_sum = 0.;
+        for (int i = 0; i < nwts; i++){
+            quad_sum += h_quad_wts(i);
+        }
+
+        EXPECT_NEAR(quad_sum, quadrilateral_area, DOUBLE_TOL);
+    }
+
+    // 3D Hexahedron
+    // instantiate the shape
+    shape = Basis::Shape(ShapeType::Hexahedron);
+    NDIMS = 3;
+
+    for (int order = 1; order < 20; order++){
+
+        View<rtype**> d_quad_pts("quad_pts", 1, 1);
+        View<rtype*> d_quad_wts("quad_wts", 1);
+
+        int qorder = shape.get_quadrature_order(order);
+        QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS, nq_1d, nq);
+
+        Kokkos::resize(d_quad_pts, nq, NDIMS);
+        Kokkos::resize(d_quad_wts, nq);
+
+        host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(d_quad_pts);
+        host_view_type_1D h_quad_wts = Kokkos::create_mirror_view(d_quad_wts);
+
+        shape.get_quadrature_data(qorder,
+            nq_1d, h_quad_pts, h_quad_wts);
+
+        int nwts = h_quad_wts.extent(0);
+
+        rtype hex_sum = 0.;
+        for (int i = 0; i < nwts; i++){
+            hex_sum += h_quad_wts(i);
+        }
+
+        EXPECT_NEAR(hex_sum, hexahedron_area, DOUBLE_TOL);
+    }
 }
 
 /* Fix this test to mean someting */
