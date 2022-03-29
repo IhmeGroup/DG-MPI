@@ -12,28 +12,14 @@ namespace Physics {
 /* --------------------------------------------------------
     Physics Method Definitions + Function Pointer Wrappers
 ----------------------------------------------------------*/
-inline
-Physics::Physics(PhysicsType physics_type, const int dim, std::string _IC_name){
-
+template<unsigned dim> inline
+Physics<dim>::Physics(PhysicsType physics_type, std::string _IC_name){
     IC_type = enum_from_string<ICType>(_IC_name.c_str());
-
-    if (physics_type == PhysicsType::Euler and dim == 2){ 
-
-        NUM_STATE_VARS = 4;
-        // set_IC = EulerMaps::set_IC_euler2D;
-        // EulerMaps::set_IC_map_euler2D();
-        
-    }
-
-    if (physics_type == PhysicsType::Euler and dim == 3) {
-
-        NUM_STATE_VARS = 5;
-
-    }
 }
 
+template<>
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void Physics::call_IC(ViewTypeX x, const rtype t,
+void Physics<2>::call_IC(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const {
     if (IC_type == ICType::Uniform){
         set_state_uniform_2D(this, x, t, Uq);
@@ -41,21 +27,37 @@ void Physics::call_IC(ViewTypeX x, const rtype t,
     if (IC_type == ICType::Gaussian){
         set_gaussian_state_2D(this, x, t, Uq);
     }
+}
+
+template<>
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void Physics<3>::call_IC(ViewTypeX x, const rtype t,
+        ViewTypeUq Uq) const {
     if (IC_type == ICType::Sphere){
         set_smooth_sphere(this, x, t, Uq);
     }
 }
 
+template<>
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void Physics::call_exact_solution(ViewTypeX x, const rtype t,
+void Physics<2>::call_exact_solution(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const {
     if (IC_type == ICType::Uniform){
         set_state_uniform_2D(this, x, t, Uq);
     }
     else if (IC_type == ICType::Gaussian){
         set_gaussian_state_2D(this, x, t, Uq);
+    } else {
+        printf("THERE IS NO EXACT SOLUTION PROVIDED");
     }
-    else if (IC_type == ICType::Sphere){
+}
+
+template<>
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void Physics<3>::call_exact_solution(ViewTypeX x, const rtype t,
+        ViewTypeUq Uq) const {
+    
+    if (IC_type == ICType::Sphere){
         set_smooth_sphere(this, x, t, Uq);
     } else {
         printf("THERE IS NO EXACT SOLUTION PROVIDED");
@@ -63,9 +65,8 @@ void Physics::call_exact_solution(ViewTypeX x, const rtype t,
 }
 
 
-
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_state_uniform_2D(const Physics* physics, ViewTypeX x, const rtype t,
+void set_state_uniform_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq){
 
     for (long unsigned is = 0; is < Uq.extent(0); is++){
@@ -75,7 +76,7 @@ void set_state_uniform_2D(const Physics* physics, ViewTypeX x, const rtype t,
 }
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_gaussian_state_2D(const Physics* physics, ViewTypeX x, const rtype t,
+void set_gaussian_state_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq){
 
     rtype A;
@@ -91,7 +92,7 @@ void set_gaussian_state_2D(const Physics* physics, ViewTypeX x, const rtype t,
 }
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_smooth_sphere(const Physics* physics, ViewTypeX x, const rtype t,
+void set_smooth_sphere(const Physics<3>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq){
 
     rtype A;

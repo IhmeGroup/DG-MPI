@@ -15,7 +15,8 @@
 
 using namespace VolumeHelpers;
 
-Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network,
+template<unsigned dim>
+Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network,
     Numerics::NumericsParams& params, PhysicsType physics_type)
     : input_file{input_file}, mesh{mesh}, network{network}, params{params} {
 
@@ -28,17 +29,23 @@ Solver::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network
     // instantiate the basis class
     basis = Basis::Basis(params.basis, order);
     // instantiate the physics class
-    physics = Physics::Physics(physics_type, mesh.dim, IC_name);
+    physics = Physics::Physics<dim>(physics_type, IC_name);
+
+    stepper = std::shared_ptr<StepperBase<dim>>(new FE<dim>());
 
     // set the size and shape of the solution coefficient views
     Kokkos::resize(Uc, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
     h_Uc = Kokkos::create_mirror_view(Uc);
 
     Kokkos::resize(U_face, mesh.num_ifaces_part, basis.get_num_basis_coeffs(), physics.get_NS());
+
+    // set the size and shape of the residuals view
+    Kokkos::resize(res, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
+
 }
 
-
-void Solver::precompute_matrix_helpers() {
+template<unsigned dim>
+void Solver<dim>::precompute_matrix_helpers() {
 
     // ---------------------------------------------------------------------------------------
     //                          Volume Helpers
@@ -69,7 +76,7 @@ void Solver::precompute_matrix_helpers() {
     //                          Interior Face Helpers
     // ---------------------------------------------------------------------------------------
     
-    int scratch_size = 0;
+    int scratch_size = 0; // TODO: Will need scratch space for ijac evaluated at faces
     printf("##### Construct Face Helpers #####\n");
     iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis);
     printf("##### Completed #####\n");
@@ -77,7 +84,8 @@ void Solver::precompute_matrix_helpers() {
 
 }
 
-void Solver::init_state_from_fcn(Mesh& mesh_local){
+template<unsigned dim>
+void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
 
     // The current initialization assumes that we are using an L2 projection for the 
     // initial conditions.
@@ -195,12 +203,13 @@ void Solver::init_state_from_fcn(Mesh& mesh_local){
     //     }
     // }
 }
-
-void Solver::copy_from_device_to_host(){
+template<unsigned dim>
+void Solver<dim>::copy_from_device_to_host(){
     Kokkos::deep_copy(h_Uc, Uc);
 }
 
-void Solver::read_in_coefficients(const std::string& filename){
+template<unsigned dim>
+void Solver<dim>::read_in_coefficients(const std::string& filename){
     // This function reads in the solution coefficients from an 
     // hdf5 file. It detects whether the data is stored as 
     // column or row major prior to reading it in. 
@@ -288,10 +297,50 @@ void Solver::read_in_coefficients(const std::string& filename){
             file.close();
         } // end if statement (rank == network.rank)
     } // end loop over ranks
+}
 
 
+template<unsigned dim>
+void Solver<dim>::solve(){
 
+    // unpack solver if needed
 
-
+    // this can be where we place parameters for writing data
+    
+    // advance the time step
+    stepper->take_time_step(*this);
 
 }
+
+template<unsigned dim>
+void Solver<dim>::get_residual(){
+
+    get_element_residuals();
+
+}
+
+template<unsigned dim>
+void Solver<dim>::get_element_residuals(){
+
+    // unpack
+    auto basis_val = vol_helpers.basis_val;
+
+
+    // allocate state evaluated at quadrature points
+    view_type_3D Uq("Uq", mesh.num_elems_part,
+        basis_val.extent(0), physics.get_NS());
+
+    Kokkos::fence();
+    
+    // Evaluate the state
+    VolumeHelpers::evaluate_state(mesh.num_elems_part,
+        basis_val, Uc, Uq);
+    Kokkos::fence();
+
+    // TODO: Evaluate gradient of state at quad points if needed
+    printf("I made it here\n");
+
+}
+
+template class Solver<2>;
+template class Solver<3>;

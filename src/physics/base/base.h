@@ -18,17 +18,17 @@
 
 namespace Physics {
 
+template<unsigned dim>
 class Physics {
 
 public:
 
     inline
-    Physics(PhysicsType physics_type, const int dim, std::string _IC_name);
+    Physics(PhysicsType physics_type, std::string _IC_name);
     Physics() = default;
-    // ~Physics() = default;
+
     inline int get_NS(){return NUM_STATE_VARS;}
 
-    // void (*set_IC)(Physics& physics, const std::string IC_name);
     template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
     void call_IC(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
@@ -37,28 +37,24 @@ public:
     void call_exact_solution(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
 
-    // void (*set_state)(const Physics& physics, scratch_view_1D_rtype x, const rtype t, 
-    //     scratch_view_1D_rtype f);
-
-    // mutable void (*set_state)();
     ICType IC_type;
     view_type_1D IC_data;
 
-    int NUM_STATE_VARS; // QUESTION: Should this be compile time constant?
-
+    // set as compile time constant -> see common/defines.h
+    static constexpr int NUM_STATE_VARS = GLOBAL_NUM_SPECIES + 1 + dim;
 };
 
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_state_uniform_2D(const Physics* physics, ViewTypeX x, const rtype t,
+void set_state_uniform_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq);
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_gaussian_state_2D(const Physics* physics, ViewTypeX x, const rtype t,
+void set_gaussian_state_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq);
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
-void set_smooth_sphere(const Physics* physics, ViewTypeX x, const rtype t,
+void set_smooth_sphere(const Physics<3>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq);
 
 

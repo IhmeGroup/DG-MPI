@@ -1,6 +1,7 @@
 #include <string>
 #include <string>
 #include <vector>
+#include <memory>
 #include <iostream>
 #include "toml11/toml.hpp"
 #include "mesh/mesh.h"
@@ -18,10 +19,15 @@ using std::endl; using std::string;
 
 // Forward declaration
 int main(int argc, char* argv[]);
-void run_post(toml::value& toml_input, MemoryNetwork& network);
-void get_error(Solver& solver, const int ord, bool normalize_by_volume);
 
-void get_error(Solver& solver, const int ord, bool normalize_by_volume){
+template<unsigned dim>
+void run_post(toml::value& toml_input, MemoryNetwork& network);
+
+template<unsigned dim>
+void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume);
+
+template<unsigned dim>
+void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
 
     // unpack
     auto time = solver.time;
@@ -190,7 +196,7 @@ void get_error(Solver& solver, const int ord, bool normalize_by_volume){
 
 }
 
-
+template<unsigned dim>
 void run_post(toml::value& toml_input, MemoryNetwork& network) {
     // TODO: Add gorder from mesh file
     int order = 1;
@@ -209,8 +215,7 @@ void run_post(toml::value& toml_input, MemoryNetwork& network) {
     std::string phys = toml::find<std::string>(toml_input, "Physics", "name");
     auto physics_type = enum_from_string<PhysicsType>(phys.c_str());
 
-    // Create solver
-    auto solver = Solver(toml_input, mesh, network, numerics_params,
+    auto solver = Solver<dim>(toml_input, mesh, network, numerics_params,
         physics_type);
 
     // Read in InitialCondition data and copy it to the physics.IC_data view
@@ -259,8 +264,12 @@ int main(int argc, char* argv[]) {
     auto toml_input = toml::parse(toml_fname);
 
     // Run the requested post-processing
-    run_post(toml_input, network);
-
+    const unsigned NDIMS = toml::find<unsigned>(toml_input, "Physics", "dim");
+    if (NDIMS == 2){
+        run_post<2>(toml_input, network);
+    } else if (NDIMS == 3){
+        run_post<3>(toml_input, network);
+    }
     // Finalize memory network
     network.finalize();
 }
