@@ -13,6 +13,11 @@ using rtype = float;
 constexpr auto MPI_RTYPE = MPI_FLOAT;
 #endif
 
+// compiler directive to switch the number of state variables 
+// user prescribes number of species in the CMAKE File with 
+// the default being 1 species (Air)
+constexpr auto GLOBAL_NUM_SPECIES = CMAKE_NUM_SPECIES;
+
 constexpr auto INIT_EX_PARAMS_MAX = 10;
 constexpr auto INIT_NAME_MAX_CHARS = 30;
 
