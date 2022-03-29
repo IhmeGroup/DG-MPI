@@ -10,7 +10,8 @@
 
 class Writer {
     public:
-        Writer(Mesh& mesh, MemoryNetwork& network, Solver& solver);
+        Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
+            int nb, int ns);
 
     private:
         template <class T>

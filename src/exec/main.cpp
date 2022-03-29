@@ -18,6 +18,8 @@ using std::cout, std::endl, std::string;
 
 // Forward declaration
 int main(int argc, char* argv[]);
+
+template<unsigned dim>
 void run_solver(toml::value& toml_input, MemoryNetwork& network);
 
 
@@ -37,12 +39,17 @@ int main(int argc, char* argv[]) {
     //cout << toml_input.report() << endl;
 
     // Run solver
-    run_solver(toml_input, network);
-
+    const unsigned NDIMS = toml::find<unsigned>(toml_input, "Physics", "dim");
+    if (NDIMS == 2){
+        run_solver<2>(toml_input, network);
+    } else if (NDIMS == 3){
+        run_solver<3>(toml_input, network);
+    }
     // Finalize memory network
     network.finalize();
 }
 
+template<unsigned dim>
 void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // TODO: Add gorder from mesh file
     int order = 1;
@@ -56,9 +63,9 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // Get physics type -> NOTE: physics object is constructed in solver constructor
     std::string phys = toml::find<std::string>(toml_input, "Physics", "name");
     auto physics_type = enum_from_string<PhysicsType>(phys.c_str());
+    const unsigned NDIMS = toml::find<unsigned>(toml_input, "Physics", "dim");
 
-    // Create solver
-    auto solver = Solver(toml_input, mesh, network, numerics_params,
+    auto solver = Solver<dim>(toml_input, mesh, network, numerics_params,
         physics_type);
 
     // Read in InitialCondition data and copy it to the physics.IC_data view
@@ -88,9 +95,14 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     printf("###################################################################\n");
 
     // ... we actually do the DG solve here
+    solver.solve();
 
     // TODO: make this write a parallel hdf5 write
-    auto writer = Writer(mesh, network, solver);
+    // copy device solution coefficients to host
+    solver.copy_from_device_to_host();
+    int nb = solver.basis.get_num_basis_coeffs();
+    int ns = solver.physics.get_NS();
+    auto writer = Writer(mesh, network, solver.h_Uc, nb, ns);
     printf("###################################################################\n");
     printf("Solution written to disk\n");
     printf("###################################################################\n");
@@ -98,3 +110,5 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // Finalize mesh
     mesh.finalize();
 }
+
+

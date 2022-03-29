@@ -6,16 +6,15 @@
 
 using std::string, std::vector;
 
-
-Writer::Writer(Mesh& mesh, MemoryNetwork& network, Solver& solver) {
+Writer::Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
+    int nb, int ns) {
     std::stringstream stream;
     // stream << PROJECT_ROOT << "/build_gpu/test/mpi_enabled_tests/mesh/data.h5";
     stream << "data.h5";
     const string file_name = stream.str();
 
-    // Copy everything to the host from the device
+    // Copy mesh info to the host from the device
     mesh.copy_from_device_to_host();
-    solver.copy_from_device_to_host();
 
     // Write some attributes, on the head rank
     network.barrier();
@@ -32,9 +31,9 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, Solver& solver) {
         // Number of nodes per element
         write_attribute(mesh.num_nodes_per_elem,
                 "Number of Nodes Per Element", file);
-        write_attribute(solver.basis.get_num_basis_coeffs(),
+        write_attribute(nb,
                 "Number of Basis Functions", file);
-        write_attribute(solver.physics.get_NS(),
+        write_attribute(ns,
                 "Number of State Variables", file);        
         file.close();
     }
@@ -57,7 +56,7 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, Solver& solver) {
                 "Number of Elements per Partition", group);
             // Get the layout to store
             bool stored_layout = 
-                std::is_same_v<decltype(solver.Uc)::array_layout,Kokkos::LayoutRight>;
+                std::is_same_v<decltype(h_Uc)::array_layout,Kokkos::LayoutRight>;
             // store the layout of Uc
             write_attribute(stored_layout, "Stored Layout", group);
 
@@ -97,9 +96,9 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, Solver& solver) {
             // Dimensions of the dataset: (num_elems, nb, ns)
             dimensions.resize(3);
             dimensions[0] = mesh.num_elems_part;
-            dimensions[1] = solver.basis.get_num_basis_coeffs();
-            dimensions[2] = solver.physics.get_NS();
-            write_dataset(solver.h_Uc.data(), "Solution Coefficients", group,
+            dimensions[1] = nb;
+            dimensions[2] = ns;
+            write_dataset(h_Uc.data(), "Solution Coefficients", group,
                 dimensions);
             // Close file
             file.close();
@@ -144,7 +143,7 @@ void Writer::write_attribute(T data, string name, H5::Group group) {
     attribute.write(type, (void*)&data);
 }
 
-template <>
+template<>
 H5::PredType Writer::get_hdf5_type<double*>() {
     return H5::PredType::NATIVE_DOUBLE;
 }
