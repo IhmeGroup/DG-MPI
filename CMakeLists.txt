@@ -83,6 +83,17 @@ option(USE_OMP          "Use OpenMP" ON)
 # option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 # option(BUILD_EXAMPLES   "Build examples" OFF)
 
+# Sets the number of species if using more than one. 
+# Defaults to 1 (or air)
+# If user increases above 1, user is responsible for either
+# cleaning the cache or specifically setting the NUM_SPECIES var 
+# back to 1 if they wish to go back to the default build. 
+if(DEFINED NUM_SPECIES)
+    set(CMAKE_NUM_SPECIES ${NUM_SPECIES})
+else()
+    set(CMAKE_NUM_SPECIES 1)
+endif()
+
 # MKL libraries to link against
 # set(MKL_LIBRARIES mkl_intel_lp64 mkl_sequential mkl_core)
 
@@ -159,6 +170,7 @@ set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
 if(USE_DOUBLES)
     add_compile_definitions(USE_DOUBLES)
 endif()
+add_compile_definitions(CMAKE_NUM_SPECIES)
 
 # global include
 include_directories("${PROJECT_SOURCE_DIR}")
@@ -205,6 +217,8 @@ message(STATUS "METIS lib:           ${METIS_LIBRARIES}")
 message(STATUS "HDF5 root:           ${HDF5_ROOT}")
 message(STATUS "Kokkos root:         ${Kokkos_ROOT}")
 message(STATUS "MPI root:            ${MPI_ROOT}")
+message(STATUS "NUMBER OF SPECIES:   ${CMAKE_NUM_SPECIES}")
+message(STATUS "")
     # message(STATUS "Kokkos kernels root: ${KokkosKernels_ROOT}")
 
 # if(BUILD_BENCHMARKS)
@@ -220,6 +234,8 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "")
 message(STATUS "HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}")
 message(STATUS "")
+
+
 # if(USE_MKL)
     # message(STATUS "")
     # message(STATUS "MKL enabled")
