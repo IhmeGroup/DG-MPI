@@ -3,6 +3,39 @@
 
 namespace SolverTools {
 
+inline
+void calculate_volume_flux_integral(const int num_elems, view_type_3D basis_ref_grad,
+    view_type_4D F_quad, view_type_3D res){
+
+    // unpack loop constants
+    const int nq = basis_ref_grad.extent(0);
+    const int nb = basis_ref_grad.extent(1);
+    const int ns = F_quad.extent(2);
+    const int ndims = basis_ref_grad.extent(2);
+
+
+    Kokkos::parallel_for("calc vol flux integral", Kokkos::TeamPolicy<>( num_elems,
+        Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
+
+        const int elem_ID = member.league_rank();
+        
+        // TODO: Optimize this loop either with batched Kokkos kernels or 
+        // with hierarchical parralelism
+        for (int ib = 0; ib < nb; ib++){
+            for (int is = 0; is < ns; is++){
+                for (int iq = 0; iq < nq; iq++){
+                    for (int id = 0; id < ndims; id++){
+                        res(elem_ID, ib, is) += basis_ref_grad(iq, ib, id) *
+                            F_quad(elem_ID, iq, is, id);
+                    }
+                }
+            }
+        }
+    });
+
+}
+
+
 template<typename ViewType_iMM, typename ViewType2D, typename ViewType1D_djac, 
 typename ViewType1D_quadwts, typename ViewType2D_f, typename ViewType2D_state>
 KOKKOS_INLINE_FUNCTION
