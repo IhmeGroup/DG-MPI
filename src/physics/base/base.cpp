@@ -1,6 +1,6 @@
 // #include "physics/base/base.h"
 // #include "physics/euler/data.h"
-// #include "physics/euler/functions.h"
+#include "physics/euler/functions.h"
 #include <cmath>
 
 namespace Physics {
@@ -13,8 +13,25 @@ namespace Physics {
     Physics Method Definitions + Function Pointer Wrappers
 ----------------------------------------------------------*/
 template<unsigned dim> inline
-Physics<dim>::Physics(PhysicsType physics_type, std::string _IC_name){
+Physics<dim>::Physics(PhysicsType physics_type, 
+    std::string _IC_name) : physics_type{physics_type} {
+    
+    // set the initial condition enum
     IC_type = enum_from_string<ICType>(_IC_name.c_str());
+}
+
+
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+void Physics<dim>::get_conv_flux_interior(const rtype* U, const rtype* gU, 
+    rtype* F, rtype* Fdir) const {
+
+    if (physics_type == PhysicsType::Euler){
+        EulerFcnType::conv_flux_interior<dim>(U, Fdir);
+    }
+    else {
+        printf("ERROR: NO FLUX FUNCTION\n"); // TODO: Figure out throws on GPU
+    }
+
 }
 
 template<>
@@ -59,6 +76,8 @@ void Physics<3>::call_exact_solution(ViewTypeX x, const rtype t,
     
     if (IC_type == ICType::Sphere){
         set_smooth_sphere(this, x, t, Uq);
+    } else if (IC_type == ICType::Uniform){
+        set_state_uniform_3D(this, x, t, Uq);
     } else {
         printf("THERE IS NO EXACT SOLUTION PROVIDED");
     }
@@ -67,6 +86,16 @@ void Physics<3>::call_exact_solution(ViewTypeX x, const rtype t,
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
 void set_state_uniform_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
+        ViewTypeUq Uq){
+
+    for (long unsigned is = 0; is < Uq.extent(0); is++){
+        Uq(is) = physics->IC_data[is];
+    }
+
+}
+
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_state_uniform_3D(const Physics<3>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq){
 
     for (long unsigned is = 0; is < Uq.extent(0); is++){

@@ -29,6 +29,10 @@ public:
 
     inline int get_NS(){return NUM_STATE_VARS;}
 
+    KOKKOS_INLINE_FUNCTION
+    void get_conv_flux_interior(const rtype *U, const rtype *gU, 
+        rtype* F, rtype* gF) const;
+
     template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
     void call_IC(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
@@ -37,6 +41,7 @@ public:
     void call_exact_solution(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
 
+    PhysicsType physics_type;
     ICType IC_type;
     view_type_1D IC_data;
 
@@ -47,6 +52,10 @@ public:
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
 void set_state_uniform_2D(const Physics<2>* physics, ViewTypeX x, const rtype t,
+        ViewTypeUq Uq);
+
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_state_uniform_3D(const Physics<3>* physics, ViewTypeX x, const rtype t,
         ViewTypeUq Uq);
 
 template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
