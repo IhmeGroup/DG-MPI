@@ -40,9 +40,6 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
     auto order = solver.order;
 
     rtype tot_vol_part;
-
-    printf("order=%i\n", order);
-
     
     if (normalize_by_volume == true){
         tot_vol_part = MeshTools::get_total_volume(mesh.num_elems_part, 
@@ -57,6 +54,7 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
     // Over-integrate for the post processing -> compute quadrature
     int NDIMS = basis.shape.get_NDIMS();
     int nb = basis.get_num_basis_coeffs();
+    int gnb = mesh.gbasis.get_num_basis_coeffs();
     int nq_1d; int nq;
     int qorder = basis.shape.get_quadrature_order(2*order);
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
@@ -76,7 +74,7 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
     // Get the basis values evaluated at the 
     // overintegrated quadrature points
     view_type_2D basis_val("basis_val_post", nq, nb);
-    view_type_2D gbasis_val("gbasis_val_post", nq, nb);
+    view_type_2D gbasis_val("gbasis_val_post", nq, gnb);
     host_view_type_2D h_basis_val = Kokkos::create_mirror_view(basis_val);
     host_view_type_2D h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
 
@@ -88,7 +86,7 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
 
     // Get the geometric basis ref gradient evaluated
     // at the overintegrated quadrature points
-    view_type_3D gbasis_ref_grad("gbasis_ref_grad_post", nq, nb, NDIMS);
+    view_type_3D gbasis_ref_grad("gbasis_ref_grad_post", nq, gnb, NDIMS);
     host_view_type_3D h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
 
     mesh.gbasis.get_grads(h_quad_pts, h_gbasis_ref_grad);

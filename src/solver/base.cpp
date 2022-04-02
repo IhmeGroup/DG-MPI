@@ -3,6 +3,7 @@
 #include "solver/tools.h"
 #include "numerics/basis/basis.h"
 #include "numerics/basis/tools.h"
+#include "solver/flux_functors_impl.h"
 
 #include "H5Cpp.h"
 
@@ -67,10 +68,9 @@ void Solver<dim>::precompute_matrix_helpers() {
     Kokkos::fence();
     printf("##### Completed #####\n");
     printf("##### Construct Volume Helpers #####\n");
-    vol_helpers.compute_volume_helpers(scratch_size_vol, mesh, basis);
+    vol_helpers.compute_volume_helpers(scratch_size_vol, mesh, basis, network);
     Kokkos::fence();
     printf("##### Completed #####\n");
-
 
     // ---------------------------------------------------------------------------------------
     //                          Interior Face Helpers
@@ -97,12 +97,13 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
     // Over-integrate for the initial conditions -> compute quadrature
     int NDIMS = basis.shape.get_NDIMS();
     int nb = basis.get_num_basis_coeffs();
-
+    int gnb = mesh.gbasis.get_num_basis_coeffs();
     int nq_1d; int nq;
-    int qorder = basis.shape.get_quadrature_order(2*order);
+    int order_ = std::max(order, 1);
+    int qorder = basis.shape.get_quadrature_order(2*order_);
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
-
+    printf("order=%i\n", order);
     printf("nq=%i\n", nq);
     printf("NDIMS=%i\n", NDIMS);
     view_type_2D quad_pts("quad_pts_ICs", nq, NDIMS);
@@ -117,7 +118,7 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
     // Get the basis values evaluated at the 
     // overintegrated quadrature points
     view_type_2D basis_val("basis_val_ICs", nq, nb);
-    view_type_2D gbasis_val("gbasis_val_ICs", nq, nb);
+    view_type_2D gbasis_val("gbasis_val_ICs", nq, gnb);
     host_view_type_2D h_basis_val = Kokkos::create_mirror_view(basis_val);
     host_view_type_2D h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
 
@@ -129,7 +130,7 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
 
     // Get the geometric basis ref gradient evaluated
     // at the overintegrated quadrature points
-    view_type_3D gbasis_ref_grad("gbasis_ref_grad_ICs", nq, nb, NDIMS);
+    view_type_3D gbasis_ref_grad("gbasis_ref_grad_ICs", nq, gnb, NDIMS);
     host_view_type_3D h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
 
     mesh.gbasis.get_grads(h_quad_pts, h_gbasis_ref_grad);
@@ -185,6 +186,8 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
                 jac, djac, elem_coords, member);
             member.team_barrier();
 
+            // network.print_view(jac);
+
 
             // L2 projection
             SolverTools::L2_projection(
@@ -193,20 +196,14 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
                 Kokkos::subview(Uc, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);
 
         });
-
-
-    // for (unsigned long i=0; i<Uc.extent(0); i++){
-    //     for (unsigned long j=0; j<Uc.extent(1); j++){
-    //         for (unsigned long k=0; k<Uc.extent(2); k++){
-    //             printf("Uc(%i, %i, %i)=%f\n", i, j, k, Uc(i,j,k));
-    //         }
-    //     }
-    // }
 }
+
+
 template<unsigned dim>
 void Solver<dim>::copy_from_device_to_host(){
     Kokkos::deep_copy(h_Uc, Uc);
 }
+
 
 template<unsigned dim>
 void Solver<dim>::read_in_coefficients(const std::string& filename){
@@ -322,13 +319,21 @@ void Solver<dim>::get_residual(){
 template<unsigned dim>
 void Solver<dim>::get_element_residuals(){
 
+    using MyMDRangePolicy = Kokkos::MDRangePolicy<
+        // rank and way to iterate (outer = iteration over tiles, 
+        // inner = iteration within a tile)
+        Kokkos::Rank<2, Kokkos::Iterate::Default, Kokkos::Iterate::Default>>;
+    
     // unpack
     auto basis_val = vol_helpers.basis_val;
-
 
     // allocate state evaluated at quadrature points
     view_type_3D Uq("Uq", mesh.num_elems_part,
         basis_val.extent(0), physics.get_NS());
+
+    // allocate gradient of the state evaluated at quad points
+    view_type_4D vgUq("gUq", mesh.num_elems_part,
+        basis_val.extent(0), physics.get_NS(), dim);
 
     Kokkos::fence();
     
@@ -337,9 +342,38 @@ void Solver<dim>::get_element_residuals(){
         basis_val, Uc, Uq);
     Kokkos::fence();
 
-    // TODO: Evaluate gradient of state at quad points if needed
-    printf("I made it here\n");
+    // TODO: evaluate the gradient of the state if needed
 
+    // declare the volume flux functor
+    FluxFunctors::VolumeFluxesFunctor<dim> functor(physics, Uq,
+        vgUq, vol_helpers.djac_elems, vol_helpers.ijac_elems,
+        vol_helpers.quad_wts);
+
+    // TODO:: Kihiro's range policy -> last brackets caused compile errors. 
+    //        Maybe pursue at somepoint?
+    // MyMDRangePolicy policy(
+    //     {0, 0}, // starting idx for elements and quadrature points
+    //     {mesh.num_elems_part, basis_val.extent(0)}, // ending idx for elements and quadrature points
+    //     {32, 4}  // size of tiles TODO: evaluate this performance
+    //     );
+
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>> 
+        policy({0, 0}, {mesh.num_elems_part, 
+                        basis_val.extent(0)});
+
+    // build fluxes, this overwrites in place the vUq and vgUq
+    Kokkos::parallel_for("volume_fluxes", policy, functor);
+    // NOTE: The overwritten vgUq here is ijac*Fq*quad_wts*djac
+
+    // GEMM to get the residual
+    // TODO: ADD SOURCE TERMS
+    SolverTools::calculate_volume_flux_integral(mesh.num_elems_part, 
+        vol_helpers.basis_ref_grad, vgUq, res);
+
+    // currently we print the residuals to compare against stuff like quail
+    host_view_type_3D h_res = Kokkos::create_mirror_view(res);
+    Kokkos::deep_copy(h_res, res);
+    network.print_3d_view(h_res);
 }
 
 template class Solver<2>;
