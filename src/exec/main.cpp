@@ -52,11 +52,11 @@ int main(int argc, char* argv[]) {
 template<unsigned dim>
 void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     // TODO: Add gorder from mesh file
-    int order = 1;
+    int gorder = 1;
     // Get parameters related to the numerics
-    auto numerics_params = Numerics::NumericsParams(toml_input, order);
+    auto numerics_params = Numerics::NumericsParams(toml_input, gorder);
     // Create mesh
-    auto gbasis = Basis::Basis(numerics_params.gbasis, order);
+    auto gbasis = Basis::Basis(numerics_params.gbasis, gorder);
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis);
 
