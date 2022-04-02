@@ -128,5 +128,4 @@ TEST(quadrature_test_suite, quad_rule){
 
     int qorder = basis.shape.get_quadrature_order(2);
 
-    std::cout<<qorder<<std::endl;
 }
