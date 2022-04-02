@@ -180,7 +180,76 @@ inline void MemoryNetwork::print(T data) const {
 }
 
 template <class T>
+inline void MemoryNetwork::print_view(Kokkos::View<T****> data) const {
+    barrier();
+    if (head_rank) {
+        cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+    }
+    // Loop over ranks
+    for (unsigned i = 0; i < num_ranks; i++) {
+        barrier();
+        // Only print on the appropriate rank
+        if (i == rank) {
+            // Print
+            cout << "Rank " << rank << " says:" << endl;
+            // Loop through indices of data
+            for (long unsigned i = 0; i < data.extent(0); i++) {
+                cout << "(" << i << ", :, :, :)" << endl;
+                for (long unsigned j = 0; j < data.extent(1); j++) {
+                    for (long unsigned k = 0; k < data.extent(2); k++) {
+                        for (long unsigned l = 0; l < data.extent(3); l++){
+                            cout << data(i, j, k, l) << "  ";
+                        }
+                        cout << endl;
+                    }
+                    cout << endl;
+                }
+                cout << endl;
+            }
+        }
+    }
+    barrier();
+    if (head_rank) {
+        cout << "------------------------------ The Ranks Have Spoken ------------------------------" << endl;
+    }
+}
+
+template <class T>
 inline void MemoryNetwork::print_view(Kokkos::View<T***> data) const {
+    barrier();
+    if (head_rank) {
+        cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+    }
+    // Loop over ranks
+    for (unsigned i = 0; i < num_ranks; i++) {
+        barrier();
+        // Only print on the appropriate rank
+        if (i == rank) {
+            // Print
+            cout << "Rank " << rank << " says:" << endl;
+            // Loop through indices of data
+            for (long unsigned i = 0; i < data.extent(0); i++) {
+                cout << "(" << i << ", :, :)" << endl;
+                for (long unsigned j = 0; j < data.extent(1); j++) {
+                    for (long unsigned k = 0; k < data.extent(2); k++) {
+                        cout << data(i, j, k) << "  ";
+                    }
+                    cout << endl;
+                }
+                cout << endl;
+            }
+        }
+    }
+    barrier();
+    if (head_rank) {
+        cout << "------------------------------ The Ranks Have Spoken ------------------------------" << endl;
+    }
+}
+
+template <class T>
+inline void MemoryNetwork::print_view(Kokkos::View<T***,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>> data) const {
     barrier();
     if (head_rank) {
         cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
@@ -241,6 +310,37 @@ inline void MemoryNetwork::print_view(Kokkos::View<T**> data) const {
 }
 
 template <class T>
+inline void MemoryNetwork::print_view(Kokkos::View<T**,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>> data) const {
+    barrier();
+    if (head_rank) {
+        cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+    }
+    // Loop over ranks
+    for (unsigned i = 0; i < num_ranks; i++) {
+        barrier();
+        // Only print on the appropriate rank
+        if (i == rank) {
+            // Print
+            cout << "Rank " << rank << " says:" << endl;
+            // Loop through indices of data
+            for (long unsigned i = 0; i < data.extent(0); i++) {
+                for (long unsigned j = 0; j < data.extent(1); j++) {
+                    cout << data(i, j) << "  ";
+                }
+                cout << endl;
+            }
+            cout << endl;
+        }
+    }
+    barrier();
+    if (head_rank) {
+        cout << "------------------------------ The Ranks Have Spoken ------------------------------" << endl;
+    }
+}
+
+template <class T>
 inline void MemoryNetwork::print_view(Kokkos::View<T*> data) const {
     barrier();
     if (head_rank) {
@@ -258,6 +358,39 @@ inline void MemoryNetwork::print_view(Kokkos::View<T*> data) const {
                 cout << data(i) << "  ";
             }
             cout << endl;
+        }
+    }
+    barrier();
+    if (head_rank) {
+        cout << "------------------------------ The Ranks Have Spoken ------------------------------" << endl;
+    }
+}
+
+
+template <class ViewType>
+inline void MemoryNetwork::print_3d_view(ViewType data) const {
+    barrier();
+    if (head_rank) {
+        cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+    }
+    // Loop over ranks
+    for (unsigned i = 0; i < num_ranks; i++) {
+        barrier();
+        // Only print on the appropriate rank
+        if (i == rank) {
+            // Print
+            cout << "Rank " << rank << " says:" << endl;
+            // Loop through indices of data
+            for (long unsigned i = 0; i < data.extent(0); i++) {
+                cout << "(" << i << ", :, :)" << endl;
+                for (long unsigned j = 0; j < data.extent(1); j++) {
+                    for (long unsigned k = 0; k < data.extent(2); k++) {
+                        cout << data(i, j, k) << "  ";
+                    }
+                    cout << endl;
+                }
+                cout << endl;
+            }
         }
     }
     barrier();

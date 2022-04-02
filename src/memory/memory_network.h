@@ -38,12 +38,23 @@ class MemoryNetwork {
         template <class T>
         void print(T data) const;
         template <class T>
+        void print_view(Kokkos::View<T****> data) const;
+        template <class T>
         void print_view(Kokkos::View<T***> data) const;
         template <class T>
         void print_view(Kokkos::View<T**> data) const;
         template <class T>
         void print_view(Kokkos::View<T*> data) const;
-
+        template <class T>
+        void print_view(Kokkos::View<T***,
+            Kokkos::DefaultExecutionSpace::scratch_memory_space,
+            Kokkos::MemoryTraits<Kokkos::Unmanaged>> data) const;
+        template <class T>
+        void print_view(Kokkos::View<T**,
+            Kokkos::DefaultExecutionSpace::scratch_memory_space,
+            Kokkos::MemoryTraits<Kokkos::Unmanaged>> data) const;
+        template <class ViewType>
+        void print_3d_view(ViewType data) const;
     public:
         unsigned num_ranks;
         unsigned rank;
