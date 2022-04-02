@@ -22,7 +22,7 @@ int get_num_basis_coeff_quadrilateral(int p){
 KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
         Kokkos::View<int*> pts_order) {
-    printf("in orientation quad");
+
     assert(npts == (int) pts_order.extent(0));
     switch (orient) {
         case 0: {

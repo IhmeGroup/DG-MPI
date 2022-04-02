@@ -11,7 +11,6 @@ void get_values_lagrangeseg(host_view_type_2D_ls quad_pts,
         void (*get_1d_nodes)(rtype, rtype, int,
         host_view_type_1D &)){
 
-    printf("in the lagrange seg call\n");
     int nq = quad_pts.extent(0);
 
     if (order == 0){
@@ -54,7 +53,6 @@ void get_values_lagrangequad(host_view_type_2D_ls quad_pts,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes)){
 
-    printf("in the lagrange quad call\n");
     int nq = quad_pts.extent(0);
 
     if (order == 0){

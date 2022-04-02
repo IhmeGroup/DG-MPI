@@ -23,10 +23,6 @@ void get_quadrature_gauss_legendre(
 
     SegmentQuadrature::get_segment_weights_gl(order, h_quad_wts_1d);
 
-    printf("order=%i\n", order);
-
-    printf("nq1d=%i\n", nq_1d);
-
     for (int j = 0; j < nq_1d; j++) {
         for (int i = 0; i < nq_1d; i++) {
             quad_pts(j * nq_1d + i, 0) = h_quad_pts_1d(i, 0);

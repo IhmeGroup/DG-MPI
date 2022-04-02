@@ -39,10 +39,14 @@ void get_element_jacobian(view_type_2D quad_pts,
         auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());
 
         Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
+
         Math::det(jac_iq, djac(iq));
         Math::invA(jac_iq, ijac_iq);
 
     });
+
+    member.team_barrier();
+
 }
 
 template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
