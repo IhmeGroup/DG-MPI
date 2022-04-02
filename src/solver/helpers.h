@@ -19,7 +19,7 @@ struct VolumeHelperFunctor {
 
     inline
     void compute_volume_helpers(int scratch_size, Mesh& mesh,
-        Basis::Basis& basis);
+        Basis::Basis& basis, MemoryNetwork& network);
 
     inline
     void compute_inv_mass_matrices(int scratch_size, Mesh& mesh,

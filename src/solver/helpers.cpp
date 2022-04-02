@@ -3,7 +3,7 @@ namespace VolumeHelpers {
 
 inline
 void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
-    Mesh& mesh, Basis::Basis& basis){
+    Mesh& mesh, Basis::Basis& basis, MemoryNetwork& network){
 
     get_quadrature(basis, basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
@@ -246,13 +246,13 @@ void InteriorFaceHelperFunctor::get_quadrature(
             Kokkos::subview(h_quad_pts, ifa, Kokkos::ALL(), Kokkos::ALL()));
     }
 
-    for (unsigned ifa = 0; ifa < NFACE; ifa++){
-            for (unsigned iq = 0; iq < h_quad_pts.extent(1); iq++){
-                for (unsigned i = 0; i < h_quad_pts.extent(2); i++){
-                printf("h_quad_pts(%i, %i, %i)=%f\n", ifa, iq, i, h_quad_pts(ifa, iq, i));
-            }
-        }
-    }
+    // for (unsigned ifa = 0; ifa < NFACE; ifa++){
+    //         for (unsigned iq = 0; iq < h_quad_pts.extent(1); iq++){
+    //             for (unsigned i = 0; i < h_quad_pts.extent(2); i++){
+    //             printf("h_quad_pts(%i, %i, %i)=%f\n", ifa, iq, i, h_quad_pts(ifa, iq, i));
+    //         }
+    //     }
+    // }
 
 
     Kokkos::deep_copy(quad_pts, h_quad_pts);
@@ -299,11 +299,11 @@ void InteriorFaceHelperFunctor::get_reference_data(
         basis.get_grads(h_quad_pts_, h_basis_ref_grad_);
         gbasis.get_grads(h_quad_pts_, h_gbasis_ref_grad_);
 
-        for (unsigned i = 0; i < h_basis_val_.extent(0); i++){
-        for (unsigned j = 0; j < h_basis_val_.extent(1); j++){
-            printf("ifa: %i, phi(%i, %i)=%f\n", ifa, i, j, h_basis_val(ifa, i, j));
-        }
-        }
+        // for (unsigned i = 0; i < h_basis_val_.extent(0); i++){
+        // for (unsigned j = 0; j < h_basis_val_.extent(1); j++){
+        //     printf("ifa: %i, phi(%i, %i)=%f\n", ifa, i, j, h_basis_val(ifa, i, j));
+        // }
+        // }
 
         // for (unsigned i = 0; i < h_gbasis_val_.extent(0); i++){
         // for (unsigned j = 0; j < h_gbasis_val_.extent(1); j++){
@@ -327,7 +327,7 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
     Basis::Basis basis){
 
     const int nqf = quad_pts.extent(1);
-    printf("nqf = %i", nqf);
+
     Kokkos::View<int*> orderL("orderL", nqf);
     Kokkos::View<int*> orderR("orderR", nqf);
 
@@ -339,8 +339,8 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
         const unsigned orientL = mesh.get_orientL(iface);
         const unsigned orientR = mesh.get_orientR(iface);
 
-        printf("oL=%i\n", orientL);
-        printf("oR=%i\n", orientR);
+        // printf("oL=%i\n", orientL);
+        // printf("oR=%i\n", orientR);
 
         basis.shape.get_face_pts_order_wrt_orient0(orientL, nqf, orderL);
         basis.shape.get_face_pts_order_wrt_orient0(orientR, nqf, orderR);
@@ -349,8 +349,8 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
             quad_idx_L(iface, iq) = orderL(iq);
             quad_idx_R(iface, iq) = orderR(iq);
 
-            printf("quad_idx_L(%i, %i)=%i\n", iface, iq, orderL(iq));
-            printf("quad_idx_R(%i, %i)=%i\n", iface, iq, orderR(iq));
+            // printf("quad_idx_L(%i, %i)=%i\n", iface, iq, orderL(iq));
+            // printf("quad_idx_R(%i, %i)=%i\n", iface, iq, orderR(iq));
 
         }
     });
