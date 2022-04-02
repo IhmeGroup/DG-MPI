@@ -29,6 +29,33 @@ namespace Math {
         // make sure that the matrices are square
         assert(mat.extent(0) == mat.extent(1));
         assert(imat.extent(0) == imat.extent(1));
+
+        const long unsigned dim = mat.extent(0);
+        if (dim == 1){
+            rtype det = mat(0, 0);
+            imat(0, 0) = 1./det;
+        } else if (dim == 2){
+            rtype det=mat(0, 0)*mat(1, 1)-mat(0, 1)*mat(1, 0);
+            imat(0, 0)=mat(1, 1)/det;
+            imat(0, 1)=-mat(0, 1)/det;
+            imat(1, 0)=-mat(1, 0)/det;
+            imat(1, 1)=mat(0, 0)/det;
+        } else if (dim == 3){
+            rtype det=mat(0, 0)*mat(1, 1)*mat(2, 2)-mat(0, 0)*mat(1, 2)*mat(2, 1)
+                -mat(0, 1)*mat(1, 0)*mat(2, 2)+mat(0, 1)*mat(1, 2)*mat(2, 0)
+                +mat(0, 2)*mat(1, 0)*mat(2, 1)-mat(0, 2)*mat(1, 1)*mat(2, 0);
+            // det=1.0;
+            imat(0, 0)=(mat(1, 1)*mat(2, 2)-mat(1, 2)*mat(2, 1))/det;
+            imat(1, 0)=-(mat(1, 0)*mat(2, 2)-mat(1, 2)*mat(2, 0))/det;
+            imat(2, 0)=(mat(1, 0)*mat(2, 1)-mat(1, 1)*mat(2, 0))/det;
+            imat(0, 1)=-(mat(0, 1)*mat(2, 2)-mat(0, 2)*mat(2, 1))/det;
+            imat(1, 1)=(mat(0, 0)*mat(2, 2)-mat(0, 2)*mat(2, 0))/det;
+            imat(2, 1)=-(mat(0, 0)*mat(2, 1)-mat(0, 1)*mat(2, 0))/det;
+            imat(0, 2)=(mat(0, 1)*mat(1, 2)-mat(0, 2)*mat(1, 1))/det;
+            imat(1, 2)=-(mat(0, 0)*mat(1, 2)-mat(0, 2)*mat(1, 0))/det;
+            imat(2, 2)=(mat(0, 0)*mat(1, 1)-mat(0, 1)*mat(1, 0))/det;
+
+        } else {
         // need to make imat identity prior to solve
         identity(imat);
         // get the LU decomposition
@@ -36,6 +63,8 @@ namespace Math {
         // solve the LU=I to make I=(UL)^-1
         SerialSolveLU<Trans::NoTranspose, Algo::Level3::Unblocked>
             ::invoke(mat, imat);
+
+        }
     }
 
 
@@ -44,13 +73,41 @@ namespace Math {
         // make sure that the matrices are square
         assert(mat.extent(0) == mat.extent(1));
         assert(imat.extent(0) == imat.extent(1));
-        // need to make imat identity prior to solve
-        identity(imat);
-        // get the LU decomposition
-        TeamLU<MemberType, Algo::Level3::Unblocked>::invoke(member, mat);
-        // solve the LU=I to make I=(UL)^-1
-        TeamSolveLU<MemberType, Trans::NoTranspose, Algo::Level3::Unblocked>
-            ::invoke(member, mat, imat);
+
+        const long unsigned dim = mat.extent(0);
+        if (dim == 1){
+            rtype det = mat(0, 0);
+            imat(0, 0) = 1./det;
+        } else if (dim == 2){
+            rtype det=mat(0, 0)*mat(1, 1)-mat(0, 1)*mat(1, 0);
+            imat(0, 0)=mat(1, 1)/det;
+            imat(0, 1)=-mat(0, 1)/det;
+            imat(1, 0)=-mat(1, 0)/det;
+            imat(1, 1)=mat(0, 0)/det;
+        } else if (dim == 3){
+            rtype det=mat(0, 0)*mat(1, 1)*mat(2, 2)-mat(0, 0)*mat(1, 2)*mat(2, 1)
+                -mat(0, 1)*mat(1, 0)*mat(2, 2)+mat(0, 1)*mat(1, 2)*mat(2, 0)
+                +mat(0, 2)*mat(1, 0)*mat(2, 1)-mat(0, 2)*mat(1, 1)*mat(2, 0);
+            // det=1.0;
+            imat(0, 0)=(mat(1, 1)*mat(2, 2)-mat(1, 2)*mat(2, 1))/det;
+            imat(1, 0)=-(mat(1, 0)*mat(2, 2)-mat(1, 2)*mat(2, 0))/det;
+            imat(2, 0)=(mat(1, 0)*mat(2, 1)-mat(1, 1)*mat(2, 0))/det;
+            imat(0, 1)=-(mat(0, 1)*mat(2, 2)-mat(0, 2)*mat(2, 1))/det;
+            imat(1, 1)=(mat(0, 0)*mat(2, 2)-mat(0, 2)*mat(2, 0))/det;
+            imat(2, 1)=-(mat(0, 0)*mat(2, 1)-mat(0, 1)*mat(2, 0))/det;
+            imat(0, 2)=(mat(0, 1)*mat(1, 2)-mat(0, 2)*mat(1, 1))/det;
+            imat(1, 2)=-(mat(0, 0)*mat(1, 2)-mat(0, 2)*mat(1, 0))/det;
+            imat(2, 2)=(mat(0, 0)*mat(1, 1)-mat(0, 1)*mat(1, 0))/det;
+
+        } else {
+            // need to make imat identity prior to solve
+            identity(imat);
+            // get the LU decomposition
+            TeamLU<MemberType, Algo::Level3::Unblocked>::invoke(member, mat);
+            // solve the LU=I to make I=(UL)^-1
+            TeamSolveLU<MemberType, Trans::NoTranspose, Algo::Level3::Unblocked>
+                ::invoke(member, mat, imat);
+        }
     }
 
     template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
