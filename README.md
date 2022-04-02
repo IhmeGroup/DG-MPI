@@ -1,4 +1,6 @@
 ![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![GitHub](https://img.shields.io/github/license/IhmeGroup/DG-MPI)
+
 
 # DG-MPI
 
