@@ -4,6 +4,7 @@
 #include "common/defines.h"
 // #include "physics/base/base.h" 
 #include <Kokkos_Core.hpp>
+#include "math/linear_algebra.h"
 // // #include "KokkosBlas1_nrm2.hpp"
 // // #include "KokkosBlas1_axpby.hpp"
 // // #include "KokkosBlas1_scal.hpp"
@@ -11,9 +12,12 @@
 
 namespace EulerFcnType {
 
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+rtype get_pressure(const rtype& gamma, const rtype* U);
 
 template<unsigned dim> KOKKOS_INLINE_FUNCTION
-void conv_flux_interior(const rtype* U, rtype* Fdir);
+void conv_flux_interior(const rtype& gamma, const rtype* U,
+    rtype* Fdir);
 
 // /*
 // ---------------

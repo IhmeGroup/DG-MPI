@@ -1,17 +1,34 @@
 // // #include "physics/euler/functions.h"
-
+#include <Kokkos_Core.hpp>
+#include <KokkosBlas1_dot.hpp>
+#include <KokkosBlas1_nrm2.hpp>
 
 namespace EulerFcnType {
 
 
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+rtype get_pressure(const rtype& gamma, const rtype* U) {
+    // unpack
+    rtype mom[dim];
+
+    // slice the state 
+    const int start = 1;
+    for (unsigned i = 0; i < dim; i++){
+        mom[i] = U[start + i];
+    }
+
+    const rtype rKE = Math::dot<dim>(mom, mom) / U[0];
+    return (gamma - 1.0) * (U[dim + 1] - 0.5 * rKE);
+}
+
 template<> KOKKOS_INLINE_FUNCTION
-void conv_flux_interior<2>(const rtype* U, rtype* Fdir){
+void conv_flux_interior<2>(const rtype& gamma, const rtype* U, rtype* Fdir){
 
     const rtype r1 = 1. / U[0];
     const rtype ru = U[1];
     const rtype rv = U[2];
     const rtype rE = U[3];
-    const rtype P = 1.0;//Physics::IdealGas<2>::pressure(params, U);
+    const rtype P = get_pressure<2>(gamma, U);
 
     Fdir[0] = ru;
     Fdir[1] = ru*ru*r1 + P;
@@ -26,14 +43,14 @@ void conv_flux_interior<2>(const rtype* U, rtype* Fdir){
 }
 
 template<> KOKKOS_INLINE_FUNCTION
-void conv_flux_interior<3>(const rtype* U, rtype* Fdir){
+void conv_flux_interior<3>(const rtype& gamma, const rtype* U, rtype* Fdir){
 
     const rtype r1 = 1. / U[0];
     const rtype ru = U[1];
     const rtype rv = U[2];
     const rtype rw = U[3];
     const rtype rE = U[4];
-    const rtype P = 1.0;//Physics::IdealGas<3>::pressure(params, U);
+    const rtype P = get_pressure<3>(gamma, U);
 
     Fdir[0] = ru;
     Fdir[1] = ru*ru*r1 + P;
@@ -81,4 +98,4 @@ void conv_flux_interior<3>(const rtype* U, rtype* Fdir){
 // }
 
 
-} // end namespace BaseFcnType
+} // end namespace EulerFcnType
