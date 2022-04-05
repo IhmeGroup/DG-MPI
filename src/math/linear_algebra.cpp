@@ -1,5 +1,38 @@
 namespace Math {
 
+    template<unsigned N> KOKKOS_INLINE_FUNCTION
+    rtype dot(const rtype *a, const rtype *b){
+        rtype res = 0.;
+        for (unsigned i = 0; i < N; i++) {
+            res += a[i]*b[i];
+        }
+        return res;
+    }
+
+
+    template<> KOKKOS_INLINE_FUNCTION
+    rtype dot<2>(const rtype* a, const rtype* b) {
+        return a[0]*b[0] + a[1]*b[1];
+    }
+
+
+    template<> KOKKOS_INLINE_FUNCTION
+    rtype dot<3>(const rtype* a, const rtype* b) {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    }
+
+
+    template<> KOKKOS_INLINE_FUNCTION
+    rtype dot<4>(const rtype* a, const rtype* b) {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+    }
+
+
+    template<> KOKKOS_INLINE_FUNCTION
+    rtype dot<5>(const rtype* a, const rtype* b) {
+        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3] + a[4]*b[4];
+    }
+
 
     template<typename ViewType> KOKKOS_INLINE_FUNCTION
     void identity(ViewType mat){

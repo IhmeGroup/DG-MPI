@@ -45,6 +45,17 @@ Some things to note:
        Add additional math tests
 */
 namespace Math {
+    
+    /*
+    Conduct a dot product
+
+    Outputs:
+    --------
+        returns an rtype
+    */
+    template<unsigned N> KOKKOS_INLINE_FUNCTION
+    rtype dot(const rtype* a, const rtype* b);
+
     /*
     Construct an identity matrix
 
