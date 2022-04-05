@@ -31,6 +31,7 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     basis = Basis::Basis(params.basis, order);
     // instantiate the physics class
     physics = Physics::Physics<dim>(physics_type, IC_name);
+    physics.set_physical_params(input_file);
 
     stepper = std::shared_ptr<StepperBase<dim>>(new FE<dim>());
 
@@ -38,7 +39,7 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     Kokkos::resize(Uc, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
     h_Uc = Kokkos::create_mirror_view(Uc);
 
-    Kokkos::resize(U_face, mesh.num_ifaces_part, basis.get_num_basis_coeffs(), physics.get_NS());
+    Kokkos::resize(Uc_face, mesh.num_ifaces_part, basis.get_num_basis_coeffs(), physics.get_NS());
 
     // set the size and shape of the residuals view
     Kokkos::resize(res, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
@@ -313,6 +314,12 @@ template<unsigned dim>
 void Solver<dim>::get_residual(){
 
     get_element_residuals();
+    Kokkos::fence(); // not sure if needed
+
+    get_interior_face_residuals();
+    Kokkos::fence();
+
+    printf("I made it out\n");
 
 }
 
@@ -374,6 +381,44 @@ void Solver<dim>::get_element_residuals(){
     host_view_type_3D h_res = Kokkos::create_mirror_view(res);
     Kokkos::deep_copy(h_res, res);
     network.print_3d_view(h_res);
+}
+
+template<unsigned dim>
+void Solver<dim>::get_interior_face_residuals(){
+
+    // unpack
+    const unsigned NFACE = (unsigned)iface_helpers.basis_val.extent(0);
+    const unsigned nqf = (unsigned)iface_helpers.quad_pts.extent(1);
+    const unsigned nb = (unsigned)iface_helpers.basis_val.extent(2);
+    std::cout<<mesh.num_ifaces_part<<std::endl;
+    std::cout<<NFACE<<std::endl;
+    std::cout<<nqf<<std::endl;
+    std::cout<<nb<<std::endl;
+
+    view_type_2D face_basis_val(iface_helpers.basis_val.data(),
+        NFACE * nqf, nb);
+
+    // allocate state evaluated at quadrature points
+    view_type_3D Uq("Uq", mesh.num_elems_part,
+        NFACE * nqf, physics.get_NS());
+
+    // allocate gradient of the state evaluated at quad points
+    view_type_4D vgUq("gUq", mesh.num_elems_part,
+        NFACE * nqf, physics.get_NS(), dim);
+
+    Kokkos::fence();
+    
+    // Evaluate the state
+    VolumeHelpers::evaluate_state(mesh.num_elems_part,
+        face_basis_val, Uc, Uq);
+    Kokkos::fence();
+
+
+    // TODO: Remove prints when not needed.
+    network.print_view(Uc);
+    network.print_view(Uq);
+
+
 }
 
 template class Solver<2>;

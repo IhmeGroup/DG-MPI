@@ -31,6 +31,8 @@ class Solver {
         void get_residual();
 
         void get_element_residuals();
+
+        void get_interior_face_residuals();
         
 
     public:
@@ -44,7 +46,7 @@ class Solver {
 
         // Solution evaluated at the face quadrature points. This has shape
         // (nIF, nqf, ns)
-        Kokkos::View<rtype***> U_face;
+        Kokkos::View<rtype***> Uc_face;
 
         const toml::value& input_file;
         Mesh& mesh;
