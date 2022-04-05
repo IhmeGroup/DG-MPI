@@ -354,8 +354,7 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
 
         }
     });
-
-
 }
+
 } // end namespace InteriorFaceHelpers
 

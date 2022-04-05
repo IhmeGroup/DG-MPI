@@ -92,34 +92,26 @@ struct InteriorFaceHelperFunctor{
     void precompute_facequadrature_lookup(Mesh& mesh,
         Basis::Basis basis);
 
-    // inline
-    // void get_reference_data(Basis::Basis basis,
-    //     Basis::Basis gbasis,
-    //     const int order);
+    view_type_3D quad_pts; // [NFACE, nq, NDIMS]
+    view_type_1D quad_wts; // [nq]
 
-    // inline
-    // void allocate_views(const int num_elems);
+    host_view_type_3D h_quad_pts; // [NFACE, nq, NDIMS]
+    host_view_type_1D h_quad_wts; // [nq]
 
-    view_type_3D quad_pts;
-    view_type_1D quad_wts;
+    view_type_3D basis_val; // [NFACE, nq, nb]
+    view_type_4D basis_ref_grad; // [NFACE, nq, nb, NDIMS]
 
-    host_view_type_3D h_quad_pts;
-    host_view_type_1D h_quad_wts;
+    host_view_type_3D h_basis_val; // [NFACE, nq, nb]
+    host_view_type_4D h_basis_ref_grad; // [NFACE, nq, nb, NDIMS]
 
-    view_type_3D basis_val;
-    view_type_4D basis_ref_grad;
+    view_type_3D gbasis_val; // [NFACE, nq, nb]
+    view_type_4D gbasis_ref_grad; // [NFACE, nq, nb, NDIMS]
 
-    host_view_type_3D h_basis_val;
-    host_view_type_4D h_basis_ref_grad;
+    host_view_type_3D h_gbasis_val; // [NFACE, nq, nb]
+    host_view_type_4D h_gbasis_ref_grad; // [NFACE, nq, nb, NDIMS]
 
-    view_type_3D gbasis_val;
-    view_type_4D gbasis_ref_grad;
-
-    host_view_type_3D h_gbasis_val;
-    host_view_type_4D h_gbasis_ref_grad;
-
-    Kokkos::View<int**> quad_idx_L;
-    Kokkos::View<int**> quad_idx_R;
+    Kokkos::View<int**> quad_idx_L; // [num_ifaces_part, nqf]
+    Kokkos::View<int**> quad_idx_R; // [num_ifaces_part, nqf]
 
 };
 
