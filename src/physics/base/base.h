@@ -3,10 +3,11 @@
 
 #include <string>
 #include <vector>
+#include "toml11/toml.hpp"
 #include "common/defines.h"
 #include "common/my_exceptions.h"
 #include "common/enums.h"
-#include <map>
+
 // #include "equations/equation_data.h"
 // #include "physics/physics_data.h"
 // #include "math/ode.h"
@@ -29,6 +30,8 @@ public:
 
     inline int get_NS(){return NUM_STATE_VARS;}
 
+    void set_physical_params(const toml::value& toml_input);
+
     KOKKOS_INLINE_FUNCTION
     void get_conv_flux_interior(const rtype *U, const rtype *gU, 
         rtype* F, rtype* gF) const;
@@ -45,8 +48,13 @@ public:
     ICType IC_type;
     view_type_1D IC_data;
 
+
     // set as compile time constant -> see common/defines.h
     static constexpr int NUM_STATE_VARS = GLOBAL_NUM_SPECIES + 1 + dim;
+
+private:
+
+    rtype gamma;
 };
 
 

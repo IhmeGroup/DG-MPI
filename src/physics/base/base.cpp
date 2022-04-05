@@ -20,13 +20,24 @@ Physics<dim>::Physics(PhysicsType physics_type,
     IC_type = enum_from_string<ICType>(_IC_name.c_str());
 }
 
+template<unsigned dim> inline
+void Physics<dim>::set_physical_params(const toml::value& toml_input){
+ 
+    auto physics_params = toml::find(toml_input, "Physics");
+
+    if (physics_type == PhysicsType::Euler){
+        gamma = toml::find_or<rtype>(physics_params, "gamma", 1.4);
+    }
+
+}
+
 
 template<unsigned dim> KOKKOS_INLINE_FUNCTION
 void Physics<dim>::get_conv_flux_interior(const rtype* U, const rtype* gU, 
     rtype* F, rtype* Fdir) const {
 
     if (physics_type == PhysicsType::Euler){
-        EulerFcnType::conv_flux_interior<dim>(U, Fdir);
+        EulerFcnType::conv_flux_interior<dim>(gamma, U, Fdir);
     }
     else {
         printf("ERROR: NO FLUX FUNCTION\n"); // TODO: Figure out throws on GPU
@@ -112,6 +123,7 @@ void set_gaussian_state_2D(const Physics<2>* physics, ViewTypeX x, const rtype t
     for (unsigned is = 0; is < physics->NUM_STATE_VARS; is++){
         A = physics->IC_data[is];
 
+        //TODO: Change this back to  a gaussian function
         // rtype xdir = x(0)*x(0) / (2.*0.2*0.2);
         // rtype ydir = x(1)*x(1) / (2.*0.4*0.4);
 
@@ -138,53 +150,5 @@ void set_smooth_sphere(const Physics<3>* physics, ViewTypeX x, const rtype t,
         Uq[is] = 0.5 * (v1 - v0) * (tanh(M_PI * (R - magR)/w) + 1.0) + v0;
     }
 }
-// 0.000190
-// 0.000241
-    
-// template<int dim> int PhysicsBase<dim>::get_NS(){
-//     return 0;
-// }
 
-// template <int dim> DG_KOKKOS_FUNCTION
-// void PhysicsBase<dim>::get_conv_flux_projected(
-//     Kokkos::View<const rtype*> Uq,
-//     Kokkos::View<const rtype*> normals,
-//     Kokkos::View<rtype*> Fproj){
-//     // unpack
-//     int NS = get_NS();
-
-//     // allocate view for directional flux
-//     Kokkos::View<rtype**> Fq("Fq", NS, dim);
-//     conv_flux_physical(Uq, Fq);
-//     KokkosBlas::gemv ("N", 1., Fq, normals, 1., Fproj);
-// }
-
-// template<int dim> DG_KOKKOS_FUNCTION
-// void PhysicsBase<dim>::conv_flux_physical(
-//     Kokkos::View<const rtype*> U,
-//     Kokkos::View<rtype**> F){
-//     // throw NotImplementedException("PhysicsBase does not implement "
-//  //                                      "conv_flux_physical -> implement in child class");
-// }
-
-// template<int dim> DG_KOKKOS_FUNCTION
-// rtype PhysicsBase<dim>::get_maxwavespeed(Kokkos::View<const rtype*> U) {
-// // throw NotImplementedException("PhysicsBase does not implement "
-// //                                       "get_maxwavespeed -> implement in child class");
-// }
-
-
-// template<int dim> DG_KOKKOS_FUNCTION
-// rtype PhysicsBase<dim>::compute_variable(std::string str,
-//       Kokkos::View<const rtype*> Uq){
-
-//     var = PhysicsBase<dim>::get_physical_variable(str);
-//     // var = enum_from_string<PhysicsVariables>(str.c_str());
-
-//     // NEED TO UPDATE THIS FUNCTION TO GET SPECIFIC VAR FUNCTIONS
-//     return 0.0;
-// }
-
-// template class PhysicsBase<2>;
-// template class PhysicsBase<3>;
 } // end namespace Physics
