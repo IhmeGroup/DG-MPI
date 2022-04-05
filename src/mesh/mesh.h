@@ -117,6 +117,31 @@ class Mesh {
         KOKKOS_INLINE_FUNCTION
         unsigned get_orientR(const int& iface) const {return interior_faces(iface, 7);}
 
+        // Get the left rank for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_rankL(const int& iface) const {return interior_faces(iface, 0);}
+
+        // Get the right rank for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_rankR(const int& iface) const {return interior_faces(iface, 4);}
+       
+        // Get the left element neighbor for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_elemL(const int& iface) const {return interior_faces(iface, 1);}
+
+        // Get the right element neighbor for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_elemR(const int& iface) const {return interior_faces(iface, 5);}
+
+        // Get the left reference face ID for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_ref_face_idL(const int& iface) const {return interior_faces(iface, 2);}
+
+        // Get the right reference face ID for an interior face
+        KOKKOS_INLINE_FUNCTION
+        unsigned get_ref_face_idR(const int& iface) const {return interior_faces(iface, 6);}
+
+
         /*! \brief Report mesh object
          *
          * @return
