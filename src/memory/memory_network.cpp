@@ -219,6 +219,8 @@ inline void MemoryNetwork::print_view(Kokkos::View<T***> data) const {
     barrier();
     if (head_rank) {
         cout << "--------------------------------- The Ranks Speak! --------------------------------" << endl;
+        cout << "View Shape ["<<data.extent(0)<<", "<<data.extent(1)<<", "<<
+            data.extent(2) << "]"<<endl;
     }
     // Loop over ranks
     for (unsigned i = 0; i < num_ranks; i++) {
