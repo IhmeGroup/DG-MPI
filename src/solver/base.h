@@ -26,6 +26,9 @@ class Solver {
 
         void read_in_coefficients(const std::string& filename);
 
+        void construct_face_states(const view_type_3D Uq, 
+            view_type_3D UqL, view_type_3D UqR);
+
         void solve();
 
         void get_residual();
