@@ -199,6 +199,8 @@ class Mesh {
          */
         std::vector<std::vector<int>> IF_to_elem;
         std::vector<int> nIF_in_elem;
+
+        // TODO: Partition elem_to_IF and put it in a View
         std::vector<std::vector<int>> elem_to_IF;
         std::vector<int> nBG_in_elem;
         std::vector<std::vector<int>> elem_to_BF;
@@ -263,8 +265,8 @@ class Mesh {
         Kokkos::View<unsigned**> elem_to_node_IDs;
         // View containing the interior face information, of shape
         // [num_ifaces_part, 8], where the 8 pieces of data are:
-        // the rank, element ID, ref. face ID, and orientation on the left, and
-        // the rank, element ID, ref. face ID, and orientation on the right.
+        // the rank, global element ID, ref. face ID, and orientation on the left, and
+        // the rank, global element ID, ref. face ID, and orientation on the right.
         Kokkos::View<unsigned**> interior_faces;
 
         // These are the host mirror versions of the data structures
