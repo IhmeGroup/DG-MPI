@@ -39,3 +39,6 @@ log.out
 # vim backup files
 *.swp
 *.swo
+
+# vscode files
+*.json
