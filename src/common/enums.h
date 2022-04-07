@@ -69,6 +69,7 @@ enum ICType {
     Uniform,
     Gaussian,
     Sphere,
+    IsentropicVortex,
 };
 template <>
 inline std::vector<std::string> get_enum_to_string_array<ICType> () {
@@ -76,6 +77,7 @@ inline std::vector<std::string> get_enum_to_string_array<ICType> () {
         "Uniform",
         "Gaussian",
         "Sphere",
+        "IsentropicVortex",
     };
 }
 
