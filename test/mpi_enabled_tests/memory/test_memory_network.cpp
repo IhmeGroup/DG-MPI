@@ -28,19 +28,22 @@ void MemoryTestSuite::test_1() {
     auto toml_input = toml::parse(toml_fname);
 
     // Location of mesh file
-    //string mesh_file_name = string(PROJECT_ROOT) + "/test/mpi_enabled_tests/memory/quad_2x2.h5";
-    string mesh_file_name = string(PROJECT_ROOT) + "/examples/quad_2x2/some_big_mesh.h5";
+    string mesh_file_name = string(PROJECT_ROOT) + "/test/mpi_enabled_tests/memory/quad_2x2.h5";
+    // string mesh_file_name = string(PROJECT_ROOT) + "/examples/quad_2x2/some_big_mesh.h5";
     // Create mesh
     auto gbasis = Basis::Basis();
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis, mesh_file_name);
 
     // Sample left and right states
-    constexpr int ns = 3;
+    constexpr int ns = 4; //3;
     double UqL_i[ns];
     double UqR_i[ns];
-    UqL_i[0] = 0; UqL_i[1] = 1; UqL_i[2] = 2;
-    UqR_i[0] = 3; UqR_i[1] = 4; UqR_i[2] = 5;
+    // UqL_i[0] = 0; UqL_i[1] = 1; UqL_i[2] = 2;
+    // UqR_i[0] = 3; UqR_i[1] = 4; UqR_i[2] = 5;
+
+    UqL_i[0] = 1.0; UqL_i[1] = 2.0; UqL_i[2] = 3.0; UqL_i[3] = 4.0;
+    UqR_i[0] = 1.0; UqR_i[1] = 2.0; UqR_i[2] = 3.0; UqR_i[3] = 4.0;
 
     // Left and right states of all local interior faces
     int nq = 2;
@@ -81,8 +84,19 @@ void MemoryTestSuite::test_1() {
             }
     });
 
+    // std::cout<<"UqL"<<std::endl;
+    // network.print_view(UqL);
+    // std::cout<<"UqR"<<std::endl;
+    // network.print_view(UqR);
+
     // Perform communication across faces
     network.communicate_face_solution(UqL, UqR, Uq_local, Uq_ghost, mesh);
+
+
+    // std::cout<<"UqL"<<std::endl;
+    // network.print_view(UqL);
+    // std::cout<<"UqR"<<std::endl;
+    // network.print_view(UqR);
 
     // Copy back to host
     auto h_UqL = Kokkos::create_mirror_view_and_copy(
