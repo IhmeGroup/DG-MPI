@@ -2,6 +2,7 @@
 #include <Kokkos_Core.hpp>
 #include <KokkosBlas1_dot.hpp>
 #include <KokkosBlas1_nrm2.hpp>
+#include <cmath>
 
 namespace EulerFcnType {
 
@@ -71,6 +72,59 @@ void conv_flux_interior<3>(const rtype& gamma, const rtype* U, rtype* Fdir){
     Fdir[14] = (rE + P)*rw*r1;
 }
 
+
+template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
+void set_state_isentropic_vortex(const Physics::Physics<2>* physics, ViewTypeX x, const rtype t,
+    ViewTypeUq Uq){
+
+    const rtype rhob = physics->IC_data[0];
+    const rtype ub = physics->IC_data[1];
+    const rtype vb = physics->IC_data[2];
+    const rtype pb = physics->IC_data[3];
+    const rtype vs = physics->IC_data[4];
+
+    const rtype gamma = physics->get_gamma();
+    const rtype Rg = physics->get_gasconstant();
+
+    assert(Rg == 1.0);
+
+    // Base temperature
+    rtype Tb = pb / (rhob * Rg);
+
+    // Entroy 
+    rtype s = pb / (pow(rhob, gamma));
+
+    // Track center of vortex
+    rtype xr = x[0] - ub * t;
+    rtype yr = x[1] - vb * t;
+
+    rtype r = sqrt(pow(xr, 2) + pow(yr, 2));
+
+    // Perturbations
+    rtype dU = vs / (2.0 * M_PI) * exp(0.5 * (1.0 - pow(r, 2)));
+    rtype du = dU * -1.0 * yr;
+    rtype dv = dU * xr;
+
+    rtype dT = -1.0 * (gamma - 1.0) * pow(vs, 2) / (8.0 * gamma * pow(M_PI, 2))
+        * exp(1.0 - pow(r, 2));
+
+    rtype u = ub + du;
+    rtype v = vb + dv;
+    rtype T = Tb + dT;
+    
+    // Convert to conservative variables
+    rtype rho = pow(T/s, 1.0 / (gamma - 1.0));
+    rtype rhou = rho * u;
+    rtype rhov = rho * v;
+    rtype rhoE = rho * Rg / (gamma - 1.0) * T + 0.5 * 
+        (rhou * rhou + rhov * rhov) / rho;
+
+    Uq(0) = rho;
+    Uq(1) = rhou;
+    Uq(2) = rhov;
+    Uq(3) = rhoE;
+
+}
 
 // // KOKKOS_INLINE_FUNCTION
 // // void set_state_uniform_2D(const Physics::Physics& physics, scratch_view_1D_rtype x, const rtype t,
