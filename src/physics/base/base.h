@@ -30,6 +30,9 @@ public:
 
     inline int get_NS(){return NUM_STATE_VARS;}
 
+    inline rtype get_gamma() const {return gamma;}
+    inline rtype get_gasconstant() const {return R;}
+
     void set_physical_params(const toml::value& toml_input);
 
     KOKKOS_INLINE_FUNCTION
@@ -55,6 +58,7 @@ public:
 private:
 
     rtype gamma;
+    rtype R;
 };
 
 

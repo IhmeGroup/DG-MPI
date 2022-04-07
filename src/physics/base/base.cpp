@@ -27,6 +27,7 @@ void Physics<dim>::set_physical_params(const toml::value& toml_input){
 
     if (physics_type == PhysicsType::Euler){
         gamma = toml::find_or<rtype>(physics_params, "gamma", 1.4);
+        R = toml::find_or<rtype>(physics_params, "GasConstant", 287.05);
     }
 
 }
@@ -54,6 +55,9 @@ void Physics<2>::call_IC(ViewTypeX x, const rtype t,
     }
     if (IC_type == ICType::Gaussian){
         set_gaussian_state_2D(this, x, t, Uq);
+    }
+    if (IC_type == ICType::IsentropicVortex){
+        EulerFcnType::set_state_isentropic_vortex(this, x, t, Uq);
     }
 }
 
