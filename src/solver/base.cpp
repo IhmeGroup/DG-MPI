@@ -104,9 +104,7 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
     int qorder = basis.shape.get_quadrature_order(2*order_);
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
-    printf("order=%i\n", order);
-    printf("nq=%i\n", nq);
-    printf("NDIMS=%i\n", NDIMS);
+
     view_type_2D quad_pts("quad_pts_ICs", nq, NDIMS);
     view_type_1D quad_wts("quad_wts_ICs", nq);
     host_view_type_2D h_quad_pts = Kokkos::create_mirror_view(quad_pts);
@@ -297,6 +295,50 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     } // end loop over ranks
 }
 
+template<unsigned dim>
+void Solver<dim>::construct_face_states(const view_type_3D Uq, 
+    view_type_3D UqL, view_type_3D UqR){
+
+    const unsigned num_ifaces_part = mesh.num_ifaces_part;
+    const unsigned nqf = UqL.extent(1);
+    auto quad_idx_L = iface_helpers.quad_idx_L;
+    auto quad_idx_R = iface_helpers.quad_idx_R;
+    const unsigned NUM_STATE_VARS = physics.get_NS();
+
+    const unsigned rank = network.rank;
+    auto mesh_local = mesh;
+    Kokkos::parallel_for("construct face states", 
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0},
+        {num_ifaces_part, nqf}), KOKKOS_CLASS_LAMBDA(const int& iface,
+        const int& iq){
+
+        const unsigned rankL = mesh_local.get_rankL(iface);
+        const unsigned rankR = mesh_local.get_rankR(iface);
+
+        if (rank == rankL) {
+            const unsigned elemL_global = mesh_local.get_elemL(iface);
+            const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
+            const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
+            int startL = face_ID_L * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                UqL(iface, iq, is) = Uq(elemL, startL + quad_idx_L(iface, iq), is);
+            }
+        }
+
+        if (rank == rankR){
+            const unsigned elemR_global = mesh_local.get_elemR(iface);
+            const unsigned face_ID_R = mesh_local.get_ref_face_idR(iface);
+            const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
+            int startR = face_ID_R * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                UqR(iface, iq, is) = Uq(elemR, startR + quad_idx_R(iface, iq), is);
+            }
+        }
+    });
+
+}
 
 template<unsigned dim>
 void Solver<dim>::solve(){
@@ -366,7 +408,7 @@ void Solver<dim>::get_element_residuals(){
 
     Kokkos::MDRangePolicy<Kokkos::Rank<2>> 
         policy({0, 0}, {mesh.num_elems_part, 
-                        basis_val.extent(0)});
+                        (long)basis_val.extent(0)});
 
     // build fluxes, this overwrites in place the vUq and vgUq
     Kokkos::parallel_for("volume_fluxes", policy, functor);
@@ -403,8 +445,16 @@ void Solver<dim>::get_interior_face_residuals(){
         NFACE * nqf, physics.get_NS());
 
     // allocate gradient of the state evaluated at quad points
-    view_type_4D vgUq("gUq", mesh.num_elems_part,
-        NFACE * nqf, physics.get_NS(), dim);
+    // view_type_4D vgUq("gUq", mesh.num_elems_part,
+        // NFACE * nqf, physics.get_NS(), dim);
+
+    // allocate left state evaluated at quadrature points
+    view_type_3D UqL("UqL", mesh.num_ifaces_part,
+        nqf, physics.get_NS());
+
+    // allocate right state evaluated at quadrature points
+    view_type_3D UqR("UqR", mesh.num_ifaces_part,
+        nqf, physics.get_NS());
 
     Kokkos::fence();
     
@@ -413,10 +463,45 @@ void Solver<dim>::get_interior_face_residuals(){
         face_basis_val, Uc, Uq);
     Kokkos::fence();
 
+    // We need to construct the left / right states prior to passing data
+    // between the ranks
+    construct_face_states(Uq, UqL, UqR);
 
-    // TODO: Remove prints when not needed.
-    network.print_view(Uc);
-    network.print_view(Uq);
+    // Face local and ghost states for network 
+    auto Uq_local = new view_type_3D[mesh.num_neighbor_ranks];
+    auto Uq_ghost = new view_type_3D[mesh.num_neighbor_ranks];
+    for (unsigned i = 0; i < mesh.num_neighbor_ranks; i++) {
+        Kokkos::resize(Uq_local[i], 
+            mesh.h_num_faces_per_rank_boundary(i), nqf, physics.get_NS());
+        Kokkos::resize(Uq_ghost[i], 
+            mesh.h_num_faces_per_rank_boundary(i), nqf, physics.get_NS());
+    }
+    network.barrier(); // TODO: Determine if needed
+    
+    // Pass the evaluated face state data between ranks
+    network.communicate_face_solution(UqL, UqR, Uq_local, Uq_ghost, mesh);
+
+    // Cleanup after comms
+    network.barrier(); // TODO: Determine if needed
+    // Kokkos::fence();
+    for (unsigned i = 0; i < mesh.num_neighbor_ranks; i++) {
+        // Explicitly destruct inner views to avoid memory leak
+        Uq_local[i].~view_type_3D();
+        Uq_ghost[i].~view_type_3D();
+    }
+
+    // Copy back to host (TODO: Remove after debugging)
+    auto h_UqL = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, UqL);
+    auto h_UqR = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, UqR);
+
+    network.print_3d_view(h_UqL);
+    network.print_3d_view(h_UqR);
+
+
+
+    // Face flux function
 
 
 }
