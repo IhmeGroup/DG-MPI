@@ -21,10 +21,8 @@ namespace Basis {class Basis;}
  * This class is really just an intermediate representation of the mesh.
  * The Gmsh file gets processed into HDF5 using Eric's python tool.
  * Then this class reads the HDF5 file.
- * Then the data is transfered to a region.
+ * Then the data is transfered to a group of Views.
  *
- * We don't read it into a region directly because when we first wrote the code,
- * it wasn't clear how to format the HDF5 file to interface directly with Legion.
  */
 class Mesh {
     public:
