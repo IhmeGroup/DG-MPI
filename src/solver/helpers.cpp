@@ -203,11 +203,12 @@ void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, Vi
 namespace InteriorFaceHelpers {
 
 void InteriorFaceHelperFunctor::compute_interior_face_helpers(int scratch_size, Mesh& mesh,
-    Basis::Basis& basis){
+    Basis::Basis& basis, view_type_3D x_elems){
 
     get_quadrature(basis, basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
     precompute_facequadrature_lookup(mesh, basis);
+    precompute_normals(mesh, basis, x_elems);
     // TODO: Add face ijac computation
 }
 
@@ -353,6 +354,58 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
             // printf("quad_idx_R(%i, %i)=%i\n", iface, iq, orderR(iq));
 
         }
+    });
+}
+
+inline
+void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basis,
+        view_type_3D x_elems){
+
+    const int nqf = quad_pts.extent(1);
+    const unsigned gorder = mesh.gbasis.get_order();
+    const unsigned num_nodes_per_face = mesh.gbasis.shape.get_num_nodes_per_face(gorder);
+    const unsigned num_nodes_per_elem = mesh.gbasis.shape.get_num_nodes_per_elem(gorder);
+
+    int scratch_size_normals = scratch_view_1D_rtype::shmem_size(nqf * mesh.dim) +
+    scratch_view_1D_int::shmem_size(num_nodes_per_face) +
+        scratch_view_1D_rtype::shmem_size(num_nodes_per_face * mesh.dim);
+
+    Kokkos::parallel_for("normals", Kokkos::TeamPolicy<>( mesh.num_ifaces_part, 
+        Kokkos::AUTO).set_scratch_size( 1, Kokkos::PerTeam( scratch_size_normals )),
+        KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
+        // get current iface
+        const unsigned iface = member.league_rank();
+        // face normals are always taken outwards -> always use the left facing data
+        const unsigned face_ID_L = mesh.get_ref_face_idL(iface);
+        const unsigned elemL = mesh.get_elemL(iface);
+        auto x_elemL = Kokkos::subview(x_elems, elemL, Kokkos::ALL, Kokkos::ALL);
+
+        // get allocation from scratch memory
+        scratch_view_1D_rtype Nq(member.team_scratch( 1 ),
+                nqf * mesh.dim);
+        scratch_view_1D_int face_node_idx(member.team_scratch( 1 ),
+            num_nodes_per_face);
+        scratch_view_1D_rtype face_coord(member.team_scratch( 1 ), 
+            num_nodes_per_face * mesh.dim);
+
+        // populate face_node_idx which is filled with reference node id wrt 
+        // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
+        mesh.gbasis.shape.get_local_nodes_on_face(face_ID_L, gorder, face_node_idx);
+        // extract the face coordinates from the mesh coordinates
+        BasisTools::extract_node_coordinates(mesh.dim, x_elemL, face_node_idx, face_coord);
+
+        for (unsigned i = 0 ; i < num_nodes_per_face; i++){
+            printf("face_node_idx(%i)=%i\n", i, face_node_idx(i));
+        }
+
+        // extract reference quadrature for a face from quad_pts
+        auto ref_quad_pts = Kokkos::subview(quad_pts, 0, Kokkos::ALL, Kokkos::make_pair((unsigned)0, mesh.dim - 1));
+        mesh.gbasis.shape.get_normals_on_face((int)0, (int)nqf, (int)gorder, ref_quad_pts, face_coord, Nq);
+
+        // MeshTools::get_normals_on_face(0, nqf, gorder, quad_pts, face_coord.data(), Nq);
+
+
+
     });
 }
 

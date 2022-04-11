@@ -78,7 +78,7 @@ struct InteriorFaceHelperFunctor{
 
     inline
     void compute_interior_face_helpers(int scratch_size, Mesh& mesh,
-        Basis::Basis& basis);
+        Basis::Basis& basis, view_type_3D x_elems);
 
     inline
     void get_quadrature(Basis::Basis basis,
@@ -91,6 +91,9 @@ struct InteriorFaceHelperFunctor{
     inline
     void precompute_facequadrature_lookup(Mesh& mesh,
         Basis::Basis basis);
+
+    inline
+    void precompute_normals(Mesh& mesh, Basis::Basis basis, view_type_3D x_elems);
 
     view_type_3D quad_pts; // [NFACE, nq, NDIMS]
     view_type_1D quad_wts; // [nq]
