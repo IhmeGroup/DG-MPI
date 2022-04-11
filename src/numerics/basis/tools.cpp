@@ -24,6 +24,20 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
     }
 }
 
+template<typename ViewType2D, typename ViewType1D_int, 
+typename ViewType1D_rtype> KOKKOS_INLINE_FUNCTION
+void extract_node_coordinates(const unsigned dim, 
+    const ViewType2D x_elem,
+    const ViewType1D_int node_number,
+    ViewType1D_rtype extracted_coeffs) {
+
+    const unsigned nExtract = (unsigned)node_number.extent(0);        
+    for (unsigned idim = 0; idim < dim; idim++){
+        for (unsigned inode = 0; inode < nExtract; inode++){
+            extracted_coeffs(idim * nExtract + inode) = x_elem(inode, idim);
+        }
+    }
+}
 
 template<typename ViewType1D, typename ViewType2D, typename ViewType3D> KOKKOS_INLINE_FUNCTION
 void get_element_jacobian(view_type_2D quad_pts,

@@ -24,6 +24,29 @@ Outputs:
 void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
     host_view_type_1D &xnodes);
 
+/*
+This function extracts the relevant node coordinates during the 
+calculation of the normals to get the coordinates at the face from the 
+element coordinates
+
+Inputs:
+-------
+    dim: mesh dimension
+    coord: element coordinates
+    node_number: id containing the reference 
+        coordinate number wrt the face nodes
+
+Outputs:
+--------
+    extracted_coeffs: face coordinates extracted from the element coordinates
+*/
+template<typename ViewType2D, typename ViewType1D_int, 
+typename ViewType1D_rtype> KOKKOS_INLINE_FUNCTION
+void extract_node_coordinates(const unsigned dim, 
+    const ViewType2D x_elem,
+    const ViewType1D_int node_number,
+    ViewType1D_rtype extracted_coeffs);
+
 
 /*
 Evaluate the geometric Jacobian for a specified element
