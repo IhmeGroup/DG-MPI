@@ -13,18 +13,16 @@ namespace Physics {
     Physics Method Definitions + Function Pointer Wrappers
 ----------------------------------------------------------*/
 template<unsigned dim> inline
-Physics<dim>::Physics(PhysicsType physics_type, 
-    std::string _IC_name) : physics_type{physics_type} {
+Physics<dim>::Physics(PhysicsType physics_type, NumericalFluxType numerical_flux_type,
+    std::string _IC_name) : physics_type{physics_type}, numerical_flux_type{numerical_flux_type} {
     
     // set the initial condition enum
     IC_type = enum_from_string<ICType>(_IC_name.c_str());
 }
 
 template<unsigned dim> inline
-void Physics<dim>::set_physical_params(const toml::value& toml_input){
+void Physics<dim>::set_physical_params(const toml::value& physics_params){
  
-    auto physics_params = toml::find(toml_input, "Physics");
-
     if (physics_type == PhysicsType::Euler){
         gamma = toml::find_or<rtype>(physics_params, "gamma", 1.4);
         R = toml::find_or<rtype>(physics_params, "GasConstant", 287.05);
@@ -42,6 +40,19 @@ void Physics<dim>::get_conv_flux_interior(const rtype* U, const rtype* gU,
     }
     else {
         printf("ERROR: NO FLUX FUNCTION\n"); // TODO: Figure out throws on GPU
+    }
+
+}
+
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+void Physics<dim>::get_conv_flux_numerical(const rtype* UL, const rtype* UR, 
+        const rtype* N, rtype* F, rtype* gUL, rtype* gUR) const {
+        
+    if (numerical_flux_type == NumericalFluxType::LaxFriedrichs){
+        
+    }
+    else {
+        printf("ERROR: NO NUMERICAL FLUX FUNCTION\n"); // TODO: Figure out throws on GPU
     }
 
 }

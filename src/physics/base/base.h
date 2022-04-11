@@ -25,7 +25,8 @@ class Physics {
 public:
 
     inline
-    Physics(PhysicsType physics_type, std::string _IC_name);
+    Physics(PhysicsType physics_type, NumericalFluxType numerical_flux_type, 
+        std::string _IC_name);
     Physics() = default;
 
     inline int get_NS(){return NUM_STATE_VARS;}
@@ -36,8 +37,12 @@ public:
     void set_physical_params(const toml::value& toml_input);
 
     KOKKOS_INLINE_FUNCTION
-    void get_conv_flux_interior(const rtype *U, const rtype *gU, 
+    void get_conv_flux_interior(const rtype* U, const rtype* gU, 
         rtype* F, rtype* gF) const;
+
+    KOKKOS_INLINE_FUNCTION
+    void get_conv_flux_numerical(const rtype* UL, const rtype* UR, 
+        const rtype* N, rtype* F, rtype* gUL, rtype* gUR) const;
 
     template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
     void call_IC(ViewTypeX x, const rtype t,
@@ -48,6 +53,7 @@ public:
         ViewTypeUq Uq) const;
 
     PhysicsType physics_type;
+    NumericalFluxType numerical_flux_type;
     ICType IC_type;
     view_type_1D IC_data;
 
