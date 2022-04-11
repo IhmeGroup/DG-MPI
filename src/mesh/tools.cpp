@@ -2,9 +2,9 @@
 
 namespace MeshTools {
 
-    KOKKOS_INLINE_FUNCTION
+    template<typename ViewType2D> KOKKOS_INLINE_FUNCTION
     void elem_coords_from_elem_ID(const Mesh& mesh, const int elem_ID,
-        scratch_view_2D_rtype elem_coords, const membertype& member){
+        ViewType2D elem_coords, const membertype& member){
 
         auto node_IDs = Kokkos::subview(mesh.elem_to_node_IDs,
             elem_ID, Kokkos::ALL());
