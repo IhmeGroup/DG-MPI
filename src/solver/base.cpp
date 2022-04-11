@@ -18,8 +18,7 @@ using namespace VolumeHelpers;
 
 template<unsigned dim>
 Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& network,
-    Numerics::NumericsParams& params, PhysicsType physics_type)
-    : input_file{input_file}, mesh{mesh}, network{network}, params{params} {
+    Numerics::NumericsParams& params) : input_file{input_file}, mesh{mesh}, network{network}, params{params}{
 
     // initialize time to zero
     time = 0.0;
@@ -29,9 +28,19 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     
     // instantiate the basis class
     basis = Basis::Basis(params.basis, order);
+    
+    // get the physics info
+    auto physics_info = toml::find(input_file, "Physics");
+    // get the physics type
+    std::string phys = toml::find<std::string>(physics_info, "name");
+    auto physics_type = enum_from_string<PhysicsType>(phys.c_str());
+    // get the num flux type
+    std::string num_flux = toml::find_or<std::string>(physics_info, 
+        "convective_flux_fcn", "LaxFriedrichs");
+    auto numerical_flux_type = enum_from_string<NumericalFluxType>(num_flux.c_str());
     // instantiate the physics class
-    physics = Physics::Physics<dim>(physics_type, IC_name);
-    physics.set_physical_params(input_file);
+    physics = Physics::Physics<dim>(physics_type, numerical_flux_type, IC_name);
+    physics.set_physical_params(physics_info);
 
     stepper = std::shared_ptr<StepperBase<dim>>(new FE<dim>());
 
@@ -79,8 +88,10 @@ void Solver<dim>::precompute_matrix_helpers() {
     
     int scratch_size = 0; // TODO: Will need scratch space for ijac evaluated at faces
     printf("##### Construct Face Helpers #####\n");
-    iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis);
+    iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis, vol_helpers.x_elems);
     printf("##### Completed #####\n");
+
+    network.print_3d_view(iface_helpers.h_quad_pts);
 
 
 }
@@ -295,6 +306,12 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     } // end loop over ranks
 }
 
+
+// TODO: This function works but is likely not the best way to do this 
+// because the various if statement may lead to some thread divergence.
+// A better way to do this would be to have a partitioned element to face ID.
+// You would then loop over elements and nfaces_per_elem and get the local
+// faceid and populate accordingly
 template<unsigned dim>
 void Solver<dim>::construct_face_states(const view_type_3D Uq, 
     view_type_3D UqL, view_type_3D UqR){

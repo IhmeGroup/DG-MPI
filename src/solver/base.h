@@ -17,7 +17,7 @@ template<unsigned dim>
 class Solver {
     public:
         Solver(const toml::value& input_file, Mesh& mesh, MemoryNetwork& network, 
-            Numerics::NumericsParams& params, PhysicsType physics_type);
+            Numerics::NumericsParams& params);
         void precompute_matrix_helpers();
 
         void init_state_from_fcn(Mesh& mesh_local);
