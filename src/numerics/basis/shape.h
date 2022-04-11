@@ -20,6 +20,11 @@ namespace Basis {
 inline
 int get_num_basis_coeff_segment(int p);
 
+inline
+unsigned get_num_nodes_per_face_segment(const unsigned gorder);
+
+inline
+unsigned get_num_nodes_per_elem_segment(const unsigned gorder);
 
 
 /* --------------------------------------
@@ -36,6 +41,12 @@ inline
 int get_num_basis_coeff_quadrilateral(int p);
 
 inline
+unsigned get_num_nodes_per_face_quadrilateral(const unsigned gorder);
+
+inline
+unsigned get_num_nodes_per_elem_quadrilateral(const unsigned gorder);
+
+inline
 void get_points_on_face_quadrilateral(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
@@ -44,6 +55,13 @@ KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
         Kokkos::View<int*> pts_order);
 
+KOKKOS_INLINE_FUNCTION
+void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
+    scratch_view_1D_int lfnodes);
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_quadrilateral(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals);
 
 /* --------------------------------------
         Hexahedron Shape Definitions
@@ -78,6 +96,12 @@ inline
 int get_num_basis_coeff_hexahedron(int p);
 
 inline
+unsigned get_num_nodes_per_face_hexahedron(const unsigned gorder);
+
+inline
+unsigned get_num_nodes_per_elem_hexahedron(const unsigned gorder);
+
+inline
 void get_points_on_face_hexahedron(const int face_id, const int orient, const int np,
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
@@ -85,6 +109,14 @@ void get_points_on_face_hexahedron(const int face_id, const int orient, const in
 KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
         Kokkos::View<int*> pts_order);
+
+KOKKOS_INLINE_FUNCTION
+void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
+    scratch_view_1D_int lfnodes);
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_hexahedron(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals);
 
 class Shape {
 
@@ -107,6 +139,9 @@ public:
     int get_quadrature_order(const int order);
     inline int get_num_faces_per_elem() const {return NFACES;}
     inline int get_num_orient_per_face() const {return NUM_ORIENT_PER_FACE;};
+    unsigned (*get_num_nodes_per_face)(const unsigned gorder);
+    unsigned (*get_num_nodes_per_elem)(const unsigned gorder);
+
     void (*get_quadrature_data)(const int order, const int nq_1d,
         Kokkos::View<rtype**>::HostMirror& quad_pts,
         Kokkos::View<rtype*>::HostMirror& quad_wts);
@@ -118,6 +153,15 @@ public:
     KOKKOS_INLINE_FUNCTION
     void get_face_pts_order_wrt_orient0(const int orient, const int npts,
         Kokkos::View<int*> pts_order) const;
+
+    KOKKOS_INLINE_FUNCTION
+    void get_local_nodes_on_face(const int face_id, const int gorder,
+        scratch_view_1D_int lfnodes) const;
+
+    template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+    void get_normals_on_face(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts,
+        const ViewType1D coeffs, ViewType1D normals) const;
 
 private:
     int (*get_quadrature_order_pointer)(const int order,

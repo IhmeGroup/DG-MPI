@@ -10,6 +10,15 @@ int get_num_basis_coeff_segment(int p){
     return p + 1;
 }
 
+inline
+unsigned get_num_nodes_per_face_segment(const unsigned gorder) {
+    return 1;
+}
+
+inline
+unsigned get_num_nodes_per_elem_segment(const unsigned gorder) {
+    return (gorder+1);
+}
 
 /* --------------------------------------
         Quadrilateral Shape Definitions
@@ -17,6 +26,16 @@ int get_num_basis_coeff_segment(int p){
 inline
 int get_num_basis_coeff_quadrilateral(int p){
     return (p + 1) * (p + 1);
+}
+
+inline
+unsigned get_num_nodes_per_face_quadrilateral(const unsigned gorder){
+    return gorder + 1;
+}
+
+inline
+unsigned get_num_nodes_per_elem_quadrilateral(const unsigned gorder){
+    return (gorder + 1) * (gorder + 1);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -101,12 +120,62 @@ void get_points_on_face_quadrilateral(const int face_id, const int orient, const
 }
 
 
+KOKKOS_INLINE_FUNCTION
+void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
+    scratch_view_1D_int lfnodes) {
+
+        int i0 = 0, d = 0;
+        
+        switch (face_id) {
+        case 0:
+            i0 = 0;
+            d = 1;
+            break;
+        case 1:
+            i0 = gorder;
+            d = gorder + 1;
+            break;
+        case 2:
+            i0 = gorder * (gorder + 2);
+            d = -1;
+            break;
+        case 3:
+            i0 = gorder * (gorder + 1);
+            d = -gorder - 1;
+            break;
+    }
+
+    for (int i = 0; i < gorder + 1; i++) {
+        lfnodes(i) = i0 + i * d;
+    }
+}
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_quadrilateral(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals) {
+
+
+        printf("IMPLEMENT QUADRILATERAL NORMALS\n");
+
+
+}
+
 /* --------------------------------------
         Hexahedron Shape Definitions
 ----------------------------------------*/
 inline
 int get_num_basis_coeff_hexahedron(int p){
     return (p + 1) * (p + 1) * (p + 1);
+}
+
+inline
+unsigned get_num_nodes_per_face_hexahedron(const unsigned gorder){
+    return (gorder + 1) * (gorder + 1);
+}
+
+inline
+unsigned get_num_nodes_per_elem_hexahedron(const unsigned gorder){
+    return (gorder + 1) * (gorder + 1) * (gorder + 1);
 }
 
 inline
@@ -315,6 +384,65 @@ void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
     }
 }
 
+KOKKOS_INLINE_FUNCTION
+void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
+    scratch_view_1D_int lfnodes) {
+
+    int i0=0, d0=0, d1=0;
+
+    switch (face_id) {
+        case 0:
+            // bottom
+            i0 = 0;
+            d0 = gorder+1;
+            d1 = 1;
+            break;
+        case 1:
+            // front
+            i0 = 0;
+            d0 = 1;
+            d1 = (gorder+1)*(gorder+1);
+            break;
+        case 2:
+            // right
+            i0 = gorder;
+            d0 = gorder+1;
+            d1 = (gorder+1)*(gorder+1);
+            break;
+        case 3:
+            // back
+            i0 = (gorder+1)*(gorder+1)-1;
+            d0 = -1;
+            d1 = (gorder+1)*(gorder+1);
+            break;
+        case 4:
+            // left
+            i0 = gorder*(gorder+1);
+            d0 = -(gorder+1);
+            d1 = (gorder+1)*(gorder+1);
+            break;
+        case 5:
+            // top
+            i0 = gorder*(gorder+1)*(gorder+1);
+            d0 = 1;
+            d1 = gorder+1;
+            break;
+    }
+
+    for (int j = 0, k = 0; j < gorder+1; j++){
+        for (int i = 0; i < gorder+1; i++, k++) {
+            lfnodes(k) = i0 + i*d0 + j*d1;
+        }
+    }
+}
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_hexahedron(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals) {
+
+            printf("IMPLEMENT NORMALS FOR HEX\n");
+}
+
 inline
 Shape::Shape(ShapeType shape_type){
     if (shape_type == ShapeType::Segment){
@@ -324,7 +452,8 @@ Shape::Shape(ShapeType shape_type){
             SegmentQuadrature::get_gausslegendre_quadrature_order;
         get_quadrature_data =
             SegmentQuadrature::get_quadrature_gauss_legendre;
-        
+        get_num_nodes_per_face = get_num_nodes_per_face_segment;
+        get_num_nodes_per_elem = get_num_nodes_per_elem_segment;
         // set constants
         NDIMS = 1;
         NFACES = 2;
@@ -341,6 +470,8 @@ Shape::Shape(ShapeType shape_type){
         get_quadrature_data =
             QuadrilateralQuadrature::get_quadrature_gauss_legendre;
         get_points_on_face = get_points_on_face_quadrilateral;
+        get_num_nodes_per_face = get_num_nodes_per_face_quadrilateral;
+        get_num_nodes_per_elem = get_num_nodes_per_elem_quadrilateral;
 
         // set constants
         NDIMS = 2;
@@ -358,6 +489,8 @@ Shape::Shape(ShapeType shape_type){
         get_quadrature_data =
             HexahedronQuadrature::get_quadrature_gauss_legendre;
         get_points_on_face = get_points_on_face_hexahedron;
+        get_num_nodes_per_face = get_num_nodes_per_face_hexahedron;
+        get_num_nodes_per_elem = get_num_nodes_per_elem_hexahedron;
 
         // set constants
         NDIMS = 3;
@@ -379,8 +512,42 @@ void Shape::get_face_pts_order_wrt_orient0(const int orient, const int npts,
     else if (type == ShapeType::Hexahedron){
         get_face_pts_order_wrt_orient0_hexahedron(orient, npts, pts_order);    
     } else {
-        printf("Not Implemented Error"); // TODO: Figure out GPU throws
+        printf("Not Implemented Error\n"); // TODO: Figure out GPU throws
     }
+}
+
+KOKKOS_INLINE_FUNCTION
+void Shape::get_local_nodes_on_face(const int face_id, const int gorder,
+    scratch_view_1D_int lfnodes) const {
+
+    if (type == ShapeType::Quadrilateral) {
+        get_local_nodes_on_face_quadrilateral(face_id, gorder, lfnodes);
+    }
+    else if (type == ShapeType::Hexahedron){
+        get_local_nodes_on_face_hexahedron(face_id, gorder, lfnodes);
+    } else {
+        printf("Not Implemented Error\n"); // TODO: Figure out GPU throws
+    }
+}
+
+template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
+void Shape::get_normals_on_face(const int orient, const int np, const int gorder,
+        const ViewType2D face_pts,
+        const ViewType1D coeffs, ViewType1D normals) const {
+
+    if (type == ShapeType::Quadrilateral) {
+        get_normals_on_face_quadrilateral(orient, np, gorder, face_pts,
+            coeffs, normals);
+    }
+    else if (type == ShapeType::Hexahedron){
+        get_normals_on_face_hexahedron(orient, np, gorder, face_pts,
+            coeffs, normals);    
+    } 
+    else {
+        printf("Normals Not Implemented Error\n"); // TODO: Figure out GPU throws
+    }
+
+
 }
 
 inline
