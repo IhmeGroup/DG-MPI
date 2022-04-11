@@ -209,12 +209,7 @@ void run_post(toml::value& toml_input, MemoryNetwork& network) {
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis);
 
-    // Get physics type -> NOTE: physics object is constructed in solver constructor
-    std::string phys = toml::find<std::string>(toml_input, "Physics", "name");
-    auto physics_type = enum_from_string<PhysicsType>(phys.c_str());
-
-    auto solver = Solver<dim>(toml_input, mesh, network, numerics_params,
-        physics_type);
+    auto solver = Solver<dim>(toml_input, mesh, network, numerics_params);
 
     // Read in InitialCondition data and copy it to the physics.IC_data view
     std::vector<rtype> IC_data_vec=toml::find<std::vector<rtype>>(toml_input, "InitialCondition", "data");
