@@ -44,6 +44,9 @@ public:
     void get_conv_flux_numerical(const rtype* UL, const rtype* UR, 
         const rtype* N, rtype* F, rtype* gUL, rtype* gUR) const;
 
+    KOKKOS_INLINE_FUNCTION
+    rtype get_maxwavespeed(const rtype* U) const;
+
     template<typename ViewTypeX, typename ViewTypeUq> KOKKOS_INLINE_FUNCTION
     void call_IC(ViewTypeX x, const rtype t,
         ViewTypeUq Uq) const;
@@ -60,9 +63,7 @@ public:
 
     // set as compile time constant -> see common/defines.h
     static constexpr int NUM_STATE_VARS = GLOBAL_NUM_SPECIES + 1 + dim;
-
-private:
-
+    
     rtype gamma;
     rtype R;
 };

@@ -1,5 +1,6 @@
 // #include "physics/base/base.h"
 // #include "physics/euler/data.h"
+#include "physics/base/functions.h"
 #include "physics/euler/functions.h"
 #include <cmath>
 
@@ -49,12 +50,26 @@ void Physics<dim>::get_conv_flux_numerical(const rtype* UL, const rtype* UR,
         const rtype* N, rtype* F, rtype* gUL, rtype* gUR) const {
         
     if (numerical_flux_type == NumericalFluxType::LaxFriedrichs){
-        
+        BaseConvNumFluxType::compute_flux_laxfriedrichs(*this, UL, UR, N, F, gUL, gUR);
+    }
+    else if (numerical_flux_type == NumericalFluxType::HLLC){
+        EulerConvNumFluxType::compute_flux_hllc(*this, UL, UR, N, F, gUL, gUR);
     }
     else {
         printf("ERROR: NO NUMERICAL FLUX FUNCTION\n"); // TODO: Figure out throws on GPU
     }
 
+}
+
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+rtype Physics<dim>::get_maxwavespeed(const rtype* U) const {
+
+    if (physics_type == PhysicsType::Euler){
+        return EulerFcnType::get_maxwavespeed<dim>(gamma, U);
+    }
+    else {
+        printf("ERROR: NO MAX WAVE SPEED\n"); // TODO: Figure out throws on GPU
+    }
 }
 
 template<>
@@ -90,7 +105,11 @@ void Physics<2>::call_exact_solution(ViewTypeX x, const rtype t,
     }
     else if (IC_type == ICType::Gaussian){
         set_gaussian_state_2D(this, x, t, Uq);
-    } else {
+    } 
+    else if (IC_type == ICType::IsentropicVortex){
+        EulerFcnType::set_state_isentropic_vortex(this, x, t, Uq);
+    }
+    else {
         printf("THERE IS NO EXACT SOLUTION PROVIDED");
     }
 }
