@@ -454,12 +454,12 @@ void Solver<dim>::get_residual()
     // network.print_3d_view(res);
     get_element_residuals();
     Kokkos::fence(); // not sure if needed
-    copy_from_device_to_host();
+    // copy_from_device_to_host();
     // network.print_3d_view(h_res);
 
     get_interior_face_residuals();
     Kokkos::fence();
-    copy_from_device_to_host();
+    // copy_from_device_to_host();
     // network.print_3d_view(h_res);
 
     // printf("I made it out\n");
