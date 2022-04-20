@@ -65,6 +65,31 @@ inline std::vector<std::string> get_enum_to_string_array<PhysicsType> () {
     };
 }
 
+enum StepperType {
+    ForwardEuler,
+    RungeKutta4,
+};
+template <>
+inline std::vector<std::string> get_enum_to_string_array<StepperType> () {
+    return std::vector<std::string> {
+        "FE",
+        "RK4",
+    };
+}
+
+
+enum NumericalFluxType {
+    LaxFriedrichs,
+    HLLC,
+};
+template <>
+inline std::vector<std::string> get_enum_to_string_array<NumericalFluxType> () {
+    return std::vector<std::string> {
+        "LaxFriedrichs",
+        "HLLC"
+    };
+}
+
 enum ICType {
     Uniform,
     Gaussian,
