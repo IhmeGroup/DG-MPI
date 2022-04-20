@@ -31,7 +31,10 @@ namespace BaseConvNumFluxType {
 //     LaxFriedrichs,
 //     None,
 // };
-
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+void compute_flux_laxfriedrichs(const Physics::Physics<dim>& physics,
+    const rtype* UL, const rtype* UR, const rtype* N, 
+    rtype* F, rtype* gUL, rtype* gUR);
 // /*
 // This class corresponds to the local Lax-Friedrichs flux function
 // */
@@ -47,6 +50,8 @@ namespace BaseConvNumFluxType {
 
 } // end namespace BaseConvNumFluxType
 
+
+#include "physics/base/functions.cpp"
 
 
 #endif //DG_PHYSICS_BASE_FUNCTIONS_H
