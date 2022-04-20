@@ -33,6 +33,12 @@ namespace Math {
         return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3] + a[4]*b[4];
     }
 
+    template<typename ViewType1D> KOKKOS_INLINE_FUNCTION
+    void cross(const rtype* a, const rtype* b, ViewType1D c){
+        c(0) = a[1] * b[2] - a[2] * b[1];
+        c(1) = a[2] * b[0] - a[0] * b[2];
+        c(2) = a[0] * b[1] - a[1] * b[0];
+    }
 
     template<typename ViewType> KOKKOS_INLINE_FUNCTION
     void identity(ViewType mat){
@@ -44,18 +50,39 @@ namespace Math {
         }
     }
 
-
     template<typename ScalarType, typename ViewType> KOKKOS_INLINE_FUNCTION
     void cA_to_A(const ScalarType c, ViewType A){
         SerialScale::invoke(c, A);
     }
 
 
+    inline
+    void fill(const int num_entries, rtype* A, rtype c){
+        view_type_1D AA(A, num_entries);
+        KokkosBlas::fill(AA, c);
+    }
+
     template<typename MemberType, typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
     void copy_A_to_B(const ViewType1& A, ViewType2& B, const MemberType& member){
         TeamCopy<MemberType, Trans::NoTranspose>::invoke(member, A, B);
     }
 
+    inline
+    void cApB_to_B(const unsigned nA, const rtype c, rtype* A, rtype* B){
+        Kokkos::View<rtype*> AA(A, nA);
+        Kokkos::View<rtype*> BB(B, nA);
+        KokkosBlas::axpy(c, AA, BB);
+
+    }
+
+    inline
+    void cApB_to_C(const unsigned nA, const rtype c, const rtype* A, const rtype* B, rtype* C){
+        Kokkos::View<const rtype*> AA(A, nA);
+        Kokkos::View<const rtype*> BB(B, nA);
+        Kokkos::View<rtype*> CC(C, nA);
+        KokkosBlas::update(c, AA, 1.0, BB, 0.0, CC);
+
+    }
 
     template<typename ViewType1, typename ViewType2> KOKKOS_INLINE_FUNCTION
     void invA(const ViewType1 mat, ViewType2 imat){
@@ -150,6 +177,14 @@ namespace Math {
             ::invoke(c, A, B, 0., C);
     }
 
+    template<typename ViewTypeA, typename ViewTypeB, typename ViewTypeC, typename MemberType> KOKKOS_INLINE_FUNCTION
+    void cAxBT_to_C(rtype c, const ViewTypeA& A,
+        const ViewTypeB& B, ViewTypeC& C, const MemberType& member){
+        
+        TeamGemm<MemberType, Trans::NoTranspose, Trans::Transpose, Algo::Gemm::Unblocked>
+            ::invoke(member, c, A, B, 0., C);
+        }
+
 
     template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
     void cATxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C){
@@ -167,6 +202,24 @@ namespace Math {
         TeamGemm<MemberType, Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
             ::invoke(member, c, A, B, 0., C);
     }
+
+    template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
+    void cATxBpC_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C){
+        
+        SerialGemm<Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
+            ::invoke(c, A, B, 1., C);
+    }
+
+
+    template<typename MemberType, typename ViewType1, typename ViewType2, 
+    typename ViewType3> KOKKOS_INLINE_FUNCTION
+    void cATxBpC_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C, 
+        const MemberType& member){
+        
+        TeamGemm<MemberType, Trans::Transpose, Trans::NoTranspose, Algo::Gemm::Unblocked>
+            ::invoke(member, c, A, B, 1., C);
+    }
+
 
     template<typename ViewType1, typename ViewType2, typename ViewType3> KOKKOS_INLINE_FUNCTION
     void cAxB_to_C(rtype c, const ViewType1& A, const ViewType2& B, ViewType3& C){
