@@ -115,6 +115,14 @@ class Mesh {
         KOKKOS_INLINE_FUNCTION
         unsigned get_orientR(const int& iface) const {return interior_faces(iface, 7);}
 
+        // Get the left orientation for an interior face (host view)
+        inline
+        unsigned get_orientL_host(const int& iface) const {return h_interior_faces(iface, 3);}
+
+        // Get the right orientation for an interior face
+        inline
+        unsigned get_orientR_host(const int& iface) const {return h_interior_faces(iface, 7);}
+
         // Get the left rank for an interior face
         KOKKOS_INLINE_FUNCTION
         unsigned get_rankL(const int& iface) const {return interior_faces(iface, 0);}
@@ -122,6 +130,14 @@ class Mesh {
         // Get the right rank for an interior face
         KOKKOS_INLINE_FUNCTION
         unsigned get_rankR(const int& iface) const {return interior_faces(iface, 4);}
+
+        // Get the left rank for an interior face (host view)
+        inline
+        unsigned get_rankL_host(const int& iface) const {return h_interior_faces(iface, 0);}
+
+        // Get the right rank for an interior face
+        inline
+        unsigned get_rankR_host(const int& iface) const {return h_interior_faces(iface, 4);}
        
         // Get the left element neighbor for an interior face
         KOKKOS_INLINE_FUNCTION
