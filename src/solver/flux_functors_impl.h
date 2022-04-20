@@ -120,7 +120,7 @@ struct InteriorFacesFluxFunctor {
 public:
     InteriorFacesFluxFunctor(const Physics::Physics<dim> physics,
         view_type_3D UqL, view_type_3D UqR, view_type_4D gUqL, view_type_4D gUqR,
-        view_type_1D quad_wts);
+        view_type_1D quad_wts, view_type_3D normals, view_type_3D Fq);
 
   KOKKOS_INLINE_FUNCTION
     void operator()(const int iface, const int iq) const;
@@ -134,6 +134,8 @@ private:
     view_type_3D UqR;
     view_type_4D gUqL;
     view_type_4D gUqR;
+    view_type_3D normals;
+    view_type_3D Fq;
     // view_type_2D djac;
     // view_type_4D ijac; 
     view_type_1D quad_wts;
@@ -143,9 +145,10 @@ private:
 
 template<unsigned dim>
 InteriorFacesFluxFunctor<dim>::InteriorFacesFluxFunctor(const Physics::Physics<dim> physics, 
-    view_type_3D UqL, view_type_3D UqR, view_type_4D vgUqL, view_type_4D vgUqR,
-    view_type_1D quad_wts) : physics{physics}, UqL{UqL}, UqR{UqR}, gUqL{gUqL}, gUqR{gUqR}, quad_wts{quad_wts}{
-
+    view_type_3D UqL, view_type_3D UqR, view_type_4D gUqL, view_type_4D gUqR,
+    view_type_1D quad_wts, 
+    view_type_3D normals,
+    view_type_3D Fq) : physics{physics}, UqL{UqL}, UqR{UqR}, gUqL{gUqL}, gUqR{gUqR}, quad_wts{quad_wts}, normals{normals}, Fq{Fq}{
 }
 
 
@@ -162,6 +165,9 @@ void InteriorFacesFluxFunctor<dim>::operator()(
     rtype gU_tmp[dim * NS];
 
     // read state from views
+    for (unsigned idim = 0; idim < dim; idim++){
+        N[idim] = normals(iface, iq, idim);
+    }
     for (unsigned is = 0; is < NS; is++){
         UL[is] = UqL(iface, iq, is);
         UR[is] = UqR(iface, iq, is);
@@ -212,7 +218,11 @@ void InteriorFacesFluxFunctor<dim>::operator()(
     // call the flux function
     // this will overwrite gUL and gUR by the appropriate fluxes
     physics.get_conv_flux_numerical(UL, UR, N, F, gUL, gUR);
-
+    for (unsigned is = 0; is < NS; is++){
+        // fill the iface view and multiply by quad_wts in prep for integration
+        // printf("F(%i)=%f\n", is, F[is]); // before multiplying by quad_wts
+        Fq(iface, iq, is) = F[is] * quad_wts(iq);
+    }
 }
 
 } // end namespace FluxFunctors
