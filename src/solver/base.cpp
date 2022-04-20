@@ -21,7 +21,7 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     Numerics::NumericsParams& params) : input_file{input_file}, mesh{mesh}, network{network}, params{params}{
 
     // initialize time to zero
-    time = 0.0;
+    time = 0.0; // TODO: Set this from restartfile or input deck
     const auto IC_name = toml::find<std::string>(input_file, "InitialCondition", "name");
 
     order = toml::find<int>(input_file, "Numerics", "order");
@@ -42,16 +42,25 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     physics = Physics::Physics<dim>(physics_type, numerical_flux_type, IC_name);
     physics.set_physical_params(physics_info);
 
-    stepper = std::shared_ptr<StepperBase<dim>>(new FE<dim>());
+    auto stepper_info = toml::find(input_file, "Stepper");
+    auto stepper_name = toml::find_or(stepper_info, "type", "FE");
 
+    // std::unique_ptr<StepperBase<dim>> stepper_test(StepperFactory<dim>::create_stepper(
+    //     enum_from_string<StepperType>(stepper_name.c_str())));
+
+    stepper = std::shared_ptr<StepperBase<dim>>(StepperFactory<dim>::create_stepper(enum_from_string<StepperType>(stepper_name.c_str())));
+    // stepper = std::shared_ptr<StepperBase<dim>>(new FE<dim>());
+
+    stepper->set_time_step(toml::find<rtype>(stepper_info, "timestep"));
+    // std::cout<<"TIMESTEP= " << stepper->get_time_step() << std::endl;
+    stepper->set_final_time(toml::find<rtype>(stepper_info, "end"));
     // set the size and shape of the solution coefficient views
     Kokkos::resize(Uc, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
     h_Uc = Kokkos::create_mirror_view(Uc);
 
-    Kokkos::resize(Uc_face, mesh.num_ifaces_part, basis.get_num_basis_coeffs(), physics.get_NS());
-
     // set the size and shape of the residuals view
     Kokkos::resize(res, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
+    h_res = Kokkos::create_mirror_view(res);
 
 }
 
@@ -88,10 +97,10 @@ void Solver<dim>::precompute_matrix_helpers() {
     
     int scratch_size = 0; // TODO: Will need scratch space for ijac evaluated at faces
     printf("##### Construct Face Helpers #####\n");
-    iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis, vol_helpers.x_elems);
+    iface_helpers.compute_interior_face_helpers(scratch_size, mesh, basis);
     printf("##### Completed #####\n");
 
-    network.print_3d_view(iface_helpers.h_quad_pts);
+    // network.print_3d_view(iface_helpers.h_quad_pts);
 
 
 }
@@ -212,6 +221,7 @@ void Solver<dim>::init_state_from_fcn(Mesh& mesh_local){
 template<unsigned dim>
 void Solver<dim>::copy_from_device_to_host(){
     Kokkos::deep_copy(h_Uc, Uc);
+    Kokkos::deep_copy(h_res, res);
 }
 
 
@@ -237,6 +247,7 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
             int num_elems_part;
             int nb;
             int ns;
+            rtype file_time;
             bool stored_layout;
 
             // add head group with attributes
@@ -249,6 +260,10 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
             attr = group.openAttribute("Number of State Variables");
             attr.read(type, &ns);
 
+            attr = group.openAttribute("Solver Final Time");
+            auto type_rtype = attr.getDataType();
+            attr.read(type_rtype, &file_time);
+            time = file_time;
 
             // read in solver coefficients
             group = file.openGroup("Rank "+ std::to_string(network.rank));
@@ -332,6 +347,9 @@ void Solver<dim>::construct_face_states(const view_type_3D Uq,
         const unsigned rankL = mesh_local.get_rankL(iface);
         const unsigned rankR = mesh_local.get_rankR(iface);
 
+        // printf("quad_idx_L(0, 0)=%i\n", quad_idx_L(0, 0));
+        // printf("quad_idx_L(0, 1)=%i\n", quad_idx_L(0, 1));
+
         if (rank == rankL) {
             const unsigned elemL_global = mesh_local.get_elemL(iface);
             const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
@@ -354,8 +372,55 @@ void Solver<dim>::construct_face_states(const view_type_3D Uq,
             }
         }
     });
-
 }
+
+template<unsigned dim>
+void Solver<dim>::construct_flux_state(const view_type_3D Fq_face, 
+    view_type_3D Fq_elem){
+
+    const unsigned num_ifaces_part = mesh.num_ifaces_part;
+    const unsigned nqf = Fq_face.extent(1);
+    auto quad_idx_L = iface_helpers.quad_idx_L;
+    auto quad_idx_R = iface_helpers.quad_idx_R;
+
+    const unsigned NUM_STATE_VARS = physics.get_NS();
+    const unsigned rank = network.rank;
+    auto mesh_local = mesh;
+
+    Kokkos::parallel_for("construct flux state", 
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0},
+        {num_ifaces_part, nqf}), KOKKOS_CLASS_LAMBDA(const int& iface,
+        const int& iq){
+
+        const unsigned rankL = mesh_local.get_rankL(iface);
+        const unsigned rankR = mesh_local.get_rankR(iface);
+
+        if (rank == rankL) {
+            const unsigned elemL_global = mesh_local.get_elemL(iface);
+            const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
+            const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
+            int startL = face_ID_L * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                Fq_elem(elemL, startL + quad_idx_L(iface, iq), is) = 
+                    -1.0 * Fq_face(iface, iq, is);
+            }
+        }
+
+        if (rank == rankR){
+            const unsigned elemR_global = mesh_local.get_elemR(iface);
+            const unsigned face_ID_R = mesh_local.get_ref_face_idR(iface);
+            const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
+            int startR = face_ID_R * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                Fq_elem(elemR, startR + quad_idx_R(iface, iq), is) = 
+                    Fq_face(iface, iq, is);
+            }
+        }
+    });
+}
+
 
 template<unsigned dim>
 void Solver<dim>::solve(){
@@ -363,22 +428,41 @@ void Solver<dim>::solve(){
     // unpack solver if needed
 
     // this can be where we place parameters for writing data
-    
-    // advance the time step
-    stepper->take_time_step(*this);
+    const unsigned num_iterations = (int)(stepper->get_tfinal() / stepper->get_time_step());
+    std::cout<<"Number of iterations = " << num_iterations << std::endl;
+
+    unsigned itime = 0;
+    while (itime < num_iterations) {
+        // advance the time step
+        stepper->take_time_step(*this);
+        std::cout << "Time = " << time << std::endl;
+        itime++;
+    }
+    copy_from_device_to_host();
+    network.print_3d_view(h_Uc);
 
 }
 
 template<unsigned dim>
-void Solver<dim>::get_residual(){
+void Solver<dim>::get_residual()
+{
 
+    // zero out residual
+    const int ndof = res.extent(0) * res.extent(1) * res.extent(2);
+    Math::fill(ndof, res.data(), 0.0);
+
+    // network.print_3d_view(res);
     get_element_residuals();
     Kokkos::fence(); // not sure if needed
+    copy_from_device_to_host();
+    // network.print_3d_view(h_res);
 
     get_interior_face_residuals();
     Kokkos::fence();
+    copy_from_device_to_host();
+    // network.print_3d_view(h_res);
 
-    printf("I made it out\n");
+    // printf("I made it out\n");
 
 }
 
@@ -430,16 +514,19 @@ void Solver<dim>::get_element_residuals(){
     // build fluxes, this overwrites in place the vUq and vgUq
     Kokkos::parallel_for("volume_fluxes", policy, functor);
     // NOTE: The overwritten vgUq here is ijac*Fq*quad_wts*djac
+    // // // Copy back to host (TODO: Remove after debugging)
+    // auto h_vgUq = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, vgUq);
+    // network.print_4d_view(h_vgUq);
 
     // GEMM to get the residual
     // TODO: ADD SOURCE TERMS
     SolverTools::calculate_volume_flux_integral(mesh.num_elems_part, 
         vol_helpers.basis_ref_grad, vgUq, res);
 
-    // currently we print the residuals to compare against stuff like quail
-    host_view_type_3D h_res = Kokkos::create_mirror_view(res);
-    Kokkos::deep_copy(h_res, res);
-    network.print_3d_view(h_res);
+    // // // Copy back to host (TODO: Remove after debugging)
+    // copy_from_device_to_host();
+    // network.print_3d_view(h_res);
 }
 
 template<unsigned dim>
@@ -449,21 +536,44 @@ void Solver<dim>::get_interior_face_residuals(){
     const unsigned NFACE = (unsigned)iface_helpers.basis_val.extent(0);
     const unsigned nqf = (unsigned)iface_helpers.quad_pts.extent(1);
     const unsigned nb = (unsigned)iface_helpers.basis_val.extent(2);
-    std::cout<<mesh.num_ifaces_part<<std::endl;
-    std::cout<<NFACE<<std::endl;
-    std::cout<<nqf<<std::endl;
-    std::cout<<nb<<std::endl;
+    // std::cout<<mesh.num_ifaces_part<<std::endl;
+    // std::cout<<NFACE<<std::endl;
+    // std::cout<<nqf<<std::endl;
+    // std::cout<<nb<<std::endl;
 
+    // TODO: We populate face_basis_val in this way because of GPU vs CPU 
+    // implementations. face_basis_val is a 3D view (shape [NFACE, nqf, nb]) 
+    // and its layout changes from Right to Left for the GPU. When we then try to 
+    // access the data and place it in another view like the line commented below,
+    // it leads to incorrect ordering of the quadrature points.
+
+    // This only works with CPUS:
+    /*
     view_type_2D face_basis_val(iface_helpers.basis_val.data(),
         NFACE * nqf, nb);
+    */
+    // This code below works for both, but is not a great solution.
+    view_type_2D face_basis_val("face_basis_val", NFACE * nqf, nb);
+    auto h_face_basis_val = Kokkos::create_mirror_view_and_copy(
+        Kokkos::DefaultHostExecutionSpace{}, face_basis_val);
+    for (unsigned i =0; i < NFACE; i++){
+        for (unsigned j = 0; j < nqf; j++){
+            for (unsigned k = 0; k < nb; k++){
+                h_face_basis_val(i * nqf + j, k) = 
+                    iface_helpers.h_basis_val(i, j, k); 
+            }
+        }
+    }
+    Kokkos::deep_copy(face_basis_val, h_face_basis_val);
+
 
     // allocate state evaluated at quadrature points
     view_type_3D Uq("Uq", mesh.num_elems_part,
         NFACE * nqf, physics.get_NS());
 
-    // allocate gradient of the state evaluated at quad points
-    // view_type_4D vgUq("gUq", mesh.num_elems_part,
-        // NFACE * nqf, physics.get_NS(), dim);
+    // allocate flux evaluated at quadrature points
+    view_type_3D Fq_elem("Fq_elem", mesh.num_elems_part,
+        NFACE * nqf, physics.get_NS());
 
     // allocate left state evaluated at quadrature points
     view_type_3D UqL("UqL", mesh.num_ifaces_part,
@@ -472,6 +582,17 @@ void Solver<dim>::get_interior_face_residuals(){
     // allocate right state evaluated at quadrature points
     view_type_3D UqR("UqR", mesh.num_ifaces_part,
         nqf, physics.get_NS());
+
+    // allocate left gradient of the state evaluated at quad points
+    view_type_4D gUqL("gUqL", mesh.num_ifaces_part,
+        nqf, physics.get_NS(), dim);
+
+    // allocate right gradient of the state evaluated at quad points
+    view_type_4D gUqR("gUqR", mesh.num_ifaces_part,
+        nqf, physics.get_NS(), dim);
+
+    // allocate flux evaluated at quadrature points for each face
+    view_type_3D Fq("Fq", mesh.num_ifaces_part, nqf, physics.get_NS());
 
     Kokkos::fence();
     
@@ -507,19 +628,53 @@ void Solver<dim>::get_interior_face_residuals(){
         Uq_ghost[i].~view_type_3D();
     }
 
-    // Copy back to host (TODO: Remove after debugging)
-    auto h_UqL = Kokkos::create_mirror_view_and_copy(
-            Kokkos::DefaultHostExecutionSpace{}, UqL);
-    auto h_UqR = Kokkos::create_mirror_view_and_copy(
-            Kokkos::DefaultHostExecutionSpace{}, UqR);
+    // // // Copy back to host (TODO: Remove after debugging)
+    // auto h_UqL = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, UqL);
+    // auto h_UqR = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, UqR);
 
-    network.print_3d_view(h_UqL);
-    network.print_3d_view(h_UqR);
-
-
+    // network.print_3d_view(h_UqL);
+    // network.print_3d_view(h_UqR);
 
     // Face flux function
+    // declare the volume flux functor
+    FluxFunctors::InteriorFacesFluxFunctor<dim> functor(physics, UqL,
+        UqR, gUqL, gUqR, iface_helpers.quad_wts, iface_helpers.normals, Fq);
 
+    Kokkos::MDRangePolicy<Kokkos::Rank<2>> 
+        policy({0, 0}, {mesh.num_ifaces_part, nqf});
+
+    // build fluxes, this overwrites in place the vUq and vgUq
+    Kokkos::parallel_for("interior face fluxes", policy, functor);
+
+    // construct the fluxes per element with correct signs
+    construct_flux_state(Fq, Fq_elem);
+
+    // // Copy back to host (TODO: Remove after debugging)
+    // printf("Fq_elem\n");
+    // auto h_Fq_elem = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, Fq_elem);
+    // network.print_3d_view(h_Fq_elem);
+
+    // // Copy back to host (TODO: Remove after debugging)
+    // {
+    // printf("res\n");
+    // auto h_res = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, res);
+    // network.print_3d_view(h_res);
+    // }
+    // GEMM to get the left residual contribution
+    SolverTools::calculate_face_flux_integral(mesh.num_elems_part, 
+        face_basis_val, Fq_elem, res);
+
+    // // Copy back to host (TODO: Remove after debugging)
+    // {
+    // printf("res\n");
+    // auto h_res = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, res);
+    // network.print_3d_view(h_res);
+    // }
 
 }
 

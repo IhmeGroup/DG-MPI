@@ -29,6 +29,9 @@ class Solver {
         void construct_face_states(const view_type_3D Uq, 
             view_type_3D UqL, view_type_3D UqR);
 
+        void construct_flux_state(const view_type_3D Fq_face, 
+            view_type_3D Fq_elem);
+
         void solve();
 
         void get_residual();
@@ -43,13 +46,15 @@ class Solver {
         Kokkos::View<rtype***> Uc;
         host_view_type_3D h_Uc;
 
+
         // Residuals
         Kokkos::View<rtype***> res;
+        host_view_type_3D h_res;
 
 
-        // Solution evaluated at the face quadrature points. This has shape
-        // (nIF, nqf, ns)
-        Kokkos::View<rtype***> Uc_face;
+        // // Solution evaluated at the face quadrature points. This has shape
+        // // (nIF, nqf, ns)
+        // Kokkos::View<rtype***> Uc_face;
 
         const toml::value& input_file;
         Mesh& mesh;
@@ -70,8 +75,8 @@ class Solver {
         
         int nb;
         int order;
-
         rtype time;
+        
 };
 
 #endif // DG_SOLVER_H
