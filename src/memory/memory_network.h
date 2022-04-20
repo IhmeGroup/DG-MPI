@@ -55,6 +55,8 @@ class MemoryNetwork {
             Kokkos::MemoryTraits<Kokkos::Unmanaged>> data) const;
         template <class ViewType>
         void print_3d_view(ViewType data) const;
+        template <class ViewType>
+        void print_4d_view(ViewType data) const;
     public:
         unsigned num_ranks;
         unsigned rank;
