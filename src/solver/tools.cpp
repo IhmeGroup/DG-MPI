@@ -13,11 +13,11 @@ void calculate_volume_flux_integral(const int num_elems, view_type_3D basis_ref_
     const int ns = F_quad.extent(2);
     const int ndims = basis_ref_grad.extent(2);
 
-
-    Kokkos::parallel_for("calc vol flux integral", Kokkos::TeamPolicy<>( num_elems,
-        Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
-
-        const int elem_ID = member.league_rank();
+    // TODO: Use batched kernels + teampolicy to optimize this!
+    // Kokkos::parallel_for("calc vol flux integral", Kokkos::TeamPolicy<>( num_elems,
+    //     Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
+    Kokkos::parallel_for(num_elems, KOKKOS_LAMBDA(const int& elem_ID){
+        // const int elem_ID = member.league_rank();
         
         // TODO: Optimize this loop either with batched Kokkos kernels or 
         // with hierarchical parralelism
@@ -32,7 +32,34 @@ void calculate_volume_flux_integral(const int num_elems, view_type_3D basis_ref_
             }
         }
     });
+}
 
+inline
+void calculate_face_flux_integral(const int num_elems, view_type_2D basis_val, 
+    view_type_3D F_quad, view_type_3D res){
+
+    Kokkos::parallel_for("face flux integral", Kokkos::TeamPolicy<>( num_elems,
+        Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
+        const int elem_ID = member.league_rank();
+        auto F_elem = Kokkos::subview(F_quad, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        auto res_elem = Kokkos::subview(res, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        
+        // if (member.team_rank()==0){
+        // // for (unsigned i = 0 ; i < F_elem.extent(0); i++){
+        // //     for (unsigned j = 0; j < F_elem.extent(1); j++){
+        // //         printf("F_elem(%i, %i, %i)=%f\n", member.league_rank(), i, j, F_elem(i, j));
+        // //     }
+        // // }
+
+        // for (unsigned i = 0 ; i < basis_val.extent(0); i++){
+        //     for (unsigned j = 0; j < basis_val.extent(1); j++){
+        //         printf("basis_val(%i, %i)=%f\n", i, j, basis_val(i, j));
+        //     }
+        // }
+        // }
+        Math::cATxBpC_to_C(1., basis_val, F_elem, res_elem, member);
+        member.team_barrier();
+    });
 }
 
 
@@ -92,6 +119,22 @@ void L2_projection(ViewType_iMM iMM, ViewType2D basis_val, ViewType1D_djac djac,
     //     }
     // }
     member.team_barrier();
+}
+
+template<typename ViewType_iMM, typename ViewType_res> inline
+void mult_inv_mass_matrix(const rtype dt, const ViewType_iMM iMM_elems,
+    const ViewType_res res, ViewType_res dU){
+
+    Kokkos::parallel_for("mult inv mass matrix", Kokkos::TeamPolicy<>( (int)res.extent(0),
+        Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
+        const int elem_ID = member.league_rank();
+        auto iMM = Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        auto res_elem = Kokkos::subview(res, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        auto dU_elem = Kokkos::subview(dU, elem_ID, Kokkos::ALL(), Kokkos::ALL());
+        Math::cAxB_to_C(dt, iMM, res_elem, dU_elem, member);
+        member.team_barrier();
+    });
+
 }
 
 } // end namespace SolverTools
