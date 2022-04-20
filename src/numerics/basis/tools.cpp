@@ -25,16 +25,16 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
 }
 
 template<typename ViewType2D, typename ViewType1D_int, 
-typename ViewType1D_rtype> KOKKOS_INLINE_FUNCTION
+typename ViewType2D_rtype> KOKKOS_INLINE_FUNCTION
 void extract_node_coordinates(const unsigned dim, 
     const ViewType2D x_elem,
     const ViewType1D_int node_number,
-    ViewType1D_rtype extracted_coeffs) {
+    ViewType2D_rtype extracted_coeffs) {
 
     const unsigned nExtract = (unsigned)node_number.extent(0);        
     for (unsigned idim = 0; idim < dim; idim++){
         for (unsigned inode = 0; inode < nExtract; inode++){
-            extracted_coeffs(idim * nExtract + inode) = x_elem(inode, idim);
+            extracted_coeffs(inode, idim) = x_elem(node_number(inode), idim);
         }
     }
 }
@@ -53,8 +53,10 @@ void get_element_jacobian(view_type_2D quad_pts,
         auto ijac_iq = Kokkos::subview(ijac, iq, Kokkos::ALL(), Kokkos::ALL());
 
         Math::cATxB_to_C(1., elem_coords, basis_ref_grad_iq, jac_iq);
-
         Math::det(jac_iq, djac(iq));
+        if (djac(iq) <= 0.0){
+            printf("Oh No! You have negative Jacobians! ... Is your mesh garbage or do you have the wrong orientation?\n");
+        }
         Math::invA(jac_iq, ijac_iq);
 
     });
