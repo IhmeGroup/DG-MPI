@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <iomanip>
 #include "toml11/toml.hpp"
 #include "mesh/mesh.h"
 #include "utils/utils.h"
@@ -39,6 +40,10 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
     auto vol_helpers = solver.vol_helpers;
     auto order = solver.order;
 
+    // solver.network.print_3d_view(Uc);
+    // time = 1.0; // TODO REMOVE HARD CODED VALUE!!!!!!!
+    printf("solver time = %f\n", time);
+
     rtype tot_vol_part;
     
     if (normalize_by_volume == true){
@@ -56,7 +61,8 @@ void get_error(Solver<dim>& solver, const int ord, bool normalize_by_volume){
     int nb = basis.get_num_basis_coeffs();
     int gnb = mesh.gbasis.get_num_basis_coeffs();
     int nq_1d; int nq;
-    int qorder = basis.shape.get_quadrature_order(2*order);
+    int order_ = std::max(order, 1);
+    int qorder = basis.shape.get_quadrature_order(2*order_);
     QuadratureTools::get_number_of_quadrature_points(qorder, NDIMS,
             nq_1d, nq);
 
@@ -231,6 +237,8 @@ void run_post(toml::value& toml_input, MemoryNetwork& network) {
     // Read in coefficients from data.h file
     std::string filename = "data.h5";
     solver.read_in_coefficients(filename);
+
+    std::cout<<"time="<<solver.time<<std::endl;
 
     // Get error if desired
     // TODO: Add inputs to choose whether or not to calculate.
