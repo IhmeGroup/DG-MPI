@@ -64,6 +64,10 @@ using scratch_view_1D_rtype = Kokkos::View<rtype*,
         Kokkos::DefaultExecutionSpace::scratch_memory_space,
         Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
+using scratch_view_1D_int = Kokkos::View<int*,
+        Kokkos::DefaultExecutionSpace::scratch_memory_space,
+        Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
 using team_policy = Kokkos::TeamPolicy<>;
 using membertype = Kokkos::TeamPolicy<>::member_type;
 
