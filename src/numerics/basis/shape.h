@@ -8,6 +8,7 @@
 #include "numerics/quadrature/segment.h"
 #include "numerics/quadrature/quadrilateral.h"
 #include "numerics/quadrature/hexahedron.h"
+#include "math/linear_algebra.h"
 
 #include <Kokkos_Core.hpp>
 
@@ -51,17 +52,20 @@ void get_points_on_face_quadrilateral(const int face_id, const int orient, const
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
-KOKKOS_INLINE_FUNCTION
+inline //KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
-        Kokkos::View<int*> pts_order);
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order);
 
 KOKKOS_INLINE_FUNCTION
 void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
     scratch_view_1D_int lfnodes);
 
-template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_quadrilateral(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals);
+template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
+typename ViewType3D_xphys_grad,
+typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_quadrilateral(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
+        ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member);
 
 /* --------------------------------------
         Hexahedron Shape Definitions
@@ -106,17 +110,20 @@ void get_points_on_face_hexahedron(const int face_id, const int orient, const in
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
-KOKKOS_INLINE_FUNCTION
+inline //KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
-        Kokkos::View<int*> pts_order);
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order);
 
 KOKKOS_INLINE_FUNCTION
 void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
     scratch_view_1D_int lfnodes);
 
-template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_hexahedron(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals);
+template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
+typename ViewType3D_xphys_grad,
+typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_hexahedron(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords, 
+        ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member);
 
 class Shape {
 
@@ -139,6 +146,7 @@ public:
     int get_quadrature_order(const int order);
     inline int get_num_faces_per_elem() const {return NFACES;}
     inline int get_num_orient_per_face() const {return NUM_ORIENT_PER_FACE;};
+    inline ShapeType get_face_type() const {return face_type;}
     unsigned (*get_num_nodes_per_face)(const unsigned gorder);
     unsigned (*get_num_nodes_per_elem)(const unsigned gorder);
 
@@ -150,18 +158,23 @@ public:
         const Kokkos::View<rtype**>::HostMirror face_pts,
         Kokkos::View<rtype**, Kokkos::LayoutStride>::HostMirror elem_pts);
 
-    KOKKOS_INLINE_FUNCTION
+    inline //KOKKOS_INLINE_FUNCTION
     void get_face_pts_order_wrt_orient0(const int orient, const int npts,
-        Kokkos::View<int*> pts_order) const;
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order) const;
 
     KOKKOS_INLINE_FUNCTION
     void get_local_nodes_on_face(const int face_id, const int gorder,
         scratch_view_1D_int lfnodes) const;
 
-    template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-    void get_normals_on_face(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts,
-        const ViewType1D coeffs, ViewType1D normals) const;
+    template<typename ViewType2D, 
+    typename ViewType3D_gbasis_grad,
+    typename ViewType3D_xphys_grad, 
+    typename ViewType3D_normals, 
+    typename MemberType> KOKKOS_INLINE_FUNCTION
+    void get_normals_on_face(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad,
+        const ViewType2D face_coords, ViewType3D_xphys_grad xphys_grad,
+        ViewType3D_normals normals, const MemberType& member) const;
 
 private:
     int (*get_quadrature_order_pointer)(const int order,
@@ -169,6 +182,7 @@ private:
 
 protected:
     ShapeType type; // name of shape type
+    ShapeType face_type; // name of shape's face type
     std::string name; // name of shape
     int NDIMS; // number of dimensions
     int NFACES; // number of faces

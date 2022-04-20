@@ -38,9 +38,9 @@ unsigned get_num_nodes_per_elem_quadrilateral(const unsigned gorder){
     return (gorder + 1) * (gorder + 1);
 }
 
-KOKKOS_INLINE_FUNCTION
+inline //KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_quadrilateral(const int orient, const int npts,
-        Kokkos::View<int*> pts_order) {
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order) {
 
     assert(npts == (int) pts_order.extent(0));
     switch (orient) {
@@ -150,13 +150,52 @@ void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
     }
 }
 
-template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_quadrilateral(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals) {
+template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
+typename ViewType3D_xphys_grad,
+typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_quadrilateral(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
+        ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member) {
 
+        const int iface = member.league_rank();
 
-        printf("IMPLEMENT QUADRILATERAL NORMALS\n");
+        for (unsigned ip = 0; ip < np; ip++){
+            auto face_gbasis_ref_grad_ = 
+                Kokkos::subview(face_gbasis_ref_grad, ip, Kokkos::ALL, Kokkos::ALL);
+            auto xphys_grad_ = Kokkos::subview(xphys_grad, Kokkos::ALL, Kokkos::ALL, ip);
+            // Math::cAxB_to_C(1., face_gbasis_ref_grad_, face_coords, xphys_grad, member);
 
+            Math::cATxB_to_C(1., face_coords, face_gbasis_ref_grad_, xphys_grad_, member);
+
+            // if (iface == 3){
+            //     for (unsigned i = 0; i < face_coords.extent(0); i++){
+            //         for (unsigned j = 0; j < face_coords.extent(1); j++){
+            //             printf("iface=%i -> face_coords(%i, %i)=%f\n", iface, i, j, face_coords(i, j));
+            //         }
+            //     }
+            //     for (unsigned i = 0; i < face_gbasis_ref_grad_.extent(0); i++){
+            //         for (unsigned j = 0; j < face_gbasis_ref_grad_.extent(1); j++){
+            //             printf("iface=%i -> face_gbasis_ref_grad_(%i, %i)=%f\n", iface, i, j, face_gbasis_ref_grad_(i, j));
+            //         }
+            //     }
+            //     for (int i = 0; i < xphys_grad.extent(0); i++){
+            //         for (int j = 0; j < xphys_grad.extent(1); j++){
+            //             printf("iface=%i -> xphys_grad(%i, %i)=%f\n", member.league_rank(), i, j, xphys_grad(i, j));
+            //         }
+            //     }
+            // }
+        }
+        // for (int i = 0; i < xphys_grad.extent(0); i++){
+        //     for (int j = 0; j < xphys_grad.extent(1); j++){
+        //         printf("iface=%i -> xphys_grad(%i, %i)=%f\n", member.league_rank(), i, j, xphys_grad(i, j));
+        //     }
+        // }
+
+        for (unsigned ip = 0; ip < np; ip++){
+            normals(iface, ip, 0) = xphys_grad(1, 0, ip);
+            normals(iface, ip, 1) = -1.0 * xphys_grad(0, 0, ip);
+        }
+        
 
 }
 
@@ -280,9 +319,9 @@ void get_points_on_face_hexahedron(const int face_id, const int orient, const in
     }
 }
 
-KOKKOS_INLINE_FUNCTION
+inline //KOKKOS_INLINE_FUNCTION
 void get_face_pts_order_wrt_orient0_hexahedron(const int orient, const int npts,
-        Kokkos::View<int*> pts_order) {
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order) {
 
     assert(npts == (int) pts_order.extent(0));
     assert(npts > 0);
@@ -436,11 +475,55 @@ void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
     }
 }
 
-template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_hexahedron(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts, const ViewType1D coeffs, ViewType1D normals) {
+template<typename ViewType2D, typename ViewType3D_gbasis_grad,
+typename ViewType3D_xphys_grad,
+typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
+void get_normals_on_face_hexahedron(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
+        ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member) {
 
-            printf("IMPLEMENT NORMALS FOR HEX\n");
+
+        const int iface = member.league_rank();
+
+        for (unsigned ip = 0; ip < np; ip++){
+            auto face_gbasis_ref_grad_ = 
+                Kokkos::subview(face_gbasis_ref_grad, ip, Kokkos::ALL, Kokkos::ALL);
+            auto xphys_grad_ = Kokkos::subview(xphys_grad, Kokkos::ALL, Kokkos::ALL, ip);
+
+            // Math::cAxB_to_C(1., face_gbasis_ref_grad_, face_coords, xphys_grad, member);
+            Math::cATxB_to_C(1., face_coords, face_gbasis_ref_grad_, xphys_grad_, member);
+
+        }
+
+        // if (iface == 3){
+        //         for (int i = 0; i < xphys_grad.extent(0); i++){
+        //             for (int j = 0; j < xphys_grad.extent(1); j++){
+        //                 for (int k = 0; k < xphys_grad.extent(2); k++){
+        //                 printf("iface=%i -> xphys_grad(%i, %i, %i)=%f\n", member.league_rank(), i, j, k, xphys_grad(i, j, k));
+        //             }
+        //             }
+        //         }
+        // }
+        // for (int i = 0; i < xphys_grad.extent(0); i++){
+        //     for (int j = 0; j < xphys_grad.extent(1); j++){
+        //         printf("iface=%i -> xphys_grad(%i, %i)=%f\n", member.league_rank(), i, j, xphys_grad(i, j));
+        //     }
+        // }
+        // for (int i = 0; i < face_coords.extent(0); i++){
+        //     for (int j = 0; j < face_coords.extent(1); j++){
+        //         printf("iface=%i -> face_coords(%i, %i)=%f\n", member.league_rank(), i, j, face_coords(i, j));
+        //     }
+        // }
+
+        rtype x_xref1[3], x_xref2[3];
+        for (unsigned ip = 0; ip < np; ip++){
+            for (unsigned j = 0; j < 3; j++){
+                x_xref1[j] = xphys_grad(j, 0, ip);
+                x_xref2[j] = xphys_grad(j, 1, ip);
+            }
+            auto normals_ = Kokkos::subview(normals, iface, ip, Kokkos::ALL);
+            Math::cross(x_xref1, x_xref2, normals_);
+        }
 }
 
 inline
@@ -480,6 +563,7 @@ Shape::Shape(ShapeType shape_type){
         NUM_ORIENT_PER_FACE = 2;
         name = "Quadrilateral";
         type = ShapeType::Quadrilateral;
+        face_type = ShapeType::Segment;
     }
     if (shape_type == ShapeType::Hexahedron){
         // set methods
@@ -499,13 +583,14 @@ Shape::Shape(ShapeType shape_type){
         NUM_ORIENT_PER_FACE = 8;
         name = "Hexahedron";
         type = ShapeType::Hexahedron;
+        face_type = ShapeType::Quadrilateral;
 
     }
 }
 
-KOKKOS_INLINE_FUNCTION
+inline //KOKKOS_INLINE_FUNCTION
 void Shape::get_face_pts_order_wrt_orient0(const int orient, const int npts,
-        Kokkos::View<int*> pts_order) const {
+        Kokkos::View<int*, Kokkos::OpenMP> pts_order) const {
     if (type == ShapeType::Quadrilateral){
         get_face_pts_order_wrt_orient0_quadrilateral(orient, npts, pts_order);
     }
@@ -530,18 +615,21 @@ void Shape::get_local_nodes_on_face(const int face_id, const int gorder,
     }
 }
 
-template<typename ViewType1D, typename ViewType2D> KOKKOS_INLINE_FUNCTION
-void Shape::get_normals_on_face(const int orient, const int np, const int gorder,
-        const ViewType2D face_pts,
-        const ViewType1D coeffs, ViewType1D normals) const {
+template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
+typename ViewType3D_xphys_grad, typename ViewType3D_normals, 
+typename MemberType> KOKKOS_INLINE_FUNCTION
+void Shape::get_normals_on_face(const int np, const int gorder,
+        const ViewType3D_gbasis_grad face_gbasis_ref_grad,
+        const ViewType2D face_coords, ViewType3D_xphys_grad xphys_grad,
+        ViewType3D_normals normals, const MemberType& member) const {
 
     if (type == ShapeType::Quadrilateral) {
-        get_normals_on_face_quadrilateral(orient, np, gorder, face_pts,
-            coeffs, normals);
+        get_normals_on_face_quadrilateral(np, gorder, face_gbasis_ref_grad,
+            face_coords, xphys_grad, normals, member);
     }
     else if (type == ShapeType::Hexahedron){
-        get_normals_on_face_hexahedron(orient, np, gorder, face_pts,
-            coeffs, normals);    
+        get_normals_on_face_hexahedron(np, gorder, face_gbasis_ref_grad,
+            face_coords, xphys_grad, normals, member);    
     } 
     else {
         printf("Normals Not Implemented Error\n"); // TODO: Figure out GPU throws
