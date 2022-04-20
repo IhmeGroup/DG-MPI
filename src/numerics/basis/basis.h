@@ -74,6 +74,7 @@ void get_grads_legendrehex(host_view_type_2D_ls quad_pts,
         void (*get_1d_nodes)(rtype start, rtype stop, int nnodes,
         host_view_type_1D &xnodes));
 
+
 class Basis {
 
 public:
@@ -98,6 +99,10 @@ public:
 
     void get_grads(host_view_type_2D_ls quad_pts,
         host_view_type_3D_ls basis_ref_grad);
+
+    view_type_3D get_face_basis_ref_grad_for_normals(const int gorder,
+        const host_view_type_3D h_quad_pts);
+
 
 private:
 

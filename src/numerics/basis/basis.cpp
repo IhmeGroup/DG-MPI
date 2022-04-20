@@ -127,7 +127,6 @@ void get_grads_lagrangehex(host_view_type_2D_ls quad_pts,
     }
 }
 
-
 /* --------------------------------------
     LegendreSeg Method Definitions
 ----------------------------------------*/
@@ -302,6 +301,43 @@ void Basis::get_grads(host_view_type_2D_ls quad_pts,
 
     get_grads_pointer(quad_pts, basis_ref_grad,
         order, get_1d_nodes);
+}
+
+view_type_3D Basis::get_face_basis_ref_grad_for_normals(const int gorder,
+            const host_view_type_3D h_quad_pts) {
+
+    if (shape.get_face_type() == ShapeType::Segment) {
+        Basis face_gbasis(BasisType::LagrangeSeg, gorder);        
+        int gnb = face_gbasis.shape.get_num_basis_coeff(face_gbasis.get_order());
+        int nqf = (int)h_quad_pts.extent(1);
+        view_type_3D face_gbasis_ref_grad("face gbasis ref grad", nqf, gnb, 1);
+        host_view_type_3D h_face_gbasis_ref_grad = Kokkos::create_mirror_view(face_gbasis_ref_grad);
+
+        // extract reference quadrature for a face from quad_pts
+        auto ref_quad_pts = Kokkos::subview(h_quad_pts, 0, Kokkos::ALL, Kokkos::make_pair((unsigned)0, (unsigned)1));
+        face_gbasis.get_grads(ref_quad_pts, h_face_gbasis_ref_grad);
+
+        Kokkos::deep_copy(face_gbasis_ref_grad, h_face_gbasis_ref_grad);
+
+        return face_gbasis_ref_grad;
+    }
+    else if (shape.get_face_type() == ShapeType::Quadrilateral) {
+        Basis face_gbasis(BasisType::LagrangeQuad, gorder);
+        int gnb = face_gbasis.shape.get_num_basis_coeff(face_gbasis.get_order());
+        int nqf = (int)h_quad_pts.extent(1);
+        view_type_3D face_gbasis_ref_grad("face gbasis ref grad", nqf, gnb, 2);
+        host_view_type_3D h_face_gbasis_ref_grad = Kokkos::create_mirror_view(face_gbasis_ref_grad);
+
+        // extract reference quadrature for a face from quad_pts
+        auto ref_quad_pts = Kokkos::subview(h_quad_pts, 0, Kokkos::ALL, Kokkos::make_pair((unsigned)0, (unsigned)2));
+        face_gbasis.get_grads(ref_quad_pts, h_face_gbasis_ref_grad);
+
+        Kokkos::deep_copy(face_gbasis_ref_grad, h_face_gbasis_ref_grad);      
+
+        return face_gbasis_ref_grad;
+    }
+
+
 }
 
 
