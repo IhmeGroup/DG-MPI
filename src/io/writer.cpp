@@ -7,7 +7,7 @@
 using std::string, std::vector;
 
 Writer::Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
-    int nb, int ns) {
+    int nb, int ns, rtype time) {
     std::stringstream stream;
     // stream << PROJECT_ROOT << "/build_gpu/test/mpi_enabled_tests/mesh/data.h5";
     stream << "data.h5";
@@ -34,8 +34,12 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
         write_attribute(nb,
                 "Number of Basis Functions", file);
         write_attribute(ns,
-                "Number of State Variables", file);        
+                "Number of State Variables", file);
+        write_attribute(time,
+                "Solver Final Time", file);        
         file.close();
+
+        std::cout<<"Write Time = " << time<<std::endl;
     }
 
     // Loop over each rank
@@ -98,6 +102,7 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
             dimensions[0] = mesh.num_elems_part;
             dimensions[1] = nb;
             dimensions[2] = ns;
+
             write_dataset(h_Uc.data(), "Solution Coefficients", group,
                 dimensions);
             // Close file
@@ -145,6 +150,11 @@ void Writer::write_attribute(T data, string name, H5::Group group) {
 
 template<>
 H5::PredType Writer::get_hdf5_type<double*>() {
+    return H5::PredType::NATIVE_DOUBLE;
+}
+
+template<>
+H5::PredType Writer::get_hdf5_type<double>() {
     return H5::PredType::NATIVE_DOUBLE;
 }
 

@@ -11,7 +11,7 @@
 class Writer {
     public:
         Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
-            int nb, int ns);
+            int nb, int ns, rtype time);
 
     private:
         template <class T>
