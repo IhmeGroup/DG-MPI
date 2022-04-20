@@ -78,7 +78,7 @@ struct InteriorFaceHelperFunctor{
 
     inline
     void compute_interior_face_helpers(int scratch_size, Mesh& mesh,
-        Basis::Basis& basis, view_type_3D x_elems);
+        Basis::Basis& basis);
 
     inline
     void get_quadrature(Basis::Basis basis,
@@ -93,13 +93,13 @@ struct InteriorFaceHelperFunctor{
         Basis::Basis basis);
 
     inline
-    void precompute_normals(Mesh& mesh, Basis::Basis basis, view_type_3D x_elems);
+    void precompute_normals(Mesh& mesh, Basis::Basis basis);
 
     view_type_3D quad_pts; // [NFACE, nq, NDIMS]
     view_type_1D quad_wts; // [nq]
 
     host_view_type_3D h_quad_pts; // [NFACE, nq, NDIMS]
-    host_view_type_1D h_quad_wts; // [nq]
+    host_view_type_1D h_quad_wts; // [nq]]
 
     view_type_3D basis_val; // [NFACE, nq, nb]
     view_type_4D basis_ref_grad; // [NFACE, nq, nb, NDIMS]
@@ -115,6 +115,8 @@ struct InteriorFaceHelperFunctor{
 
     Kokkos::View<int**> quad_idx_L; // [num_ifaces_part, nqf]
     Kokkos::View<int**> quad_idx_R; // [num_ifaces_part, nqf]
+
+    view_type_3D normals; // [num_ifaces_part, nqf, NDIMS]
 
 };
 

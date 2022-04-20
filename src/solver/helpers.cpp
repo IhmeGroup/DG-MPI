@@ -203,12 +203,12 @@ void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, Vi
 namespace InteriorFaceHelpers {
 
 void InteriorFaceHelperFunctor::compute_interior_face_helpers(int scratch_size, Mesh& mesh,
-    Basis::Basis& basis, view_type_3D x_elems){
+    Basis::Basis& basis){
 
     get_quadrature(basis, basis.get_order());
     get_reference_data(basis, mesh.gbasis, basis.get_order());
     precompute_facequadrature_lookup(mesh, basis);
-    precompute_normals(mesh, basis, x_elems);
+    precompute_normals(mesh, basis);
     // TODO: Add face ijac computation
 }
 
@@ -329,82 +329,133 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
 
     const int nqf = quad_pts.extent(1);
 
-    Kokkos::View<int*> orderL("orderL", nqf);
-    Kokkos::View<int*> orderR("orderR", nqf);
+    Kokkos::View<int*, Kokkos::OpenMP> orderL("orderL", nqf);
+    Kokkos::View<int*, Kokkos::OpenMP> orderR("orderR", nqf);
 
     Kokkos::resize(quad_idx_L, mesh.num_ifaces_part, nqf);
     Kokkos::resize(quad_idx_R, mesh.num_ifaces_part, nqf);
 
-    Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_CLASS_LAMBDA(const int& iface){
+    // TODO: Remove when made parallel
+    Kokkos::View<int**>::HostMirror h_quad_idx_L = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, quad_idx_L);
+    Kokkos::View<int**>::HostMirror h_quad_idx_R = Kokkos::create_mirror_view_and_copy(
+            Kokkos::DefaultHostExecutionSpace{}, quad_idx_R);
+    printf("before this stuff\n");
+    // Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_CLASS_LAMBDA(const int& iface){
+    // TODO: Figure out why there is a race condition here when using parallel_for...
+    for (int iface = 0; iface < mesh.num_ifaces_part; iface++){
+        const unsigned orientL = mesh.get_orientL_host(iface);
+        const unsigned orientR = mesh.get_orientR_host(iface);
 
-        const unsigned orientL = mesh.get_orientL(iface);
-        const unsigned orientR = mesh.get_orientR(iface);
-
+        // if (iface == 0){
+        // printf("oL=%i\n", orientL);
+        // printf("oR=%i\n", orientR);            
+        // }
         // printf("oL=%i\n", orientL);
         // printf("oR=%i\n", orientR);
+        // Kokkos::fence();
 
         basis.shape.get_face_pts_order_wrt_orient0(orientL, nqf, orderL);
         basis.shape.get_face_pts_order_wrt_orient0(orientR, nqf, orderR);
 
+        // Kokkos::fence();
         for (unsigned iq = 0; iq < nqf; iq++){
-            quad_idx_L(iface, iq) = orderL(iq);
-            quad_idx_R(iface, iq) = orderR(iq);
+            h_quad_idx_L(iface, iq) = orderL(iq);
+            h_quad_idx_R(iface, iq) = orderR(iq);
 
             // printf("quad_idx_L(%i, %i)=%i\n", iface, iq, orderL(iq));
             // printf("quad_idx_R(%i, %i)=%i\n", iface, iq, orderR(iq));
 
         }
-    });
+        // Kokkos::fence();
+
+    }
+    Kokkos::deep_copy(quad_idx_L, h_quad_idx_L);
+    Kokkos::deep_copy(quad_idx_R, h_quad_idx_R);
+    printf("after this stuff\n");
+    // printf("quad_idx_L(0, 0)=%i\n", quad_idx_L(0, 0));
+    // printf("quad_idx_L(0, 1)=%i\n", quad_idx_L(0, 1));
 }
 
 inline
-void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basis,
-        view_type_3D x_elems){
+void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basis){
 
     const int nqf = quad_pts.extent(1);
     const unsigned gorder = mesh.gbasis.get_order();
     const unsigned num_nodes_per_face = mesh.gbasis.shape.get_num_nodes_per_face(gorder);
     const unsigned num_nodes_per_elem = mesh.gbasis.shape.get_num_nodes_per_elem(gorder);
 
-    int scratch_size_normals = scratch_view_1D_rtype::shmem_size(nqf * mesh.dim) +
-    scratch_view_1D_int::shmem_size(num_nodes_per_face) +
-        scratch_view_1D_rtype::shmem_size(num_nodes_per_face * mesh.dim);
+    // resize the normal view accordingly
+    Kokkos::resize(normals, mesh.num_ifaces_part, nqf, mesh.dim);
+
+    // allocate bytes for calculating the precompute normals kernel
+    int scratch_size_normals =
+        scratch_view_1D_int::shmem_size(num_nodes_per_face) +
+        scratch_view_2D_rtype::shmem_size(num_nodes_per_face, mesh.dim) +
+        scratch_view_2D_rtype::shmem_size(num_nodes_per_elem, mesh.dim) +
+        scratch_view_3D_rtype::shmem_size(mesh.dim, (mesh.dim - 1), nqf);
+
+    // we need the reference space gradient of the geometric face basis later 
+    // in our face normal calculation but we choose to do this here so we can 
+    // capture the face_basis_ref_grad into the Kokkos lambda and not have to 
+    // pass it around using scratch memory
+    view_type_3D face_gbasis_ref_grad = 
+        mesh.gbasis.get_face_basis_ref_grad_for_normals(gorder, h_quad_pts);
 
     Kokkos::parallel_for("normals", Kokkos::TeamPolicy<>( mesh.num_ifaces_part, 
         Kokkos::AUTO).set_scratch_size( 1, Kokkos::PerTeam( scratch_size_normals )),
         KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
         // get current iface
         const unsigned iface = member.league_rank();
-        // face normals are always taken outwards -> always use the left facing data
+        // face normals are chosen to point from the left element to the right,
+        // or outward wrt the left element (i.e. -> we always use the left facing data)
         const unsigned face_ID_L = mesh.get_ref_face_idL(iface);
         const unsigned elemL = mesh.get_elemL(iface);
-        auto x_elemL = Kokkos::subview(x_elems, elemL, Kokkos::ALL, Kokkos::ALL);
-
         // get allocation from scratch memory
-        scratch_view_1D_rtype Nq(member.team_scratch( 1 ),
-                nqf * mesh.dim);
         scratch_view_1D_int face_node_idx(member.team_scratch( 1 ),
             num_nodes_per_face);
-        scratch_view_1D_rtype face_coord(member.team_scratch( 1 ), 
-            num_nodes_per_face * mesh.dim);
+        scratch_view_2D_rtype face_coord(member.team_scratch( 1 ), 
+            num_nodes_per_face, mesh.dim);
+        scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
+            num_nodes_per_elem, mesh.dim);
+        scratch_view_3D_rtype xphys_grad(member.team_scratch( 1 ),
+            mesh.dim, (mesh.dim - 1), nqf);
 
-        // populate face_node_idx which is filled with reference node id wrt 
-        // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
-        mesh.gbasis.shape.get_local_nodes_on_face(face_ID_L, gorder, face_node_idx);
-        // extract the face coordinates from the mesh coordinates
-        BasisTools::extract_node_coordinates(mesh.dim, x_elemL, face_node_idx, face_coord);
-
-        for (unsigned i = 0 ; i < num_nodes_per_face; i++){
-            printf("face_node_idx(%i)=%i\n", i, face_node_idx(i));
+        // TODO: Currently this doesn't work for multi-rank cases
+        // To fix this we can set up a view that contains the face coordinates
+        // for each interior face. This would remove the need for elem_coords 
+        // and directly store face_coords for each iface
+        if (member.team_rank() == 0 ) {
+            MeshTools::elem_coords_from_elem_ID(mesh, elemL, elem_coords, member);
+            // populate face_node_idx which is filled with reference node id wrt 
+            // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
+            mesh.gbasis.shape.get_local_nodes_on_face(face_ID_L, gorder, face_node_idx);
+            // extract the face coordinates from the mesh coordinates
+            BasisTools::extract_node_coordinates(mesh.dim, elem_coords, face_node_idx, face_coord);
         }
-
-        // extract reference quadrature for a face from quad_pts
-        auto ref_quad_pts = Kokkos::subview(quad_pts, 0, Kokkos::ALL, Kokkos::make_pair((unsigned)0, mesh.dim - 1));
-        mesh.gbasis.shape.get_normals_on_face((int)0, (int)nqf, (int)gorder, ref_quad_pts, face_coord, Nq);
-
-        // MeshTools::get_normals_on_face(0, nqf, gorder, quad_pts, face_coord.data(), Nq);
+        member.team_barrier();
 
 
+
+        // for (unsigned i = 0; i < face_coord.extent(0); i++){
+        //     for (unsigned j = 0; j < face_coord.extent(1); j++){
+        //         printf("iface=%i -> face_coord(%i, %i)=%f\n", iface, i, j, face_coord(i, j));
+        //     }
+        // }
+        member.team_barrier();
+        // for (unsigned i = 0 ; i < num_nodes_per_face; i++){
+        //     printf("face_node_idx(%i)=%i\n", i, face_node_idx(i));
+        // }
+
+        // get the normals for each iface
+        mesh.gbasis.shape.get_normals_on_face((int)nqf, (int)gorder, 
+            face_gbasis_ref_grad, face_coord, xphys_grad, normals, member);
+
+        // for (unsigned i = 0; i < normals.extent(1); i++){
+        //     for (unsigned j = 0; j < normals.extent(2); j++){
+        //         printf("normals(%i, %i, %i)=%f\n", iface, i, j, normals(iface, i, j));
+        //     }
+        // }
 
     });
 }
