@@ -16,6 +16,18 @@ namespace EulerFcnType {
 
 template<unsigned dim> KOKKOS_INLINE_FUNCTION
 rtype get_pressure(const rtype& gamma, const rtype* U);
+// template<int dim> DG_KOKKOS_FUNCTION
+// rtype Euler<dim>::get_maxwavespeed(Kokkos::View<const rtype*> U) {
+//     // unpack
+//     auto mom = Kokkos::subview(U, Kokkos::make_pair(1, dim + 1));
+//     auto rho1 = 1./U(0);
+
+//     return KokkosBlas::nrm2(mom) * rho1 + sqrt(gamma * get_pressure(U) * rho1);
+
+// }
+
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+rtype get_maxwavespeed(const rtype& gamma, const rtype* U);
 
 template<unsigned dim> KOKKOS_INLINE_FUNCTION
 void conv_flux_interior(const rtype& gamma, const rtype* U,
@@ -84,6 +96,15 @@ void set_state_isentropic_vortex(const Physics::Physics<2>* physics, ViewTypeX x
 // // };
 
 } // end namespace EulerFcnType
+
+namespace EulerConvNumFluxType {
+
+template<unsigned dim> KOKKOS_INLINE_FUNCTION
+void compute_flux_hllc(const Physics::Physics<dim>& physics,
+    const rtype* UL, const rtype* UR, const rtype* N, 
+    rtype* F, rtype* gUL, rtype* gUR);
+    
+}
 
 #include "physics/euler/functions.cpp"
 
