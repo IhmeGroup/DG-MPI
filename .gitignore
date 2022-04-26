@@ -19,6 +19,8 @@ build*
 # install dir
 /release*
 /debug*
+/build_cpu*
+/build_gpu*
 # latex documentation
 /docs/*.aux
 /docs/*latexmk
@@ -34,6 +36,9 @@ build*
 /docs/*markdown*
 # log files
 log.out
+log*.out
+# mesh files
+*.h5
 # vim tags
 /tags*
 # vim backup files

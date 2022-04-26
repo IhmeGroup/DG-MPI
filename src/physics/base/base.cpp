@@ -94,6 +94,12 @@ void Physics<3>::call_IC(ViewTypeX x, const rtype t,
     if (IC_type == ICType::Sphere){
         set_smooth_sphere(this, x, t, Uq);
     }
+    if (IC_type == ICType::Uniform){
+        set_state_uniform_3D(this, x, t, Uq);
+    }
+    if (IC_type == ICType::IsentropicVortex){
+        EulerFcnType::set_state_isentropic_vortex(this, x, t, Uq);
+    }
 }
 
 template<>
@@ -123,6 +129,8 @@ void Physics<3>::call_exact_solution(ViewTypeX x, const rtype t,
         set_smooth_sphere(this, x, t, Uq);
     } else if (IC_type == ICType::Uniform){
         set_state_uniform_3D(this, x, t, Uq);
+    } else if (IC_type == ICType::IsentropicVortex){
+        EulerFcnType::set_state_isentropic_vortex(this, x, t, Uq);
     } else {
         printf("THERE IS NO EXACT SOLUTION PROVIDED");
     }

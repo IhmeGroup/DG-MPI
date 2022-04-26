@@ -454,11 +454,14 @@ void Solver<dim>::get_residual()
     // network.print_3d_view(res);
     get_element_residuals();
     Kokkos::fence(); // not sure if needed
+
+    // std::cout << "--------  VOLUME RESIDUAL --------" << std::endl;
     // copy_from_device_to_host();
     // network.print_3d_view(h_res);
 
     get_interior_face_residuals();
     Kokkos::fence();
+    // std::cout << "--------  FACE RESIDUAL --------" << std::endl;
     // copy_from_device_to_host();
     // network.print_3d_view(h_res);
 
@@ -628,13 +631,16 @@ void Solver<dim>::get_interior_face_residuals(){
         Uq_ghost[i].~view_type_3D();
     }
 
+
+
     // // // Copy back to host (TODO: Remove after debugging)
     // auto h_UqL = Kokkos::create_mirror_view_and_copy(
     //         Kokkos::DefaultHostExecutionSpace{}, UqL);
     // auto h_UqR = Kokkos::create_mirror_view_and_copy(
     //         Kokkos::DefaultHostExecutionSpace{}, UqR);
-
+    // std::cout << "--------  LEFT FACES UqL --------" << std::endl;
     // network.print_3d_view(h_UqL);
+    // std::cout << "--------  RIGHT FACES UqR --------" << std::endl;
     // network.print_3d_view(h_UqR);
 
     // Face flux function
@@ -651,6 +657,11 @@ void Solver<dim>::get_interior_face_residuals(){
     // construct the fluxes per element with correct signs
     construct_flux_state(Fq, Fq_elem);
 
+
+    // printf("Fq\n");
+    // auto h_Fq = Kokkos::create_mirror_view_and_copy(
+    //         Kokkos::DefaultHostExecutionSpace{}, Fq);
+    // network.print_3d_view(h_Fq);
     // // Copy back to host (TODO: Remove after debugging)
     // printf("Fq_elem\n");
     // auto h_Fq_elem = Kokkos::create_mirror_view_and_copy(

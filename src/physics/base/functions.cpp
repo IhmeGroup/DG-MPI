@@ -88,14 +88,6 @@ void compute_flux_laxfriedrichs(const Physics::Physics<dim>& physics,
         }
 }
 
-template<> KOKKOS_INLINE_FUNCTION
-void compute_flux_laxfriedrichs(const Physics::Physics<3>& physics,
-    const rtype* UL, const rtype* UR, const rtype* N, 
-    rtype* F, rtype* gUL, rtype* gUR){
-
-        printf("in 3D LF\n");
-}
-
 
 // template <int dim> DG_KOKKOS_FUNCTION
 // void PhysicsBase<dim>::get_conv_flux_projected(
