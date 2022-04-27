@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <chrono>
 #include "toml11/toml.hpp"
 
 namespace Utils {
@@ -105,6 +106,26 @@ bool have_common_element(I1 first1, I1 last1, I2 first2, I2 last2) {
 /*! \brief Print the code's header text
  */
 void print_header();
+
+struct Timer {
+    
+    std::chrono::time_point<std::chrono::steady_clock> start, end;
+    std::chrono::duration<double> duration;
+
+    const std::string timer_id;
+
+    Timer(const std::string& timer_id) : timer_id{timer_id}{
+        start = std::chrono::steady_clock::now();
+    }
+
+    void end_timer() {
+        end = std::chrono::steady_clock::now();
+        duration = end - start;
+
+        double sec = duration.count();
+        std::cout << timer_id << " took " << sec << "s " << std::endl; 
+    }
+};
 
 } // end namespace Utils
 

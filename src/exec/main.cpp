@@ -57,8 +57,13 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     auto numerics_params = Numerics::NumericsParams(toml_input, gorder);
     // Create mesh
     auto gbasis = Basis::Basis(numerics_params.gbasis, gorder);
+
+    Utils::Timer mesh_timer("Mesh Partitioning Procedure");
     auto mesh = Mesh(toml_input, network.num_ranks, network.rank,
             network.head_rank, gbasis);
+    mesh_timer.end_timer();
+
+    Utils::Timer timer("Solution Start Up Procedure");
 
     const unsigned NDIMS = toml::find<unsigned>(toml_input, "Physics", "dim");
 
@@ -89,7 +94,10 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     printf("###################################################################\n");
     printf("Solution state initialized\n");
     printf("###################################################################\n");
-
+    
+    Kokkos::fence();
+    // end timing scope
+    timer.end_timer();
     // ... we actually do the DG solve here
     solver.solve();
 
