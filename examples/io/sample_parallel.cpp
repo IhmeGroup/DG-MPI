@@ -52,7 +52,7 @@ int main(int argc, char **argv)
         std::vector dataset{1.,2.,3.};
         file.create_and_write_parallel_dataset("parallel_Dset", dataset.size(), dataset.data());
 
-        // or alternatively, prove a flattened data buffer but also specify the dimensions of the original data
+        // or alternatively, provide a flattened data buffer but also specify the dimensions of the original data
         double multi_dataset[2][3] = {{1.,2.,3.}, {4.,5.,6.}};
         file.create_and_write_parallel_dataset("parallel_multi_Dset", {2,3}, &multi_dataset[0][0]);
 
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     {
         // Example 2:
         // - open existing file in parallel
-        // - best practive for reading the attributes and datasets created above
+        // - best practice for reading the attributes and datasets created above
         // - reading datasets in parallel
 
         // open an existing file
