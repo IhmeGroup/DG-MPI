@@ -138,7 +138,7 @@ class Mesh {
         // Get the right rank for an interior face
         inline
         unsigned get_rankR_host(const int& iface) const {return h_interior_faces(iface, 4);}
-       
+
         // Get the left element neighbor for an interior face
         KOKKOS_INLINE_FUNCTION
         unsigned get_elemL(const int& iface) const {return interior_faces(iface, 1);}
@@ -291,7 +291,6 @@ class Mesh {
         Kokkos::View<unsigned**>::HostMirror h_elem_to_node_IDs;
         Kokkos::View<unsigned**>::HostMirror h_interior_faces;
 
-    private:
         // Views that set a mapping from local to global node IDs, element IDs,
         // and interior face IDs
         Kokkos::View<unsigned*> local_to_global_node_IDs;

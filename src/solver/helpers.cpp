@@ -9,9 +9,9 @@ void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
     get_reference_data(basis, mesh.gbasis, basis.get_order());
     allocate_views(mesh.num_elems_part);
 
-    parallel_for("volume helpers", Kokkos::TeamPolicy<>( mesh.num_elems_part, 
-        Kokkos::AUTO).set_scratch_size( 1, 
-        Kokkos::PerTeam( scratch_size )), 
+    parallel_for("volume helpers", Kokkos::TeamPolicy<>( mesh.num_elems_part,
+        Kokkos::AUTO).set_scratch_size( 1,
+        Kokkos::PerTeam( scratch_size )),
         KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
 
         const int elem_ID = member.league_rank();
@@ -51,7 +51,7 @@ void VolumeHelperFunctor::compute_volume_helpers(int scratch_size,
 }
 
 inline
-void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size, 
+void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size,
     Mesh& mesh, Basis::Basis& basis){
 
     // to correctly compute iMM we need 2*p for quadrature rules
@@ -68,9 +68,9 @@ void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size,
     Kokkos::resize(ijac_elems, num_elems, nq, ndims, ndims);
     Kokkos::resize(iMM_elems, num_elems, nb, nb);
 
-    parallel_for("iMM_helper", Kokkos::TeamPolicy<>( mesh.num_elems_part, 
-        Kokkos::AUTO).set_scratch_size( 1, 
-        Kokkos::PerTeam( scratch_size )), 
+    parallel_for("iMM_helper", Kokkos::TeamPolicy<>( mesh.num_elems_part,
+        Kokkos::AUTO).set_scratch_size( 1,
+        Kokkos::PerTeam( scratch_size )),
         KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
 
                 const int elem_ID = member.league_rank();
@@ -94,7 +94,7 @@ void VolumeHelperFunctor::compute_inv_mass_matrices(int scratch_size,
 
                 BasisTools::get_inv_mass_matrices(quad_wts, basis_val,
                     Kokkos::subview(djac_elems, elem_ID, Kokkos::ALL()),
-                    Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);               
+                    Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL()), member);
 
     });
 }
@@ -184,13 +184,13 @@ void VolumeHelperFunctor::get_reference_data(
 
 template<typename ViewType2D, typename ViewType3D> inline
 void evaluate_state(const int num_elems, ViewType2D basis_val, ViewType3D Uc, ViewType3D Uq){
-    
+
     Kokkos::parallel_for("eval state", Kokkos::TeamPolicy<>( num_elems,
         Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
         const int elem_ID = member.league_rank();
         auto Uq_elem = Kokkos::subview(Uq, elem_ID, Kokkos::ALL(), Kokkos::ALL());
         auto Uc_elem = Kokkos::subview(Uc, elem_ID, Kokkos::ALL(), Kokkos::ALL());
-        
+
         Math::cAxB_to_C(1., basis_val, Uc_elem, Uq_elem, member);
         member.team_barrier();
     });
@@ -233,7 +233,7 @@ void InteriorFaceHelperFunctor::get_quadrature(
     // quad_pts needs to know the specific face
     view_type_2D local_quad_pts("local quad_pts", nq, NDIMS_FACE);
     host_view_type_2D h_local_quad_pts = Kokkos::create_mirror_view(local_quad_pts);
-    // get the quad_pts / quad_wts for a reference face 
+    // get the quad_pts / quad_wts for a reference face
     basis.face_shape.get_quadrature_data(qorder, nq_1d, h_local_quad_pts, h_quad_wts);
 
     Kokkos::resize(quad_pts, NFACE, nq, NDIMS);
@@ -284,7 +284,7 @@ void InteriorFaceHelperFunctor::get_reference_data(
     h_basis_ref_grad = Kokkos::create_mirror_view(basis_ref_grad);
     h_gbasis_val = Kokkos::create_mirror_view(gbasis_val);
     h_gbasis_ref_grad = Kokkos::create_mirror_view(gbasis_ref_grad);
-    
+
     for (unsigned ifa = 0; ifa < NFACE; ifa++){
 
         // get subviews prior to passing into get_values and get_grads
@@ -324,7 +324,7 @@ void InteriorFaceHelperFunctor::get_reference_data(
 
 
 inline
-void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh, 
+void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
     Basis::Basis basis){
 
     const int nqf = quad_pts.extent(1);
@@ -349,7 +349,7 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
 
         // if (iface == 0){
         // printf("oL=%i\n", orientL);
-        // printf("oR=%i\n", orientR);            
+        // printf("oR=%i\n", orientR);
         // }
         // printf("oL=%i\n", orientL);
         // printf("oR=%i\n", orientR);
@@ -380,6 +380,9 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
 inline
 void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basis){
 
+    // Create memory network
+    auto network = MemoryNetwork();
+
     const int nqf = quad_pts.extent(1);
     const unsigned gorder = mesh.gbasis.get_order();
     const unsigned num_nodes_per_face = mesh.gbasis.shape.get_num_nodes_per_face(gorder);
@@ -395,14 +398,14 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         scratch_view_2D_rtype::shmem_size(num_nodes_per_elem, mesh.dim) +
         scratch_view_3D_rtype::shmem_size(mesh.dim, (mesh.dim - 1), nqf);
 
-    // we need the reference space gradient of the geometric face basis later 
-    // in our face normal calculation but we choose to do this here so we can 
-    // capture the face_basis_ref_grad into the Kokkos lambda and not have to 
+    // we need the reference space gradient of the geometric face basis later
+    // in our face normal calculation but we choose to do this here so we can
+    // capture the face_basis_ref_grad into the Kokkos lambda and not have to
     // pass it around using scratch memory
-    view_type_3D face_gbasis_ref_grad = 
+    view_type_3D face_gbasis_ref_grad =
         mesh.gbasis.get_face_basis_ref_grad_for_normals(gorder, h_quad_pts);
 
-    Kokkos::parallel_for("normals", Kokkos::TeamPolicy<>( mesh.num_ifaces_part, 
+    Kokkos::parallel_for("normals", Kokkos::TeamPolicy<>( mesh.num_ifaces_part,
         Kokkos::AUTO).set_scratch_size( 1, Kokkos::PerTeam( scratch_size_normals )),
         KOKKOS_CLASS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member) {
         // get current iface
@@ -410,11 +413,17 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         // face normals are chosen to point from the left element to the right,
         // or outward wrt the left element (i.e. -> we always use the left facing data)
         const unsigned face_ID_L = mesh.get_ref_face_idL(iface);
-        const unsigned elemL = mesh.get_elemL(iface);
+        const unsigned face_ID_R = mesh.get_ref_face_idR(iface);
+        // Get global element IDs on either side
+        const unsigned global_elemL = mesh.get_elemL(iface);
+        const unsigned global_elemR = mesh.get_elemR(iface);
+        // Convert to local
+        auto elemL = mesh.search_for_local_ID(global_elemL, mesh.local_to_global_elem_IDs);
+        auto elemR = mesh.search_for_local_ID(global_elemR, mesh.local_to_global_elem_IDs);
         // get allocation from scratch memory
         scratch_view_1D_int face_node_idx(member.team_scratch( 1 ),
             num_nodes_per_face);
-        scratch_view_2D_rtype face_coord(member.team_scratch( 1 ), 
+        scratch_view_2D_rtype face_coord(member.team_scratch( 1 ),
             num_nodes_per_face, mesh.dim);
         scratch_view_2D_rtype elem_coords(member.team_scratch( 1 ),
             num_nodes_per_elem, mesh.dim);
@@ -423,13 +432,31 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
 
         // TODO: Currently this doesn't work for multi-rank cases
         // To fix this we can set up a view that contains the face coordinates
-        // for each interior face. This would remove the need for elem_coords 
+        // for each interior face. This would remove the need for elem_coords
         // and directly store face_coords for each iface
         if (member.team_rank() == 0 ) {
-            MeshTools::elem_coords_from_elem_ID(mesh, elemL, elem_coords, member);
-            // populate face_node_idx which is filled with reference node id wrt 
+            unsigned elem_ID;
+            unsigned ref_face_ID;
+            // If this rank has info on the left of the face, take the nodes
+            // from the left element
+            if (mesh.interior_faces(iface, 0) == network.rank) {
+                elem_ID = elemL;
+                ref_face_ID = face_ID_L;
+            // If this rank has info on the right of the face, take the nodes
+            // from the right element
+            } else if (mesh.interior_faces(iface, 4) == network.rank) {
+                elem_ID = elemR;
+                ref_face_ID = face_ID_R;
+            // This branch should, hopefully, never happen
+            } else {
+                printf("Nooooo! Bad things happened!\n");
+                printf("(this face not found on this rank when precomputing normals)\n");
+            }
+            printf("%u %u\n", elem_ID, ref_face_ID);
+            MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
+            // populate face_node_idx which is filled with reference node id wrt
             // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
-            mesh.gbasis.shape.get_local_nodes_on_face(face_ID_L, gorder, face_node_idx);
+            mesh.gbasis.shape.get_local_nodes_on_face(ref_face_ID, gorder, face_node_idx);
             // extract the face coordinates from the mesh coordinates
             BasisTools::extract_node_coordinates(mesh.dim, elem_coords, face_node_idx, face_coord);
         }
@@ -448,7 +475,7 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         // }
 
         // get the normals for each iface
-        mesh.gbasis.shape.get_normals_on_face((int)nqf, (int)gorder, 
+        mesh.gbasis.shape.get_normals_on_face((int)nqf, (int)gorder,
             face_gbasis_ref_grad, face_coord, xphys_grad, normals, member);
 
         // for (unsigned i = 0; i < normals.extent(1); i++){
