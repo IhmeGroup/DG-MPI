@@ -32,7 +32,7 @@ if(DEFINED ENV{HDF5_DIR})
     set(HDF5_ROOT "$ENV{HDF5_DIR}")
 else()
     message(STATUS "HDF5 obtained via dg-mpi/externals folder")
-    set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5/build/install")
+    set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5_download/install")
 endif()
 
 if(DEFINED ENV{MPI_DIR})
@@ -109,7 +109,7 @@ endif()
 # HDF5
 set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
 
-set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5_cpp.${so};${HDF5_ROOT}/lib/libhdf5.${so}")
+set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5.${so}")
 if(NOT HDF5_LIBRARIES)
     message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")
 endif()

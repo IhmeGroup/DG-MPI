@@ -5,13 +5,12 @@
 #include <string>
 #include <unordered_set>
 #include <set>
-#include "H5Cpp.h"
+#include "../io/HDF5Wrapper.h"
 #include "metis.h"
 #include "toml11/toml.hpp"
 #include "common/my_exceptions.h"
 
 using namespace std;
-using H5::PredType, H5::DataSpace, H5::DataSet;
 using std::cout, std::endl;
 
 // identifiers from Eric's pre-processing tool
@@ -79,8 +78,8 @@ inline void Mesh::finalize() {
 
 inline void Mesh::read_mesh(const string &mesh_file_name) {
     try {
-        H5::H5File file(mesh_file_name, H5F_ACC_RDONLY);
-        hsize_t dims[2]; // buffer to store an HDF5 dataset dimensions
+        HDF5File file(mesh_file_name, H5F_ACC_RDONLY);
+        std::vector<hsize_t> dims(1); // buffer to store an HDF5 dataset dimensions
         unsigned rank; // the number of dimensions in a dataset
 
         dims[0] = 1; // fetch all scalars first
@@ -88,34 +87,20 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         DataSpace mspace(rank, dims);
 
         // number of spatial dimensions
-        DataSet dataset = file.openDataSet(DSET_DIM);
-        DataSpace dataspace = dataset.getSpace();
-        dataset.read(&dim, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_DIM, &dim);
         // geometric order of the mesh
-        dataset = file.openDataSet(DSET_QORDER);
-        dataspace = dataset.getSpace();
-        dataset.read(&order, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_QORDER, &order);
         // number of elements
-        dataset = file.openDataSet(DSET_NELEM);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_elems, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_NELEM, &num_elems);
         // number of nodes
-        dataset = file.openDataSet(DSET_NNODE);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_nodes, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_NNODE, &num_nodes);
         // number of interior faces
-        dataset = file.openDataSet(DSET_NIFACE);
-        dataspace = dataset.getSpace();
-        dataset.read(&nIF, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_NIFACE, &nIF);
         // number of nodes per element
-        dataset = file.openDataSet(DSET_NNODE_PER_ELEM);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_nodes_per_elem, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_NNODE_PER_ELEM, &num_nodes_per_elem);
         // number of nodes per faces
-        if (H5Lexists(file.getId(), DSET_NNODE_PER_FACE.c_str(), H5P_DEFAULT)) {
-            dataset = file.openDataSet(DSET_NNODE_PER_FACE);
-            dataspace = dataset.getSpace();
-            dataset.read(&num_nodes_per_face, PredType::NATIVE_INT, mspace, dataspace);
+        if (file.link_exists(DSET_NNODE_PER_FACE.c_str())) {
+            file.open_and_read_dataset(DSET_NNODE_PER_FACE, &num_nodes_per_face);
         }
         else {
             /* This is used for METIS to determine how many nodes an element must shared to be
@@ -145,25 +130,20 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         node_partition.resize(num_nodes);
 
         // fetch elemID -> nodeID
+        rank = 2;
+        dims.resize(rank);
         dims[0] = num_elems;
         dims[1] = num_nodes_per_elem;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_ELEM_TO_NODES);
-        dataspace = dataset.getSpace();
         // ordering (row-major): elemID X nodeID
-        dataset.read(eind.data(), PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_ELEM_TO_NODES, dims, eind.data());
 
         // fetch node coordinates
         vector<rtype> buff(dim * num_nodes, 0.);
+        rank = 2;
+        dims.resize(rank);
         dims[0] = num_nodes;
         dims[1] = dim;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_NODE_COORD);
-        dataspace = dataset.getSpace();
-        // ordering (row-major): nodeID X coordinates
-        dataset.read(buff.data(), PredType::NATIVE_DOUBLE, mspace, dataspace);
+        file.open_and_read_dataset(DSET_NODE_COORD, dims, buff.data());
         // fill coordinates
         for (unsigned iNode = 0; iNode < num_nodes; iNode++) {
             coord[iNode].resize(dim);
@@ -175,13 +155,11 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         // fetch IFace -> elem and IFace -> node
         vector<int> buff_int;
         buff_int.resize(nIF * 6);
+        dims.resize(rank);
+        rank = 2;
         dims[0] = nIF;
         dims[1] = 6;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_IFACE_DATA);
-        dataspace = dataset.getSpace();
-        dataset.read(buff_int.data(), PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset(DSET_IFACE_DATA, dims, buff_int.data());
         vector<unordered_set<int> > already_created(num_elems);
         for (unsigned i = 0; i < nIF; i++) {
             IF_to_elem[i].resize(6);
@@ -255,19 +233,6 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
             nBFG = 0;
             nBF = 0;
         }
-    }
-
-    // catch failure caused by the H5File operations
-    catch (H5::FileIException &error) {
-        error.printErrorStack();
-    }
-    // catch failure caused by the DataSet operations
-    catch (H5::DataSetIException &error) {
-        error.printErrorStack();
-    }
-    // catch failure caused by the DataSpace operations
-    catch (H5::DataSpaceIException &error) {
-        error.printErrorStack();
     }
 }
 

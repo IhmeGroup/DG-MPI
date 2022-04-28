@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Download a file and check that the file passes a hash key check
 download_file () {
     name=$1
@@ -26,7 +28,7 @@ hash_key=deea47749d13bd06fbeaf98a53c6c0b61603ddc17a43dae81d72c8015576f6495fd83c1
 download_file $name $url $hash_key
 
 # Unzip
-mkdir metis
+mkdir -p metis
 tar -xvzf $name -C metis --strip-components 1
 rm $name
 
@@ -35,4 +37,18 @@ cd metis
 
 make config cc=gcc prefix=$build_path
 make install -j"${nthreads}"
+cd ..
+
+# -- PHDF5 -- #
+echo "========================"
+echo "  BUILDING HDF5"
+echo "========================"
+echo $PWD
+
+wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.13/hdf5-1.13.0/src/hdf5-1.13.0.tar.gz
+tar xf hdf5-1.13.0.tar.gz
+mv hdf5-1.13.0 hdf5-download
+cd hdf5-download
+CC=`which mpicc` CXX=`which mpic++` ./configure --prefix=${PWD}/install --enable-parallel --enable-cxx=no --enable-hl=yes --enable-hltools=yes --enable-tools=yes --enable-parallel-tools=yes --enable-java=no --enable-tests=no --enable-shared=yes --enable-static=yes
+make -j && make -j install
 cd ..
