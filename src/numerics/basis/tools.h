@@ -95,7 +95,7 @@ Outputs:
 */
 void get_lagrange_basis_val_1D(const rtype &x,
     host_view_type_1D xnodes,
-    int p, Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi);
+    Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi);
 
 /*
 Calculates the 1D Lagrange basis gradient
@@ -111,7 +111,7 @@ Outputs:
 */
 void get_lagrange_basis_grad_1D(const rtype &x,
     host_view_type_1D xnodes,
-    int p, Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi);
+    Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi);
 
 /*
 Calculates the 2D Lagrange basis value

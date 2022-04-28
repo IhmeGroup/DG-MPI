@@ -21,7 +21,7 @@ void get_values_lagrangeseg(host_view_type_2D_ls quad_pts,
         get_1d_nodes(-1., 1., order + 1, xnodes);
 
         for (int iq = 0; iq < nq; iq++){
-            BasisTools::get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, order,
+            BasisTools::get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(basis_val, iq, Kokkos::ALL()));
         }
     }
@@ -39,7 +39,7 @@ void get_grads_lagrangeseg(host_view_type_2D_ls quad_pts,
         host_view_type_1D xnodes("xnodes", order + 1);
         get_1d_nodes(-1., 1., order + 1, xnodes);
         for (int iq = 0; iq < nq; iq++){
-            BasisTools::get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, order,
+            BasisTools::get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(basis_ref_grad, iq, Kokkos::ALL(), 0));
         }
     }

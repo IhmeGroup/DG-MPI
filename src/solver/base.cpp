@@ -4,6 +4,7 @@
 #include "numerics/basis/basis.h"
 #include "numerics/basis/tools.h"
 #include "solver/flux_functors_impl.h"
+#include "utils/utils.h"
 
 #include "H5Cpp.h"
 

@@ -13,7 +13,7 @@ void equidistant_nodes_1D_range(rtype start, rtype stop, int nnodes,
         xnodes(0) = 0.;
         return;
     }
-    if (xnodes.extent(0) != nnodes){
+    if ((int)xnodes.extent(0) != nnodes){
         Kokkos::resize(xnodes, nnodes);
     }
 
@@ -113,7 +113,7 @@ void get_inv_mass_matrices(view_type_1D quad_wts, view_type_2D basis_val,
 
 inline
 void get_lagrange_basis_val_1D(const rtype &x,
-    host_view_type_1D xnodes, int p,
+    host_view_type_1D xnodes,
     Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror phi){
 
     int nnodes = xnodes.extent(0);
@@ -128,7 +128,7 @@ void get_lagrange_basis_val_1D(const rtype &x,
 
 inline
 void get_lagrange_basis_grad_1D(const rtype &x,
-    host_view_type_1D xnodes, int p,
+    host_view_type_1D xnodes,
     Kokkos::View<rtype*, Kokkos::LayoutStride>::HostMirror gphi){
 
     int nnodes = xnodes.extent(0);
@@ -162,9 +162,9 @@ void get_lagrange_basis_val_2D(host_view_type_2D_ls quad_pts,
     host_view_type_2D valy("basis_val_y", nq, p + 1);
 
     for (int iq = 0; iq < nq; iq++){
-        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(valx, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(valy, iq, Kokkos::ALL()));
     }
     for (int iq = 0; iq < nq; iq++){
@@ -192,13 +192,13 @@ void get_lagrange_basis_grad_2D(host_view_type_2D_ls quad_pts,
     host_view_type_3D grady("basis_grad_y", nq, p + 1, 1);
 
     for (int iq = 0; iq < nq; iq++){
-        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(valx, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(valy, iq, Kokkos::ALL()));
-        get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(gradx, iq, Kokkos::ALL(), 0));
-        get_lagrange_basis_grad_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_grad_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(grady, iq, Kokkos::ALL(), 0));
     }
 
@@ -227,11 +227,11 @@ void get_lagrange_basis_val_3D(host_view_type_2D_ls quad_pts,
     host_view_type_2D valz("basis_val_z", nq, p + 1);
 
     for (int iq = 0; iq < nq; iq++){
-        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(valx, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(valy, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes,
                 Kokkos::subview(valz, iq, Kokkos::ALL()));
     }
     for (int iq = 0; iq < nq; iq++){
@@ -264,17 +264,17 @@ void get_lagrange_basis_grad_3D(host_view_type_2D_ls quad_pts,
     host_view_type_3D gradz("basis_grad_z", nq, p + 1, 1);
 
     for (int iq = 0; iq < nq; iq++){
-        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(valx, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(valy, iq, Kokkos::ALL()));
-        get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes, p,
+        get_lagrange_basis_val_1D(quad_pts(iq, 2), xnodes,
                 Kokkos::subview(valz, iq, Kokkos::ALL()));
-        get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes, p,
+        get_lagrange_basis_grad_1D(quad_pts(iq, 0), xnodes,
                 Kokkos::subview(gradx, iq, Kokkos::ALL(), 0));
-        get_lagrange_basis_grad_1D(quad_pts(iq, 1), xnodes, p,
+        get_lagrange_basis_grad_1D(quad_pts(iq, 1), xnodes,
                 Kokkos::subview(grady, iq, Kokkos::ALL(), 0));
-        get_lagrange_basis_grad_1D(quad_pts(iq, 2), xnodes, p,
+        get_lagrange_basis_grad_1D(quad_pts(iq, 2), xnodes,
                 Kokkos::subview(gradz, iq, Kokkos::ALL(), 0));
     }
 

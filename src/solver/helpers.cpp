@@ -340,7 +340,7 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
             Kokkos::DefaultHostExecutionSpace{}, quad_idx_L);
     Kokkos::View<int**>::HostMirror h_quad_idx_R = Kokkos::create_mirror_view_and_copy(
             Kokkos::DefaultHostExecutionSpace{}, quad_idx_R);
-    printf("before this stuff\n");
+
     // Kokkos::parallel_for(mesh.num_ifaces_part, KOKKOS_CLASS_LAMBDA(const int& iface){
     // TODO: Figure out why there is a race condition here when using parallel_for...
     for (int iface = 0; iface < mesh.num_ifaces_part; iface++){
@@ -372,7 +372,7 @@ void InteriorFaceHelperFunctor::precompute_facequadrature_lookup(Mesh& mesh,
     }
     Kokkos::deep_copy(quad_idx_L, h_quad_idx_L);
     Kokkos::deep_copy(quad_idx_R, h_quad_idx_R);
-    printf("after this stuff\n");
+
     // printf("quad_idx_L(0, 0)=%i\n", quad_idx_L(0, 0));
     // printf("quad_idx_L(0, 1)=%i\n", quad_idx_L(0, 1));
 }

@@ -227,7 +227,7 @@ void get_solfile_params(
 namespace Numerics {
 
 NumericsParams::NumericsParams(const toml::value &input_info, const unsigned gorder_) {
-    const unsigned dim = (unsigned) toml::find<int>(input_info, "Physics", "dim");
+
     const auto num_info = toml::find(input_info, "Numerics");
 
     // solution basis

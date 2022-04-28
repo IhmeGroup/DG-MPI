@@ -579,6 +579,7 @@ inline void Mesh::partition() {
             auto ghost_faces_view = ghost_faces[index];
             auto gface_count = gface_counter[index];
             Kokkos::parallel_for(1, KOKKOS_LAMBDA(const int& i) {
+                    (void)i; //silence unused var warning
                     ghost_faces_view(gface_count) = global_face_ID;
             });
             gface_counter[index]++;
@@ -590,6 +591,7 @@ inline void Mesh::partition() {
         auto ghost_faces_view = ghost_faces[i];
         Kokkos::parallel_for(h_num_faces_per_rank_boundary(i),
                 KOKKOS_LAMBDA(const int& j) {
+                (void)j; //silence unused var warning
                 // printf("%u\n", ghost_faces_view(j));
         });
         cout << endl;

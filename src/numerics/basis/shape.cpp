@@ -12,6 +12,7 @@ int get_num_basis_coeff_segment(int p){
 
 inline
 unsigned get_num_nodes_per_face_segment(const unsigned gorder) {
+    (void)gorder; // silence unused variable
     return 1;
 }
 

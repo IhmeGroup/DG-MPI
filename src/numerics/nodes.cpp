@@ -502,8 +502,8 @@ void get_gauss_legendre_segment_nodes(const int order,
 }
 
 
-void get_gll_segment_nodes(const int order,
-    View<rtype*> &pts) {
+// void get_gll_segment_nodes(const int order,
+    // View<rtype*> &pts) {
     // switch(order){
     //     case 0 :
     //     case 1 :
@@ -931,6 +931,6 @@ void get_gll_segment_nodes(const int order,
     //         pts.push_back(1.0);
     //         break;
     // }
-}
+// }
 
 } // end namespace Nodes
