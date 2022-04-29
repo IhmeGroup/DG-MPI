@@ -17,7 +17,7 @@ int main(int argc, char **argv)
         // - best practices for creating new attributes, groups and datasets
         // - efficient writing of parallel datasets
 
-        // create and open a new file
+        // create and open a new file in parallel
         bool parallel = true;
         HDF5File file("sample_parallel.h5", H5F_ACC_TRUNC, parallel);
 
@@ -48,11 +48,11 @@ int main(int argc, char **argv)
         file.create_and_write_dataset("multi", {2,3}, &arr[0][0]);
 
 
-        // next, each ranks writes its dataset into a large unified dataset. This is the most performant way to write large data
+        // next, each ranks writes its dataset into a large unified dataset. This is the most performant way to write large datasets
         std::vector dataset{1.,2.,3.};
         file.create_and_write_parallel_dataset("parallel_Dset", dataset.size(), dataset.data());
 
-        // or alternatively, provide a flattened data buffer but also specify the dimensions of the original data
+        // or alternatively, provide a flattened data buffer but also specify the dimensions of the original data to retrieve it later
         double multi_dataset[2][3] = {{1.,2.,3.}, {4.,5.,6.}};
         file.create_and_write_parallel_dataset("parallel_multi_Dset", {2,3}, &multi_dataset[0][0]);
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         // - best practice for reading the attributes and datasets created above
         // - reading datasets in parallel
 
-        // open an existing file
+        // open an existing file in parallel
         bool parallel = true;
         HDF5File file("sample_parallel.h5", H5F_ACC_RDWR, parallel);
 
@@ -89,10 +89,10 @@ int main(int argc, char **argv)
             print_vector(v);
         }
         // 2) the data is needed on all ranks. Use the version ending in '_all'
-        auto v = file.open_and_read_dataset<int>("D1");
+        auto v = file.open_and_read_dataset_all<int>("D1");
         // now, each rank has a copy of 'v'
 
-        // opening the group can also be done by a single rank 
+        // opening the group can also be done by a single rank, if te group will not be modified
         auto g1 = file.open_group("g1");
 
         if (mpi_rank == 0)
@@ -103,6 +103,7 @@ int main(int argc, char **argv)
         // retrieve multi-dimensional dataset. to read the same dataset to all ranks, use the '_all' version of the function
         auto [data, dims] = file.open_and_read_dataset_with_dims_all<int>("multi");
         int arr[2][3];
+        // copy the flattened data in 'data' back into the 2D array 'arr'
         std::memcpy(&arr[0][0], data.data(), data.size()*sizeof(decltype(v)::value_type));
         if (mpi_rank == 0)
         {
@@ -126,16 +127,17 @@ int main(int argc, char **argv)
 
         // read the data block of the current process from the big dataset
         {
+            // must be called by all ranks
             auto [data, dims] = file.read_dataset_parallel<double>("parallel_Dset");
-            // data = {1,2,3}, dims = {3}
+            // data = {1,2,3}, dims = {3}; in this example, same for all ranks
 
             //or alternatively, pass a buffer to the function:
-            std::vector<double> buffer(totalSize);
+            std::vector<double> buffer(localSize);
             dims = file.read_dataset_parallel("parallel_Dset", buffer.data());
         }
 
         {
-            // reading a multi-dimensional dataset has the same interface
+            // reading a multi-dimensional dataset has the same interface, but will return the flattened data
             auto [data, dims] = file.read_dataset_parallel<double>("parallel_multi_Dset");
             // data = {1,2,3,4,5,6}, dims = {2,3}
         }
