@@ -20,7 +20,6 @@
 
 
 template<typename T> hid_t HDF5TYPE();
-template<> inline hid_t HDF5TYPE<bool>() {return H5T_NATIVE_INT;}
 template<> inline hid_t HDF5TYPE<int>() {return H5T_NATIVE_INT;}
 template<> inline hid_t HDF5TYPE<long int>() {return H5T_NATIVE_LONG;}
 template<> inline hid_t HDF5TYPE<long long int>() {return H5T_NATIVE_LLONG;}
@@ -207,7 +206,7 @@ class HDF5File
             if constexpr (std::is_same_v<T,bool>)
                 type = HDF5TYPE<int>();
             else
-                type = HDF5TYPE<bool>();
+                type = HDF5TYPE<T>();
 
 
             p->second = H5Acreate(get_dest(destination), name.c_str(), type, p->first, H5P_DEFAULT, H5P_DEFAULT);
