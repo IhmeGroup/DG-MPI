@@ -49,7 +49,7 @@ class HDF5File
     static constexpr int head_rank = 0;
 
     public:
-        HDF5File() : file(-1), parallel(false), comm(MPI_COMM_WORLD), info(MPI_INFO_NULL), mpi_size(-1), mpi_rank(-1) {}
+        HDF5File() : file(-1), parallel(false), comm(MPI_COMM_WORLD), info(MPI_INFO_NULL), mpi_size(1), mpi_rank(0) {}
         HDF5File(const HDF5File&) = delete;
         HDF5File(HDF5File&& rhs) :
             file(rhs.file), parallel(rhs.parallel), comm(rhs.comm), info(rhs.info), mpi_size(rhs.mpi_size), mpi_rank(rhs.mpi_rank)
@@ -72,7 +72,7 @@ class HDF5File
         }
         HDF5File& operator=(const HDF5File& rhs) = delete;
         HDF5File(const std::string& name, unsigned mode, bool par=false, MPI_Comm comm=MPI_COMM_WORLD, MPI_Info info=MPI_INFO_NULL)
-            : file(-1), parallel(par), mpi_size(-1), mpi_rank(-1)
+            : file(-1), parallel(par), mpi_size(1), mpi_rank(0)
         {
             open(name, mode, par, comm, info);
         }
@@ -91,6 +91,11 @@ class HDF5File
                 info = Info;
                 MPI_Comm_size(comm, &mpi_size);
                 MPI_Comm_rank(comm, &mpi_rank);
+            }
+            else
+            {
+                mpi_size = 1;
+                mpi_rank = 0;
             }
 
             hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -394,22 +399,22 @@ class HDF5File
         template<typename T>
         managed_hid create_dataset(const std::string& name, hsize_t length, managed_hid destination = managed_hid())
         {
-                return create_dataset<T>(name, std::vector<hsize_t>{length}, destination);
+            return create_dataset<T>(name, std::vector<hsize_t>{length}, destination);
         }
 
         // must be called by all ranks if the dataset is later modified
         auto open_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
-                auto p = new_dataset();
+            auto p = new_dataset();
 
-                p->second = H5Dopen(get_dest(destination), name.c_str(), H5P_DEFAULT);
-                if (p->second < 0)
-                {
-                    std::cerr<<"ERROR: cannot create dataset"<<std::endl;
-                    std::exit(EXIT_FAILURE);
-                }
-                p->first = H5Dget_space(p->second);
-                return p;
+            p->second = H5Dopen(get_dest(destination), name.c_str(), H5P_DEFAULT);
+            if (p->second < 0)
+            {
+                std::cerr<<"ERROR: cannot create dataset"<<std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+            p->first = H5Dget_space(p->second);
+            return p;
         }
 
         // if used in parallel mode: can be called independently.
@@ -627,14 +632,47 @@ class HDF5File
                 write_to_dataset(dset, data);
         }
 
+        // must be called by all ranks. each rank passes one value and the head rank writes a dataset composed of these values
         template<typename T>
-        std::tuple<std::vector<T>, std::vector<hsize_t>> open_and_read_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        void create_and_write_dataset_gather_scalar(const std::string& name, T value, managed_hid destination = managed_hid())
         {
-            auto dims = read_dims_of_parallel_dataset(name, destination);
-            hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
-            std::vector<T> data(localSize);
-            open_and_read_parallel_dataset(name, data.data(), destination);
-            return {data, dims};
+            std::vector<T> dataset;
+            if (!parallel || mpi_rank == head_rank)
+            {
+                dataset.resize(mpi_size);
+                dataset[mpi_rank] = value;
+            }
+            if (parallel)
+            {
+                if (mpi_rank == head_rank)
+                    MPI_Gather(&value, 1, MPITYPE<T>, dataset.data(), 1, MPITYPE<T>, head_rank, comm);
+                else
+                    MPI_Gather(&value, 1, MPITYPE<T>, nullptr, 1, MPITYPE<T>, head_rank, comm);
+            }
+            create_and_write_dataset(name, dataset.size(), dataset.data(), destination);
+        }
+
+        // must be called by all ranks. returns the nth element from the dataset on rank n
+        template<typename T>
+        T open_and_read_dataset_scatter_scalar(const std::string& name, managed_hid destination = managed_hid())
+        {
+            std::vector<T> data;
+            T value;
+            if (!parallel || mpi_rank == head_rank)
+            {
+                data = open_and_read_dataset<T>(name, destination);
+                value = data[0];
+            }
+
+            if (parallel)
+            {
+                if (mpi_rank == head_rank)
+                    MPI_Scatter(data.data(), 1, MPITYPE<T>, &value, 1, MPITYPE<T>, head_rank, comm);
+                else
+                    MPI_Scatter(nullptr, 1, MPITYPE<T>, &value, 1, MPITYPE<T>, head_rank, comm);
+            }
+
+            return value;
         }
 
 
@@ -647,12 +685,25 @@ class HDF5File
                 the dataset 'name_offsets' also has two attributes
                  - nDims: the number dimensions of the original input data (before flattening)
                  - totalSize: the total number of elements across all ranks
+                 - nRanks - the number of ranks that wrote the dataset
 
                 Also, a dataset 'name_dims' is created, that contains the dimensions of each data block. If e.g. nDims = 2, mpi_size=3, 'name_dims' might contain:
                 [ 2 4    2 5    3 4]
                 The first two elements are the first and second dimension for the data block of the first rank and so on
+        
+                Currently, reading a dataset must be done with the same number of ranks as it was written
+        
         */
 
+        template<typename T>
+        std::tuple<std::vector<T>, std::vector<hsize_t>> open_and_read_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        {
+            auto dims = read_dims_of_parallel_dataset(name, destination);
+            hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            std::vector<T> data(localSize);
+            open_and_read_parallel_dataset(name, data.data(), destination);
+            return {data, dims};
+        }
 
 
         template<typename T>
@@ -729,10 +780,12 @@ class HDF5File
         {
             // ====== 1) create the dataspace and write the local data block in parallel ======
 
-
             hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
             hsize_t totalSize = 0;
-            MPI_Allreduce(&localSize, &totalSize, 1, MPI_UINT64_T, MPI_SUM, comm);
+            if (parallel)
+                MPI_Allreduce(&localSize, &totalSize, 1, MPI_UINT64_T, MPI_SUM, comm);
+            else
+                totalSize = localSize;
 
             hid_t filespace = H5Screate_simple(1, &totalSize, &totalSize);
             if (filespace < 0)
@@ -750,8 +803,11 @@ class HDF5File
             }
 
             hsize_t offset = 0;
-            MPI_Scan(&localSize, &offset, 1, MPI_UINT64_T, MPI_SUM, comm);
-            offset -= localSize;
+            if (parallel)
+            {
+                MPI_Scan(&localSize, &offset, 1, MPI_UINT64_T, MPI_SUM, comm);
+                offset -= localSize;
+            }
 
             hid_t mspace = H5Screate_simple(1, &localSize, &localSize);
             if (mspace < 0 )
@@ -786,19 +842,23 @@ class HDF5File
             // ====== 2) write the offset information  ======
 
             std::vector<hsize_t> offsets;
-            if (mpi_rank == head_rank)
+            if (parallel)
             {
-                offsets.resize(mpi_size);
-                MPI_Gather(&offset, 1, MPITYPE<hsize_t>, offsets.data(), 1, MPITYPE<hsize_t>, head_rank, comm);
+                if (mpi_rank == head_rank)
+                {
+                    offsets.resize(mpi_size);
+                    MPI_Gather(&offset, 1, MPITYPE<hsize_t>, offsets.data(), 1, MPITYPE<hsize_t>, head_rank, comm);
+                }
+                else
+                    MPI_Gather(&offset, 1, MPITYPE<hsize_t>, nullptr, 1, MPITYPE<hsize_t>, head_rank, comm);
             }
             else
-                MPI_Gather(&offset, 1, MPITYPE<hsize_t>, nullptr, 1, MPITYPE<hsize_t>, head_rank, comm);
+                offsets = {offset};
 
             std::string offset_name = name+"_offsets";
 
-
             auto d = create_dataset<hsize_t>(offset_name, static_cast<hsize_t>(mpi_size), destination);
-            if (mpi_rank == head_rank)
+            if (!parallel || mpi_rank == head_rank)
                 write_to_dataset(d, offsets.data());
 
             // ====== 3) write the dimension information  ======
@@ -809,17 +869,22 @@ class HDF5File
                 nDims = 1;
 
             create_and_write_attribute("nDims", nDims, d);
+            create_and_write_attribute("nRanks", mpi_size, d);
             create_and_write_attribute("totalSize", totalSize, d);
 
-
             std::vector<hsize_t> dims_all;
-            if (mpi_rank == head_rank)
+            if (parallel)
             {
-                dims_all.resize(nDims*mpi_size);
-                MPI_Gather(dims.data(), nDims, MPITYPE<hsize_t>, dims_all.data(), nDims, MPITYPE<hsize_t>, head_rank, comm);
+                if (mpi_rank == head_rank)
+                {
+                    dims_all.resize(nDims*mpi_size);
+                    MPI_Gather(dims.data(), nDims, MPITYPE<hsize_t>, dims_all.data(), nDims, MPITYPE<hsize_t>, head_rank, comm);
+                }
+                else
+                    MPI_Gather(dims.data(), nDims, MPITYPE<hsize_t>, nullptr, nDims, MPITYPE<hsize_t>, head_rank, comm);
             }
             else
-                MPI_Gather(dims.data(), nDims, MPITYPE<hsize_t>, nullptr, nDims, MPITYPE<hsize_t>, head_rank, comm);
+                dims_all = dims;
 
             std::string dim_name = name+"_dims";
             create_and_write_dataset(dim_name, dims_all.size(), dims_all.data(), destination);
@@ -833,20 +898,47 @@ class HDF5File
             create_and_write_parallel_dataset(name, dims, data, destination);
         }
 
+        auto read_nRanks_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        {
+            auto d = open_dataset(name+"_offsets", destination);
+            return open_and_read_attribute_all<int>("nRanks", d);
+        }
+
         // read the dimensions of the local data block in the parallel dataset. must be called by all ranks
         auto read_dims_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
+
+            // check if the number or ranks reading the file is the same as the number of ranks that wrote the file
+            // since this function is called first in open_and_read_parallel_dataset. it is sufficient to do the check here
+
             auto d = open_dataset(name+"_offsets", destination);
             auto nDim = open_and_read_attribute_all<hsize_t>("nDims", d);
+            auto nRanks = open_and_read_attribute_all<int>("nRanks", d);
+            bool validCall = true;
+            if (parallel)
+                validCall = nRanks == mpi_size;
+            else
+                validCall = nRanks == 1;
+            if (!validCall)
+            {
+                std::cerr<<"ERROR: parallel datasets must be read with the same number of ranks it was written from"<<std::endl;
+                std::exit(EXIT_FAILURE);
+            }
 
             std::vector<hsize_t> dims(nDim);
-            if (mpi_rank == head_rank)
+            if (parallel)
             {
-                auto v = open_and_read_dataset<hsize_t>(name+"_dims", destination);
-                MPI_Scatter(v.data(), nDim, MPITYPE<hsize_t>, dims.data(), nDim, MPITYPE<hsize_t>, head_rank, comm);
+                if (mpi_rank == head_rank)
+                {
+                    auto v = open_and_read_dataset<hsize_t>(name+"_dims", destination);
+                    MPI_Scatter(v.data(), nDim, MPITYPE<hsize_t>, dims.data(), nDim, MPITYPE<hsize_t>, head_rank, comm);
+                }
+                else
+                    MPI_Scatter(nullptr, nDim, MPITYPE<hsize_t>, dims.data(), nDim, MPITYPE<hsize_t>, head_rank, comm);
             }
             else
-                MPI_Scatter(nullptr, nDim, MPITYPE<hsize_t>, dims.data(), nDim, MPITYPE<hsize_t>, head_rank, comm);
+                dims = open_and_read_dataset<hsize_t>(name+"_dims", destination);
+
             return dims;
         }
 
@@ -856,7 +948,6 @@ class HDF5File
             auto dims = read_dims_of_parallel_dataset(name, destination);
             return std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
         }
-
 
         // must be called by all ranks. returns the total number of elements in the parallel datasets across all local data blocks
         auto read_total_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
@@ -874,16 +965,17 @@ class HDF5File
         // must be called by each rank. returns the offset for each individual rank
         auto read_offset_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
-            hsize_t offset = -1;
-            if (mpi_rank == head_rank)
+            hsize_t offset = 0;
+            if (parallel)
             {
-                auto v = open_and_read_dataset<hsize_t>(name+"_offsets", destination);
-                MPI_Scatter(v.data(), 1, MPITYPE<hsize_t>, &offset, 1, MPITYPE<hsize_t>, head_rank, comm);
-                offset = v[head_rank];
+                if (mpi_rank == head_rank)
+                {
+                    auto v = open_and_read_dataset<hsize_t>(name+"_offsets", destination);
+                    MPI_Scatter(v.data(), 1, MPITYPE<hsize_t>, &offset, 1, MPITYPE<hsize_t>, head_rank, comm);
+                }
+                else
+                    MPI_Scatter(nullptr, 1, MPITYPE<hsize_t>, &offset, 1, MPITYPE<hsize_t>, head_rank, comm);
             }
-            else
-                MPI_Scatter(nullptr, 1, MPITYPE<hsize_t>, &offset, 1, MPITYPE<hsize_t>, head_rank, comm);
-
             return offset;
         }
 
@@ -981,4 +1073,3 @@ class HDF5File
 };
 
 #endif //DG_HDF5FILE_H
-
