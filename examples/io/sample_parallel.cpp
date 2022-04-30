@@ -128,17 +128,17 @@ int main(int argc, char **argv)
         // read the data block of the current process from the big dataset
         {
             // must be called by all ranks
-            auto [data, dims] = file.read_dataset_parallel<double>("parallel_Dset");
+            auto [data, dims] = file.open_and_read_parallel_dataset<double>("parallel_Dset");
             // data = {1,2,3}, dims = {3}; in this example, same for all ranks
 
             //or alternatively, pass a buffer to the function:
             std::vector<double> buffer(localSize);
-            dims = file.read_dataset_parallel("parallel_Dset", buffer.data());
+            dims = file.open_and_read_parallel_dataset("parallel_Dset", buffer.data());
         }
 
         {
             // reading a multi-dimensional dataset has the same interface, but will return the flattened data
-            auto [data, dims] = file.read_dataset_parallel<double>("parallel_multi_Dset");
+            auto [data, dims] = file.open_and_read_parallel_dataset<double>("parallel_multi_Dset");
             // data = {1,2,3,4,5,6}, dims = {2,3}
         }
 

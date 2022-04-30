@@ -12,7 +12,7 @@
 module purge
 module load cuda
 module load gnu8/8.3.0
-module load hdf5/1.10.5
+#module load hdf5/1.10.5
 module load mpich/3.3.1
 
 # move to the home dir

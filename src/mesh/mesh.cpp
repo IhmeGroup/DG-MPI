@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_set>
 #include <set>
-#include "../io/HDF5Wrapper.h"
+#include "io/HDF5Wrapper.h"
 #include "metis.h"
 #include "toml11/toml.hpp"
 #include "common/my_exceptions.h"
@@ -77,14 +77,7 @@ inline void Mesh::finalize() {
 }
 
 inline void Mesh::read_mesh(const string &mesh_file_name) {
-    try {
         HDF5File file(mesh_file_name, H5F_ACC_RDONLY);
-        std::vector<hsize_t> dims(1); // buffer to store an HDF5 dataset dimensions
-        unsigned rank; // the number of dimensions in a dataset
-
-        dims[0] = 1; // fetch all scalars first
-        rank = 1; // rank is the number of dimensions
-        DataSpace mspace(rank, dims);
 
         // number of spatial dimensions
         file.open_and_read_dataset(DSET_DIM, &dim);
@@ -129,21 +122,14 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         elem_partition.resize(num_elems);
         node_partition.resize(num_nodes);
 
+
         // fetch elemID -> nodeID
-        rank = 2;
-        dims.resize(rank);
-        dims[0] = num_elems;
-        dims[1] = num_nodes_per_elem;
         // ordering (row-major): elemID X nodeID
-        file.open_and_read_dataset(DSET_ELEM_TO_NODES, dims, eind.data());
+        file.open_and_read_dataset(DSET_ELEM_TO_NODES, eind.data());
 
         // fetch node coordinates
         vector<rtype> buff(dim * num_nodes, 0.);
-        rank = 2;
-        dims.resize(rank);
-        dims[0] = num_nodes;
-        dims[1] = dim;
-        file.open_and_read_dataset(DSET_NODE_COORD, dims, buff.data());
+        file.open_and_read_dataset(DSET_NODE_COORD, buff.data());
         // fill coordinates
         for (unsigned iNode = 0; iNode < num_nodes; iNode++) {
             coord[iNode].resize(dim);
@@ -155,11 +141,7 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         // fetch IFace -> elem and IFace -> node
         vector<int> buff_int;
         buff_int.resize(nIF * 6);
-        dims.resize(rank);
-        rank = 2;
-        dims[0] = nIF;
-        dims[1] = 6;
-        file.open_and_read_dataset(DSET_IFACE_DATA, dims, buff_int.data());
+        file.open_and_read_dataset(DSET_IFACE_DATA, buff_int.data());
         vector<unordered_set<int> > already_created(num_elems);
         for (unsigned i = 0; i < nIF; i++) {
             IF_to_elem[i].resize(6);
@@ -194,27 +176,19 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
             for (string BFG_name: BFGnames) {
                 // fetch the number of faces in the current boundary face group
                 string dset_name = "BFG_" + BFG_name + "_nBFace";
-                dataset = file.openDataSet(dset_name);
-                dataspace = dataset.getSpace();
-                dims[0] = 1;
-                rank = 1;
-                mspace = DataSpace(rank, dims);
                 int nBface_in_group = -1;
-                dataset.read(&nBface_in_group, PredType::NATIVE_INT, mspace, dataspace);
+                file.open_and_read_dataset(dset_name, &nBface_in_group);
                 nBF += nBface_in_group;
                 BFG_to_nBF[BFG_name] = nBface_in_group;
                 BFG_to_data[BFG_name].resize(nBface_in_group);
 
                 // fetch the boundary data for this boundary face group
+                std::vector<hsize_t> dims(2); // buffer to store an HDF5 dataset dimensions
                 dims[0] = nBface_in_group;
                 dims[1] = 3;
-                rank = 2;
-                mspace = DataSpace(rank, dims);
                 dset_name = "BFG_" + BFG_name + "_BFaceData";
-                dataset = file.openDataSet(dset_name);
-                dataspace = dataset.getSpace();
                 vector<int> buff_BC(dims[0] * dims[1], 0);
-                dataset.read(buff_BC.data(), PredType::NATIVE_INT, mspace, dataspace);
+                file.open_and_read_dataset(dset_name, buff_BC.data());
                 for (int i = 0; i < nBface_in_group; i++) {
                     BFG_to_data[BFG_name][i].resize(3);
                     BFG_to_data[BFG_name][i][0] = buff_BC[3 * i + 0];
@@ -233,7 +207,6 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
             nBFG = 0;
             nBF = 0;
         }
-    }
 }
 
 //inline void Mesh::partition_manually() {
