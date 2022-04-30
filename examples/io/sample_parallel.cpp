@@ -47,6 +47,9 @@ int main(int argc, char **argv)
         // must be called by all ranks. Name must be the same across all ranks, dimensions and data are only taken from the head rank
         file.create_and_write_dataset("multi", {2,3}, &arr[0][0]);
 
+        // create a dataset, that contains elements from each rank (e.g., number of points per rank)
+        file.create_and_write_dataset_gather_scalar("pointsPerRank", static_cast<double>(mpi_rank));
+        // writes {1,2,3,...,mpi_size-1}
 
         // next, each ranks writes its dataset into a large unified dataset. This is the most performant way to write large datasets
         std::vector dataset{1.,2.,3.};
@@ -111,6 +114,9 @@ int main(int argc, char **argv)
             std::cout<<"data = { {"<<arr[0][0]<<' '<<arr[0][1]<<' '<<arr[0][2]<<"} {"<<arr[1][0]<<' '<<arr[1][1]<<' '<<arr[1][2]<<"} }\n";
         }
 
+        // retrieve one value per rank from a dataset
+        double val = file.open_and_read_dataset_scatter_scalar<double>("pointsPerRank");
+        std::cout<<val<<'\n'; // val = mpi_rank
 
         // to retrieve the datasets written in parallel, some special functions are available:
 
@@ -141,7 +147,6 @@ int main(int argc, char **argv)
             auto [data, dims] = file.open_and_read_parallel_dataset<double>("parallel_multi_Dset");
             // data = {1,2,3,4,5,6}, dims = {2,3}
         }
-
     }
     std::cout<<"\n\n";
 }
