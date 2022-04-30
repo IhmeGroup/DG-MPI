@@ -59,7 +59,6 @@ echo "================================"
 
 
 cd ../../../
-
 $cmake -DGPU_BUILD=0 ..
 make -j"${nthreads}"
 

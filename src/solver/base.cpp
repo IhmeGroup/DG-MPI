@@ -6,7 +6,7 @@
 #include "solver/flux_functors_impl.h"
 #include "utils/utils.h"
 
-#include "HDF5Wrapper"
+#include "io/HDF5Wrapper.h"
 
 #include "common/defines.h"
 #include <iostream>
@@ -235,23 +235,16 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     bool parallel = true;
     HDF5File file(filename, H5F_ACC_RDONLY, parallel);
 
-    std::vector<hsize_t> dims;
-
-
     int num_elems_part = file.open_and_read_attribute<int>("Number of Elements per Partition");
     int nb = file.open_and_read_attribute<int>("Number of Basis Functions");
-    int ns = file.open_and_read_attribute<int>("Number of State Variables");;
-    rtype file_time = file.open_and_read_attribute<rtype>("Solver Final Time");;
+    int ns = file.open_and_read_attribute<int>("Number of State Variables");
+    rtype file_time = file.open_and_read_attribute<rtype>("Solver Final Time");
 
     // Row (LayoutRight) vs Column (LayoutLeft) Major Flag
     // Note: Row = True Column = False
-    bool stored_layout = file.open_and_read_attribute<bool>("Stored Layout");;
+    bool stored_layout = file.open_and_read_attribute_all<bool>("Stored Layout");
 
-    vector<rtype> buff(num_elems_part * nb * ns);
-    dims[0] = num_elems_part;
-    dims[1] = nb;
-    dims[2] = ns;
-    file.open_and_read_dataset_parallel("Solution Coefficients", dims, buff.data());
+    auto [buff, dims] = file.open_and_read_parallel_dataset<rtype>("Solution Coefficients");
 
     Kokkos::resize(Uc, num_elems_part, nb, ns);
     host_view_type_3D h_Uc = Kokkos::create_mirror_view(Uc);
@@ -278,7 +271,6 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
 
     Kokkos::deep_copy(Uc, h_Uc);
 
-    } // end loop over ranks
 }
 
 

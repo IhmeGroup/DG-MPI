@@ -1,4 +1,19 @@
 #add_library(mesh STATIC mesh.cpp)
+
+#target_include_directories(mesh
+#    PRIVATE ${HDF5_INCLUDE_DIRS}
+#)
+
+#target_link_libraries(mesh
+#    PRIVATE ${HDF5_LIBRARIES}
+#)
+
+#set_target_properties(mesh
+#    PROPERTIES
+#        ENABLE_EXPORTS ON)
+
+
+#add_library(mesh STATIC mesh.cpp)
 #target_include_directories(mesh
 #    PRIVATE ${METIS_INCLUDE_DIRS}
 #    PRIVATE ${HDF5_INCLUDE_DIRS})
