@@ -92,7 +92,7 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         // number of nodes per element
         file.open_and_read_dataset(DSET_NNODE_PER_ELEM, &num_nodes_per_elem);
         // number of nodes per faces
-        if (file.link_exists(DSET_NNODE_PER_FACE.c_str())) {
+        if (file.link_exists(DSET_NNODE_PER_FACE)) {
             file.open_and_read_dataset(DSET_NNODE_PER_FACE, &num_nodes_per_face);
         }
         else {
