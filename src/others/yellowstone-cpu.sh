@@ -14,6 +14,10 @@ module load gnu8/8.3.0
 #module load hdf5/1.10.5
 module load mpich/3.3.1
 
+if [[ -z "${cmake}" ]]; then
+    export cmake=`which cmake`
+fi
+
 set -e
 
 # move to the home dir
