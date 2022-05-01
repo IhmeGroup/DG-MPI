@@ -110,7 +110,7 @@ endif()
 # HDF5
 set(HDF5_INCLUDE_DIRS "${HDF5_ROOT}/include")
 
-set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5.${so}")
+set(HDF5_LIBRARIES "${HDF5_ROOT}/lib/libhdf5.a")
 if(NOT HDF5_LIBRARIES)
     message(FATAL_ERROR "The HDF5 library could not be found. Please provide -DHDF5_ROOT.")
 endif()
@@ -166,6 +166,7 @@ set(CMAKE_CUDA_FLAGS_DEBUG   "-g  -DDEBUG -O0 ${warning_flags}")
 set(CMAKE_C_FLAGS_RELEASE    "-O3 ${warning_flags}")
 set(CMAKE_CXX_FLAGS_RELEASE  "-O3 ${warning_flags}")
 set(CMAKE_CUDA_FLAGS_RELEASE "-O3 ${warning_flags}")
+set(CMAKE_EXE_LINKER_FLAGS "-lz")
 
 # set preprocessor definitions
 if(USE_DOUBLES)
