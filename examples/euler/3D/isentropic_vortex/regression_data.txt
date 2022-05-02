@@ -1,0 +1,17 @@
+This is a document that provides the most basic of regression for the 3D Isentropic Vortex case. The case ran has the following settings:
+
+	BCs = periodic
+	p = 3
+	mesh = cube_4.h5
+	final_time = 1.0
+	time_step = 1.0e-3
+	stepper  = RK4
+	conv_flux = HLLC
+
+L2 norm error 
+-----------------------------------------------
+norm_total_error(0)=6.154915692358897162662e-03
+norm_total_error(1)=1.599817407189921616983e-02
+norm_total_error(2)=1.387187478469797814970e-15
+norm_total_error(3)=1.501145890895294598977e-02
+norm_total_error(4)=2.617762094296333455490e-02
