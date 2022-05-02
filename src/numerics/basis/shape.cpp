@@ -154,7 +154,7 @@ void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
 template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
 typename ViewType3D_xphys_grad,
 typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_quadrilateral(const int np, const int gorder,
+void get_normals_on_face_quadrilateral(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
         ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member) {
 
@@ -193,8 +193,11 @@ void get_normals_on_face_quadrilateral(const int np, const int gorder,
         // }
 
         for (unsigned ip = 0; ip < np; ip++){
-            normals(iface, ip, 0) = xphys_grad(1, 0, ip);
-            normals(iface, ip, 1) = -1.0 * xphys_grad(0, 0, ip);
+            normals(iface, ip, 0) = sign * xphys_grad(1, 0, ip);
+            normals(iface, ip, 1) = -1.0 * sign * xphys_grad(0, 0, ip);
+
+            // normals(iface, ip, 0) = xphys_grad(1, 0, ip);
+            // normals(iface, ip, 1) = -1.0 * xphys_grad(0, 0, ip);
         }
         
 
@@ -479,7 +482,7 @@ void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
 template<typename ViewType2D, typename ViewType3D_gbasis_grad,
 typename ViewType3D_xphys_grad,
 typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_hexahedron(const int np, const int gorder,
+void get_normals_on_face_hexahedron(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
         ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member) {
 
@@ -524,6 +527,7 @@ void get_normals_on_face_hexahedron(const int np, const int gorder,
             }
             auto normals_ = Kokkos::subview(normals, iface, ip, Kokkos::ALL);
             Math::cross(x_xref1, x_xref2, normals_);
+            Math::cA_to_A(sign, normals_, member);
         }
 }
 
@@ -619,17 +623,17 @@ void Shape::get_local_nodes_on_face(const int face_id, const int gorder,
 template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
 typename ViewType3D_xphys_grad, typename ViewType3D_normals, 
 typename MemberType> KOKKOS_INLINE_FUNCTION
-void Shape::get_normals_on_face(const int np, const int gorder,
+void Shape::get_normals_on_face(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad,
         const ViewType2D face_coords, ViewType3D_xphys_grad xphys_grad,
         ViewType3D_normals normals, const MemberType& member) const {
 
     if (type == ShapeType::Quadrilateral) {
-        get_normals_on_face_quadrilateral(np, gorder, face_gbasis_ref_grad,
+        get_normals_on_face_quadrilateral(sign, np, gorder, face_gbasis_ref_grad,
             face_coords, xphys_grad, normals, member);
     }
     else if (type == ShapeType::Hexahedron){
-        get_normals_on_face_hexahedron(np, gorder, face_gbasis_ref_grad,
+        get_normals_on_face_hexahedron(sign, np, gorder, face_gbasis_ref_grad,
             face_coords, xphys_grad, normals, member);    
     } 
     else {

@@ -63,7 +63,7 @@ void get_local_nodes_on_face_quadrilateral(const int face_id, const int gorder,
 template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
 typename ViewType3D_xphys_grad,
 typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_quadrilateral(const int np, const int gorder,
+void get_normals_on_face_quadrilateral(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords,
         ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member);
 
@@ -121,7 +121,7 @@ void get_local_nodes_on_face_hexahedron(const int face_id, const int gorder,
 template<typename ViewType2D, typename ViewType3D_gbasis_grad, 
 typename ViewType3D_xphys_grad,
 typename ViewType3D_normals, typename MemberType> KOKKOS_INLINE_FUNCTION
-void get_normals_on_face_hexahedron(const int np, const int gorder,
+void get_normals_on_face_hexahedron(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad, const ViewType2D face_coords, 
         ViewType3D_xphys_grad xphys_grad, ViewType3D_normals normals, const MemberType& member);
 
@@ -171,7 +171,7 @@ public:
     typename ViewType3D_xphys_grad, 
     typename ViewType3D_normals, 
     typename MemberType> KOKKOS_INLINE_FUNCTION
-    void get_normals_on_face(const int np, const int gorder,
+    void get_normals_on_face(rtype sign, const int np, const int gorder,
         const ViewType3D_gbasis_grad face_gbasis_ref_grad,
         const ViewType2D face_coords, ViewType3D_xphys_grad xphys_grad,
         ViewType3D_normals normals, const MemberType& member) const;
