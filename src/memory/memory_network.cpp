@@ -97,7 +97,7 @@ inline void MemoryNetwork::communicate_face_solution(
     }
 
     // TODO: Figure out nonblocking communication!!!
-
+    // printf("after parallel_for loop for ghost face\n");
     /* Send data across ranks using MPI */
     // Loop over neighboring ranks
     for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
@@ -110,11 +110,39 @@ inline void MemoryNetwork::communicate_face_solution(
         // back.
         auto send_view = Kokkos::create_mirror_view_and_copy(
                 Kokkos::DefaultHostExecutionSpace{}, Uq_local);
+        // auto recv_view = Kokkos::create_mirror_view_and_copy(
+        //         Kokkos::DefaultHostExecutionSpace{}, Uq_ghost);
+        // Send ghost data
+        MPI_Request request;
+        MPI_Isend(send_view.data(), Uq_local.size(),
+                MPI_RTYPE, neighbor_rank, rank, comm, &request);
+        // Receive neighbor data
+        // MPI_Recv(recv_view.data(), Uq_ghost.size(),
+        //         MPI_RTYPE, neighbor_rank, neighbor_rank, comm,
+        //         MPI_STATUS_IGNORE);
+        // Send back to device
+        // Kokkos::deep_copy(Uq_ghost, recv_view);
+    }
+
+   // TODO: Figure out nonblocking communication!!!
+    // printf("after parallel_for loop for ghost face\n");
+    /* Send data across ranks using MPI */
+    // Loop over neighboring ranks
+    for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
+            mesh.num_neighbor_ranks; neighbor_rank_idx++) {
+        auto Uq_local = Uq_local_array[neighbor_rank_idx];
+        auto Uq_ghost = Uq_ghost_array[neighbor_rank_idx];
+        // Get rank of neighboring rank
+        auto neighbor_rank = mesh.h_neighbor_ranks(neighbor_rank_idx);
+        // TODO: Figure out CUDA-aware MPI. For now, just copy to the host and
+        // back.
+        // auto send_view = Kokkos::create_mirror_view_and_copy(
+        //         Kokkos::DefaultHostExecutionSpace{}, Uq_local);
         auto recv_view = Kokkos::create_mirror_view_and_copy(
                 Kokkos::DefaultHostExecutionSpace{}, Uq_ghost);
         // Send ghost data
-        MPI_Send(send_view.data(), Uq_local.size(),
-                MPI_RTYPE, neighbor_rank, rank, comm);
+        // MPI_Send(send_view.data(), Uq_local.size(),
+        //         MPI_RTYPE, neighbor_rank, rank, comm);
         // Receive neighbor data
         MPI_Recv(recv_view.data(), Uq_ghost.size(),
                 MPI_RTYPE, neighbor_rank, neighbor_rank, comm,
@@ -122,6 +150,8 @@ inline void MemoryNetwork::communicate_face_solution(
         // Send back to device
         Kokkos::deep_copy(Uq_ghost, recv_view);
     }
+
+    barrier();
 
     /* Copy data from neighbors to local data structures */
     for (unsigned neighbor_rank_idx = 0; neighbor_rank_idx <
@@ -156,6 +186,7 @@ inline void MemoryNetwork::communicate_face_solution(
             }
         });
     }
+    // printf("after copy\n");
 }
 
 template <class T>
