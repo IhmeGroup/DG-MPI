@@ -96,6 +96,9 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     printf("###################################################################\n");
     
     Kokkos::fence();
+
+    // allocate views for face helpers
+    solver.allocate_face_residual_views();
     // end timing scope
     timer.end_timer();
     // ... we actually do the DG solve here
