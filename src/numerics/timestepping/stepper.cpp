@@ -8,8 +8,19 @@ void StepperBase<dim>::take_time_step(Solver<dim>& solver){
 }
 
 template<unsigned dim>
+void StepperBase<dim>::allocate_helpers(Solver<dim>& solver){
+    throw InputException("Not Implemented Error");
+}
+
+template<unsigned dim>
+void FE<dim>::allocate_helpers(Solver<dim>& solver){
+    Kokkos::resize(dU, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
+}
+
+template<unsigned dim>
 void FE<dim>::take_time_step(Solver<dim>& solver){
-    // auto dt = this->get_time_step();
+
     auto iMM_elems = solver.vol_helpers.iMM_elems;
     solver.get_residual();
 
@@ -29,21 +40,27 @@ void FE<dim>::take_time_step(Solver<dim>& solver){
     // solver.network.print_3d_view(h_res);
     // solver.network.print_3d_view(h_dU);
 
-    // //Update solution state
-    // printf("BEFORE SOLUTION UPDATE\n");
-    // Kokkos::deep_copy(solver.h_Uc, solver.Uc);
-    // solver.network.print_3d_view(solver.h_Uc);
-
+    //Update solution state
     const unsigned num_entries = dU.extent(0) * dU.extent(1) * dU.extent(2);
     Math::cApB_to_B(num_entries, 1., dU.data(), solver.Uc.data());
     solver.time += dt;
 
-    // solver.network.barrier();
-    // printf("AFTER SOLUTION UPDATE\n");
-    // Kokkos::deep_copy(solver.h_Uc, solver.Uc);
-    // solver.network.print_3d_view(solver.h_Uc);
     // TODO: Add limiter call here? Or somewhere else?
 
+}
+
+template<unsigned dim>
+void RK4<dim>::allocate_helpers(Solver<dim>& solver){
+    Kokkos::resize(dU1, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
+    Kokkos::resize(dU2, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
+    Kokkos::resize(dU3, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
+    Kokkos::resize(dU4, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
+    Kokkos::resize(Uhold, solver.res.extent(0),
+        solver.res.extent(1), solver.res.extent(2));
 }
 
 template<unsigned dim>
@@ -53,26 +70,7 @@ void RK4<dim>::take_time_step(Solver<dim>& solver){
     auto iMM_elems = solver.vol_helpers.iMM_elems;
     unsigned num_entries;
 
-    // TODO: Figure out a better way to do this? Maybe just implement
-    // the low storage version of RK4...
-    // allocate stage memory (This is likely not memory efficient...)
-    view_type_3D dU1("dU1", solver.res.extent(0), 
-        solver.res.extent(1), solver.res.extent(2));
-
-    view_type_3D dU2("dU2", solver.res.extent(0), 
-        solver.res.extent(1), solver.res.extent(2));
-    
-    view_type_3D dU3("dU3", solver.res.extent(0),
-        solver.res.extent(1), solver.res.extent(2));
-    
-    view_type_3D dU4("dU4", solver.res.extent(0), 
-        solver.res.extent(1), solver.res.extent(2));
-
-    view_type_3D Uhold("Uhold", solver.res.extent(0),
-        solver.res.extent(1), solver.res.extent(2));
-
     Kokkos::deep_copy(Uhold, solver.Uc); // put the state coeffs in Utemp
-
     /* ---------------------------------------------- */
     /*                  First stage                   */
     /* ---------------------------------------------- */

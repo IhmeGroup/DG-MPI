@@ -20,7 +20,9 @@ public:
     virtual inline rtype get_time_step(){return dt;}
     virtual inline rtype get_tfinal(){return tfinal;}
     virtual void take_time_step(Solver<dim>& solver);
+    virtual void allocate_helpers(Solver<dim>& solver);
 
+    view_type_3D dU;
 
 protected:
     rtype dt;
@@ -37,6 +39,9 @@ public:
     virtual inline rtype get_time_step() override {return dt;}
     virtual inline rtype get_tfinal() override {return tfinal;}
     virtual void take_time_step(Solver<dim>& solver) override;
+    virtual inline void allocate_helpers(Solver<dim>& solver) override;
+
+    view_type_3D dU;
 
 protected:
     rtype dt;
@@ -51,6 +56,13 @@ public:
     virtual inline rtype get_time_step() override {return dt;}
     virtual inline rtype get_tfinal() override {return tfinal;}
     virtual void take_time_step(Solver<dim>& solver) override;
+    virtual inline void allocate_helpers(Solver<dim>& solver) override;
+
+    view_type_3D dU1;
+    view_type_3D dU2;
+    view_type_3D dU3;
+    view_type_3D dU4;
+    view_type_3D Uhold;
 
 protected:
     rtype dt;
