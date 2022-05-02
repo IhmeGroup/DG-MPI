@@ -2,6 +2,8 @@
 #include "solver/base.h"
 #include "solver/tools.h"
 
+#include "utils/utils.h"
+
 template<unsigned dim>
 void StepperBase<dim>::take_time_step(Solver<dim>& solver){
     throw InputException("Not Implemented Error");
@@ -24,11 +26,12 @@ void FE<dim>::take_time_step(Solver<dim>& solver){
     auto iMM_elems = solver.vol_helpers.iMM_elems;
     solver.get_residual();
 
+    Utils::Timer imm_timer("iMM Multiply Takes ");
     // Multiply by inverse mass matrix
     view_type_3D dU("dU", solver.res.extent(0), 
         solver.res.extent(1), solver.res.extent(2));
     SolverTools::mult_inv_mass_matrix(dt, iMM_elems, solver.res, dU);
-   
+    imm_timer.end_timer();
     // solver.network.print_3d_view(iMM_elems);
     // solver.network.print_3d_view(dU);
     // printf("dt = %f\n", dt);
@@ -41,9 +44,11 @@ void FE<dim>::take_time_step(Solver<dim>& solver){
     // solver.network.print_3d_view(h_dU);
 
     //Update solution state
+    Utils::Timer update_timer("Sol Update Takes ");
     const unsigned num_entries = dU.extent(0) * dU.extent(1) * dU.extent(2);
     Math::cApB_to_B(num_entries, 1., dU.data(), solver.Uc.data());
     solver.time += dt;
+    update_timer.end_timer();
 
     // TODO: Add limiter call here? Or somewhere else?
 

@@ -460,15 +460,18 @@ void Solver<dim>::get_residual()
     Math::fill(ndof, res.data(), 0.0);
 
     // network.print_3d_view(res);
+    Utils::Timer elem_timer("Element Residual Takes ");
     get_element_residuals();
     Kokkos::fence(); // not sure if needed
-
+    elem_timer.end_timer();
     // std::cout << "--------  VOLUME RESIDUAL --------" << std::endl;
     // copy_from_device_to_host();
     // network.print_3d_view(h_res);
 
+    Utils::Timer face_timer("Face Residual Takes ");
     get_interior_face_residuals();
     Kokkos::fence();
+    face_timer.end_timer();
     // std::cout << "--------  FACE RESIDUAL --------" << std::endl;
     // copy_from_device_to_host();
     // network.print_3d_view(h_res);
