@@ -77,6 +77,8 @@ inline void Mesh::finalize() {
 }
 
 inline void Mesh::read_mesh(const string &mesh_file_name) {
+        // todo: currently, each rank opens the file separately. Better to
+        // only do this on the head rank
         HDF5File file(mesh_file_name, H5F_ACC_RDONLY);
 
         // number of spatial dimensions
