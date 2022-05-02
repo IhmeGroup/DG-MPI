@@ -430,36 +430,39 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         scratch_view_3D_rtype xphys_grad(member.team_scratch( 1 ),
             mesh.dim, (mesh.dim - 1), nqf);
 
+        rtype sign;
         // TODO: Currently this doesn't work for multi-rank cases
         // To fix this we can set up a view that contains the face coordinates
         // for each interior face. This would remove the need for elem_coords
         // and directly store face_coords for each iface
-        if (member.team_rank() == 0 ) {
-            unsigned elem_ID;
-            unsigned ref_face_ID;
-            // If this rank has info on the left of the face, take the nodes
-            // from the left element
-            if (mesh.interior_faces(iface, 0) == network.rank) {
-                elem_ID = elemL;
-                ref_face_ID = face_ID_L;
-            // If this rank has info on the right of the face, take the nodes
-            // from the right element
-            } else if (mesh.interior_faces(iface, 4) == network.rank) {
-                elem_ID = elemR;
-                ref_face_ID = face_ID_R;
-            // This branch should, hopefully, never happen
-            } else {
-                printf("Nooooo! Bad things happened!\n");
-                printf("(this face not found on this rank when precomputing normals)\n");
-            }
-            printf("%u %u\n", elem_ID, ref_face_ID);
-            MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
-            // populate face_node_idx which is filled with reference node id wrt
-            // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
-            mesh.gbasis.shape.get_local_nodes_on_face(ref_face_ID, gorder, face_node_idx);
-            // extract the face coordinates from the mesh coordinates
-            BasisTools::extract_node_coordinates(mesh.dim, elem_coords, face_node_idx, face_coord);
+        // if (member.team_rank() == 0 ) {
+        unsigned elem_ID;
+        unsigned ref_face_ID;
+        // If this rank has info on the left of the face, take the nodes
+        // from the left element
+        if (mesh.interior_faces(iface, 0) == network.rank) {
+            elem_ID = elemL;
+            ref_face_ID = face_ID_L;
+            sign = 1.0;
+        // If this rank has info on the right of the face, take the nodes
+        // from the right element
+        } else if (mesh.interior_faces(iface, 4) == network.rank) {
+            elem_ID = elemR;
+            ref_face_ID = face_ID_R;
+            sign = -1.0;
+        // This branch should, hopefully, never happen
+        } else {
+            printf("Nooooo! Bad things happened!\n");
+            printf("(this face not found on this rank when precomputing normals)\n");
         }
+        // printf("%u %u\n", elem_ID, ref_face_ID);
+        MeshTools::elem_coords_from_elem_ID(mesh, elem_ID, elem_coords, member);
+        // populate face_node_idx which is filled with reference node id wrt
+        // the reference face ID number (Ex: 0-3 for quadrilaterals) and left element ID
+        mesh.gbasis.shape.get_local_nodes_on_face(ref_face_ID, gorder, face_node_idx);
+        // extract the face coordinates from the mesh coordinates
+        BasisTools::extract_node_coordinates(mesh.dim, elem_coords, face_node_idx, face_coord);
+    // }
         member.team_barrier();
 
 
@@ -475,13 +478,23 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         // }
 
         // get the normals for each iface
-        mesh.gbasis.shape.get_normals_on_face((int)nqf, (int)gorder,
+        mesh.gbasis.shape.get_normals_on_face(sign, (int)nqf, (int)gorder,
             face_gbasis_ref_grad, face_coord, xphys_grad, normals, member);
 
+        // int global_face_ID = mesh.get_global_iface_ID(iface);
+        // if (global_face_ID == 5){
+            // printf("face left rank = %i\n", mesh.interior_faces(iface, 0));
+            // printf("face right rank = %i\n", mesh.interior_faces(iface, 4));
+            // printf("sign=%f\n", sign);
         // for (unsigned i = 0; i < normals.extent(1); i++){
         //     for (unsigned j = 0; j < normals.extent(2); j++){
-        //         printf("normals(%i, %i, %i)=%f\n", iface, i, j, normals(iface, i, j));
+        //         if ( mesh.interior_faces(iface, 0) != mesh.interior_faces(iface, 4)){
+        //         printf("Rank=%i, LRank=%i, RRank=%i, sign=%f, normals(%i, %i, %i)=%f\n", 
+        //             network.rank, mesh.interior_faces(iface, 0), mesh.interior_faces(iface, 4), 
+        //             sign, global_face_ID, i, j, normals(iface, i, j));
+        //         }
         //     }
+        // }
         // }
 
     });

@@ -63,6 +63,7 @@ Solver<dim>::Solver(const toml::value &input_file, Mesh& mesh, MemoryNetwork& ne
     Kokkos::resize(res, mesh.num_elems_part, basis.get_num_basis_coeffs(), physics.get_NS());
     h_res = Kokkos::create_mirror_view(res);
 
+    stepper->allocate_helpers(*this);
 }
 
 template<unsigned dim>
@@ -92,6 +93,9 @@ void Solver<dim>::precompute_matrix_helpers() {
     Kokkos::fence();
     printf("##### Completed #####\n");
 
+    // host_view_type_3D h_iMM_elems = Kokkos::create_mirror_view(vol_helpers.iMM_elems);
+    // Kokkos::deep_copy(h_iMM_elems, vol_helpers.iMM_elems);
+    // network.print_3d_view(h_iMM_elems);
     // ---------------------------------------------------------------------------------------
     //                          Interior Face Helpers
     // ---------------------------------------------------------------------------------------
@@ -432,6 +436,8 @@ void Solver<dim>::solve(){
     const unsigned num_iterations = (int)(stepper->get_tfinal() / stepper->get_time_step());
     std::cout<<"Number of iterations = " << num_iterations << std::endl;
 
+    Utils::Timer timer("Time to Solution");
+
     unsigned itime = 0;
     while (itime < num_iterations) {
         // advance the time step
@@ -439,6 +445,7 @@ void Solver<dim>::solve(){
         std::cout << "Time = " << time << std::endl;
         itime++;
     }
+    timer.end_timer();
     copy_from_device_to_host();
     network.print_3d_view(h_Uc);
 
@@ -572,31 +579,31 @@ void Solver<dim>::get_interior_face_residuals(){
 
 
     // allocate state evaluated at quadrature points
-    view_type_3D Uq("Uq", mesh.num_elems_part,
-        NFACE * nqf, physics.get_NS());
+    // view_type_3D Uq("Uq", mesh.num_elems_part,
+    //     NFACE * nqf, physics.get_NS());
 
-    // allocate flux evaluated at quadrature points
-    view_type_3D Fq_elem("Fq_elem", mesh.num_elems_part,
-        NFACE * nqf, physics.get_NS());
+    // // allocate flux evaluated at quadrature points
+    // view_type_3D Fq_elem("Fq_elem", mesh.num_elems_part,
+    //     NFACE * nqf, physics.get_NS());
 
-    // allocate left state evaluated at quadrature points
-    view_type_3D UqL("UqL", mesh.num_ifaces_part,
-        nqf, physics.get_NS());
+    // // allocate left state evaluated at quadrature points
+    // view_type_3D UqL("UqL", mesh.num_ifaces_part,
+    //     nqf, physics.get_NS());
 
-    // allocate right state evaluated at quadrature points
-    view_type_3D UqR("UqR", mesh.num_ifaces_part,
-        nqf, physics.get_NS());
+    // // allocate right state evaluated at quadrature points
+    // view_type_3D UqR("UqR", mesh.num_ifaces_part,
+    //     nqf, physics.get_NS());
 
-    // allocate left gradient of the state evaluated at quad points
-    view_type_4D gUqL("gUqL", mesh.num_ifaces_part,
-        nqf, physics.get_NS(), dim);
+    // // allocate left gradient of the state evaluated at quad points
+    // view_type_4D gUqL("gUqL", mesh.num_ifaces_part,
+    //     nqf, physics.get_NS(), dim);
 
-    // allocate right gradient of the state evaluated at quad points
-    view_type_4D gUqR("gUqR", mesh.num_ifaces_part,
-        nqf, physics.get_NS(), dim);
+    // // allocate right gradient of the state evaluated at quad points
+    // view_type_4D gUqR("gUqR", mesh.num_ifaces_part,
+    //     nqf, physics.get_NS(), dim);
 
-    // allocate flux evaluated at quadrature points for each face
-    view_type_3D Fq("Fq", mesh.num_ifaces_part, nqf, physics.get_NS());
+    // // allocate flux evaluated at quadrature points for each face
+    // view_type_3D Fq("Fq", mesh.num_ifaces_part, nqf, physics.get_NS());
 
     Kokkos::fence();
     
@@ -604,11 +611,12 @@ void Solver<dim>::get_interior_face_residuals(){
     VolumeHelpers::evaluate_state(mesh.num_elems_part,
         face_basis_val, Uc, Uq);
     Kokkos::fence();
+    // printf("after face state eval\n");
 
     // We need to construct the left / right states prior to passing data
     // between the ranks
     construct_face_states(Uq, UqL, UqR);
-
+    // printf("after face construction\n");
     // Face local and ghost states for network 
     auto Uq_local = new view_type_3D[mesh.num_neighbor_ranks];
     auto Uq_ghost = new view_type_3D[mesh.num_neighbor_ranks];
@@ -621,7 +629,9 @@ void Solver<dim>::get_interior_face_residuals(){
     network.barrier(); // TODO: Determine if needed
     
     // Pass the evaluated face state data between ranks
+    // printf("before face comms\n");
     network.communicate_face_solution(UqL, UqR, Uq_local, Uq_ghost, mesh);
+    // printf("after face comms\n");
 
     // Cleanup after comms
     network.barrier(); // TODO: Determine if needed
@@ -654,9 +664,11 @@ void Solver<dim>::get_interior_face_residuals(){
 
     // build fluxes, this overwrites in place the vUq and vgUq
     Kokkos::parallel_for("interior face fluxes", policy, functor);
+    // printf("after face function\n");
 
     // construct the fluxes per element with correct signs
     construct_flux_state(Fq, Fq_elem);
+    // printf("after face construction\n");
 
 
     // printf("Fq\n");
@@ -680,6 +692,7 @@ void Solver<dim>::get_interior_face_residuals(){
     SolverTools::calculate_face_flux_integral(mesh.num_elems_part, 
         face_basis_val, Fq_elem, res);
 
+    // printf("after face residuals\n");
     // // Copy back to host (TODO: Remove after debugging)
     // {
     // printf("res\n");
@@ -690,5 +703,41 @@ void Solver<dim>::get_interior_face_residuals(){
 
 }
 
+template<unsigned dim>
+void Solver<dim>::allocate_face_residual_views(){
+
+    // unpack
+    const unsigned NFACE = (unsigned)iface_helpers.basis_val.extent(0);
+    const unsigned nqf = (unsigned)iface_helpers.quad_pts.extent(1);
+    const unsigned nb = (unsigned)iface_helpers.basis_val.extent(2);
+
+    // allocate state evaluated at quadrature points
+    Kokkos::resize(Uq, mesh.num_elems_part,
+        NFACE * nqf, physics.get_NS());
+
+    // allocate flux evaluated at quadrature points
+    Kokkos::resize(Fq_elem, mesh.num_elems_part,
+        NFACE * nqf, physics.get_NS());
+
+    // allocate left state evaluated at quadrature points
+    Kokkos::resize(UqL, mesh.num_ifaces_part,
+        nqf, physics.get_NS());
+
+    // allocate right state evaluated at quadrature points
+    Kokkos::resize(UqR, mesh.num_ifaces_part,
+        nqf, physics.get_NS());
+
+    // allocate left gradient of the state evaluated at quad points
+    Kokkos::resize(gUqL, mesh.num_ifaces_part,
+        nqf, physics.get_NS(), dim);
+
+    // allocate right gradient of the state evaluated at quad points
+    Kokkos::resize(gUqR, mesh.num_ifaces_part,
+        nqf, physics.get_NS(), dim);
+
+    // allocate flux evaluated at quadrature points for each face
+    Kokkos::resize(Fq, mesh.num_ifaces_part, nqf, physics.get_NS());
+
+}
 template class Solver<2>;
 template class Solver<3>;

@@ -128,6 +128,7 @@ void mult_inv_mass_matrix(const rtype dt, const ViewType_iMM iMM_elems,
     Kokkos::parallel_for("mult inv mass matrix", Kokkos::TeamPolicy<>( (int)res.extent(0),
         Kokkos::AUTO), KOKKOS_LAMBDA(const Kokkos::TeamPolicy<>::member_type& member){
         const int elem_ID = member.league_rank();
+
         auto iMM = Kokkos::subview(iMM_elems, elem_ID, Kokkos::ALL(), Kokkos::ALL());
         auto res_elem = Kokkos::subview(res, elem_ID, Kokkos::ALL(), Kokkos::ALL());
         auto dU_elem = Kokkos::subview(dU, elem_ID, Kokkos::ALL(), Kokkos::ALL());

@@ -214,13 +214,12 @@ void InteriorFacesFluxFunctor<dim>::operator()(
     // eq_input.hL = volL / face_area; // characteristic length of the left element
     // eq_input.hR = volR / face_area; // characteristic length of the right element
 
-    // TODO: CALL / WRITE THE FLUX FUNCTION
     // call the flux function
     // this will overwrite gUL and gUR by the appropriate fluxes
     physics.get_conv_flux_numerical(UL, UR, N, F, gUL, gUR);
     for (unsigned is = 0; is < NS; is++){
         // fill the iface view and multiply by quad_wts in prep for integration
-        // printf("F(%i)=%f\n", is, F[is]); // before multiplying by quad_wts
+        // printf("F(%i, %i, %i)=%f\n", iface, iq, is, F[is]); // before multiplying by quad_wts
         Fq(iface, iq, is) = F[is] * quad_wts(iq);
     }
 }

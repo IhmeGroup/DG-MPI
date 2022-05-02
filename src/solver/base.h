@@ -40,6 +40,7 @@ class Solver {
 
         void get_interior_face_residuals();
         
+        void allocate_face_residual_views();
 
     public:
         // Solution coefficients
@@ -50,6 +51,15 @@ class Solver {
         // Residuals
         Kokkos::View<rtype***> res;
         host_view_type_3D h_res;
+
+        // Interior face residual helper views
+        view_type_3D Uq;
+        view_type_3D Fq_elem;
+        view_type_3D UqL;
+        view_type_3D UqR;
+        view_type_4D gUqL;
+        view_type_4D gUqR;
+        view_type_3D Fq;
 
 
         // // Solution evaluated at the face quadrature points. This has shape
