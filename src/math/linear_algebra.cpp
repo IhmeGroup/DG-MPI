@@ -55,6 +55,11 @@ namespace Math {
         SerialScale::invoke(c, A);
     }
 
+    template<typename MemberType, typename ScalarType, typename ViewType> KOKKOS_INLINE_FUNCTION
+    void cA_to_A(const ScalarType c, ViewType A, const MemberType& member){
+        TeamScale<MemberType>::invoke(member, c, A);
+    }
+
 
     inline
     void fill(const int num_entries, rtype* A, rtype c){

@@ -94,6 +94,10 @@ namespace Math {
     template<typename ScalarType, typename ViewType> KOKKOS_INLINE_FUNCTION
     void cA_to_A(const ScalarType c, ViewType A);
     
+    /* Team scaling of matrix A by constant c */
+    template<typename MemberType, typename ScalarType, typename ViewType> KOKKOS_INLINE_FUNCTION
+    void cA_to_A(const ScalarType c, ViewType A, const MemberType& member);
+    
     /*
     Fills a view with the prescribed value
 
