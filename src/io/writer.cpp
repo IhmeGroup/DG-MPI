@@ -27,7 +27,8 @@ Writer::Writer(Mesh& mesh, MemoryNetwork& network, host_view_type_3D h_Uc,
     file.create_and_write_attribute("Number of Basis Functions", nb);
     file.create_and_write_attribute("Number of State Variables", ns);
     file.create_and_write_attribute("Solver Final Time", time);
-    file.create_and_write_attribute("Number of Elements per Partition", mesh.num_elems_part);
+    
+    file.create_and_write_dataset_gather_scalar("Number of Elements per Partition", mesh.num_elems_part);
 
     bool stored_layout =
         std::is_same_v<decltype(h_Uc)::array_layout,Kokkos::LayoutRight>;
