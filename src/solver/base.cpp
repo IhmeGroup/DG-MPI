@@ -235,7 +235,8 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     bool parallel = true;
     HDF5File file(filename, H5F_ACC_RDONLY, parallel);
 
-    int num_elems_part = file.open_and_read_attribute_all<int>("Number of Elements per Partition");
+    int num_elems_part = file.open_and_read_dataset_scatter_scalar<int>("Number of Elements per Partition");
+
     int nb = file.open_and_read_attribute_all<int>("Number of Basis Functions");
     int ns = file.open_and_read_attribute_all<int>("Number of State Variables");
     rtype file_time = file.open_and_read_attribute_all<rtype>("Solver Final Time");
