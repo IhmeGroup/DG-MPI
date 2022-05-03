@@ -49,7 +49,7 @@ class HDF5File
     static constexpr int head_rank = 0;
 
     public:
-        HDF5File() : file(-1), parallel(false), comm(MPI_COMM_WORLD), info(MPI_INFO_NULL), mpi_size(1), mpi_rank(0) {}
+        HDF5File() : file(-1), parallel(false), comm(MPI_COMM_WORLD), info(MPI_INFO_NULL), mpi_size(1), mpi_rank(head_rank) {}
         HDF5File(const HDF5File&) = delete;
         HDF5File(HDF5File&& rhs) :
             file(rhs.file), parallel(rhs.parallel), comm(rhs.comm), info(rhs.info), mpi_size(rhs.mpi_size), mpi_rank(rhs.mpi_rank)
@@ -72,7 +72,7 @@ class HDF5File
         }
         HDF5File& operator=(const HDF5File& rhs) = delete;
         HDF5File(const std::string& name, unsigned mode, bool par=false, MPI_Comm comm=MPI_COMM_WORLD, MPI_Info info=MPI_INFO_NULL)
-            : file(-1), parallel(par), mpi_size(1), mpi_rank(0)
+            : file(-1), parallel(par), mpi_size(1), mpi_rank(head_rank)
         {
             open(name, mode, par, comm, info);
         }
@@ -95,7 +95,7 @@ class HDF5File
             else
             {
                 mpi_size = 1;
-                mpi_rank = 0;
+                mpi_rank = head_rank;
             }
 
             hid_t plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -949,6 +949,21 @@ class HDF5File
             return std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
         }
 
+        // must be called by all ranks. returns a list of all rank local sizes 
+        auto read_all_local_sizes_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        {
+            std::vector<hsize_t> sizes(mpi_size);
+            auto localSize = read_local_size_of_parallel_dataset(const std::string& name);
+            sizes[mpi_rank] = localSize;
+            if (parallel)
+            {
+                MPI_Allgather(&localSize, 1, MPITYPE<hsize_t>, sizes.data(), 1, MPITYPE<hsize_t>, comm);
+            }
+            return sizes;
+        }
+
+
+
         // must be called by all ranks. returns the total number of elements in the parallel datasets across all local data blocks
         auto read_total_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
@@ -979,7 +994,9 @@ class HDF5File
             return offset;
         }
 
-
+        int rank()     const { return mpi_rank; }
+        int mpi_size() const { return mpi_size; }
+        MPIComm comm() const { return comm; }
 
     private:
         hid_t file;
