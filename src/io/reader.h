@@ -46,7 +46,7 @@ class Reader
         num_nodes          = file.open_and_read_attribute_all<unsigned>("Number of Nodes");
         num_nodes_per_elem = file.open_and_read_attribute_all<unsigned>("Number of Nodes Per Element");
         nb                 = file.open_and_read_attribute_all<unsigned>("Number of Basis Functions");
-        ns                 = file.open_and_read_attribute_all<int>("Number of State Variables");
+        ns                 = file.open_and_read_attribute_all<unsigned>("Number of State Variables");
         time               = file.open_and_read_attribute_all<double>("Solver Final Time");
         stored_layout      = file.open_and_read_attribute_all<bool>("Stored Layout");
 
@@ -63,7 +63,34 @@ class Reader
 
         if (serialize)
         {
-            // todo: sorting
+            // todo: better do sorting in-place to safe memory?
+            std::vector<double> node_coords_copy(node_coords.data);
+            std::vector<unsigned> local_to_global_node_IDs_copy(local_to_global_node_IDs.data);
+            std::vector<unsigned> elem_to_node_IDs_copy(elem_to_node_IDs.data);
+            std::vector<double> Uc_copy(Uc.data);
+
+            auto node_coords_dim = node_coords.dimensions[1];
+            auto elem_to_node_IDs_dim = elem_to_node_IDs.dimensions[1];
+            auto Uc_dim = Uc.dimensions[1]*Uc.dimensions[2];
+
+            for (std::size_t i=0; i!=local_to_global_elem_IDs.data.size(); ++i)
+            {
+                auto index = local_to_global_elem_IDs.data[i];
+
+                local_to_global_elem_IDs.data[i] = i;
+
+                local_to_global_node_IDs.data[i] = local_to_global_node_IDs_copy[index];
+
+                for(std::size_t k=0; k!=node_coords_dim; ++k)
+                    node_coords.data[i*node_coords_dim] = node_coords_copy[index*node_coords_dim + k];
+
+                for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
+                    elem_to_node_IDs.data[i*elem_to_node_IDs_dim] = elem_to_node_IDs_copy[index*elem_to_node_IDs_dim + k];
+
+                // todo: what about layout?
+                for(std::size_t k=0; k!=Uc_dim; ++k)
+                    Uc.data[i*Uc_dim] = Uc_copy[index*Uc_dim + k];
+            }
         }
     }
 
