@@ -63,6 +63,8 @@ class Reader
 
         if (serialize)
         {
+            num_ranks = 1;
+
             // todo: better do sorting in-place to safe memory?
             std::vector<double> node_coords_copy(node_coords.data);
             std::vector<unsigned> local_to_global_node_IDs_copy(local_to_global_node_IDs.data);
@@ -79,17 +81,18 @@ class Reader
 
                 local_to_global_elem_IDs.data[i] = i;
 
-                local_to_global_node_IDs.data[i] = local_to_global_node_IDs_copy[index];
+                // todo: right way around?
+                local_to_global_node_IDs.data[index] = local_to_global_node_IDs_copy[i];
 
                 for(std::size_t k=0; k!=node_coords_dim; ++k)
-                    node_coords.data[i*node_coords_dim] = node_coords_copy[index*node_coords_dim + k];
+                    node_coords.data[index*node_coords_dim] = node_coords_copy[i*node_coords_dim + k];
 
                 for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
-                    elem_to_node_IDs.data[i*elem_to_node_IDs_dim] = elem_to_node_IDs_copy[index*elem_to_node_IDs_dim + k];
+                    elem_to_node_IDs.data[index*elem_to_node_IDs_dim] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
 
                 // todo: what about layout?
                 for(std::size_t k=0; k!=Uc_dim; ++k)
-                    Uc.data[i*Uc_dim] = Uc_copy[index*Uc_dim + k];
+                    Uc.data[index*Uc_dim] = Uc_copy[i*Uc_dim + k];
             }
         }
     }
