@@ -326,59 +326,6 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     } // end loop over ranks
 }
 
-
-// TODO: This function works but is likely not the best way to do this 
-// because the various if statement may lead to some thread divergence.
-// A better way to do this would be to have a partitioned element to face ID.
-// You would then loop over elements and nfaces_per_elem and get the local
-// faceid and populate accordingly
-template<unsigned dim>
-void Solver<dim>::construct_face_states(const view_type_3D Uq, 
-    view_type_3D UqL, view_type_3D UqR){
-
-    const unsigned num_ifaces_part = mesh.num_ifaces_part;
-    const unsigned nqf = UqL.extent(1);
-    auto quad_idx_L = iface_helpers.quad_idx_L;
-    auto quad_idx_R = iface_helpers.quad_idx_R;
-    const unsigned NUM_STATE_VARS = physics.get_NS();
-
-    const unsigned rank = network.rank;
-    auto mesh_local = mesh;
-    Kokkos::parallel_for("construct face states", 
-        Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0},
-        {num_ifaces_part, nqf}), KOKKOS_CLASS_LAMBDA(const int& iface,
-        const int& iq){
-
-        const unsigned rankL = mesh_local.get_rankL(iface);
-        const unsigned rankR = mesh_local.get_rankR(iface);
-
-        // printf("quad_idx_L(0, 0)=%i\n", quad_idx_L(0, 0));
-        // printf("quad_idx_L(0, 1)=%i\n", quad_idx_L(0, 1));
-
-        if (rank == rankL) {
-            const unsigned elemL_global = mesh_local.get_elemL(iface);
-            const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
-            const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
-            int startL = face_ID_L * nqf;
-
-            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
-                UqL(iface, iq, is) = Uq(elemL, startL + quad_idx_L(iface, iq), is);
-            }
-        }
-
-        if (rank == rankR){
-            const unsigned elemR_global = mesh_local.get_elemR(iface);
-            const unsigned face_ID_R = mesh_local.get_ref_face_idR(iface);
-            const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
-            int startR = face_ID_R * nqf;
-
-            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
-                UqR(iface, iq, is) = Uq(elemR, startR + quad_idx_R(iface, iq), is);
-            }
-        }
-    });
-}
-
 template<unsigned dim>
 void Solver<dim>::construct_flux_state(const view_type_3D Fq_face, 
     view_type_3D Fq_elem){
@@ -401,9 +348,9 @@ void Solver<dim>::construct_flux_state(const view_type_3D Fq_face,
         const unsigned rankR = mesh_local.get_rankR(iface);
 
         if (rank == rankL) {
-            const unsigned elemL_global = mesh_local.get_elemL(iface);
+            const unsigned elemL = mesh_local.get_elemL(iface);
             const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
-            const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
+            // const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
             int startL = face_ID_L * nqf;
 
             for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
@@ -413,9 +360,9 @@ void Solver<dim>::construct_flux_state(const view_type_3D Fq_face,
         }
 
         if (rank == rankR){
-            const unsigned elemR_global = mesh_local.get_elemR(iface);
+            const unsigned elemR = mesh_local.get_elemR(iface);
             const unsigned face_ID_R = mesh_local.get_ref_face_idR(iface);
-            const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
+            // const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
             int startR = face_ID_R * nqf;
 
             for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
@@ -555,6 +502,7 @@ void Solver<dim>::get_interior_face_residuals(){
     // std::cout<<nqf<<std::endl;
     // std::cout<<nb<<std::endl;
 
+    Utils::Timer fill_basis("Face basis fill takes ");
     // TODO: We populate face_basis_val in this way because of GPU vs CPU 
     // implementations. face_basis_val is a 3D view (shape [NFACE, nqf, nb]) 
     // and its layout changes from Right to Left for the GPU. When we then try to 
@@ -579,7 +527,7 @@ void Solver<dim>::get_interior_face_residuals(){
         }
     }
     Kokkos::deep_copy(face_basis_val, h_face_basis_val);
-
+    fill_basis.end_timer();
 
     // allocate state evaluated at quadrature points
     // view_type_3D Uq("Uq", mesh.num_elems_part,
@@ -609,17 +557,16 @@ void Solver<dim>::get_interior_face_residuals(){
     // view_type_3D Fq("Fq", mesh.num_ifaces_part, nqf, physics.get_NS());
 
     Kokkos::fence();
-    
+    Utils::Timer eval_state("Face eval state takes ");
+
     // Evaluate the state
     VolumeHelpers::evaluate_state(mesh.num_elems_part,
         face_basis_val, Uc, Uq);
     Kokkos::fence();
     // printf("after face state eval\n");
+    eval_state.end_timer();
 
-    // We need to construct the left / right states prior to passing data
-    // between the ranks
-    construct_face_states(Uq, UqL, UqR);
-    // printf("after face construction\n");
+    Utils::Timer face_comms("Face comms takes ");
     // Face local and ghost states for network 
     auto Uq_local = new view_type_3D[mesh.num_neighbor_ranks];
     auto Uq_ghost = new view_type_3D[mesh.num_neighbor_ranks];
@@ -630,7 +577,7 @@ void Solver<dim>::get_interior_face_residuals(){
             mesh.h_num_faces_per_rank_boundary(i), nqf, physics.get_NS());
     }
     network.barrier(); // TODO: Determine if needed
-    
+
     // Pass the evaluated face state data between ranks
     // printf("before face comms\n");
     network.communicate_face_solution(UqL, UqR, Uq_local, Uq_ghost, mesh);
@@ -638,12 +585,14 @@ void Solver<dim>::get_interior_face_residuals(){
 
     // Cleanup after comms
     network.barrier(); // TODO: Determine if needed
+
     // Kokkos::fence();
     for (unsigned i = 0; i < mesh.num_neighbor_ranks; i++) {
         // Explicitly destruct inner views to avoid memory leak
         Uq_local[i].~view_type_3D();
         Uq_ghost[i].~view_type_3D();
     }
+    face_comms.end_timer();
 
 
 
@@ -659,8 +608,10 @@ void Solver<dim>::get_interior_face_residuals(){
 
     // Face flux function
     // declare the volume flux functor
-    FluxFunctors::InteriorFacesFluxFunctor<dim> functor(physics, UqL,
-        UqR, gUqL, gUqR, iface_helpers.quad_wts, iface_helpers.normals, Fq);
+    Utils::Timer flux("Flux function takes ");
+    FluxFunctors::InteriorFacesFluxFunctor<dim> functor(physics, mesh, Uq,
+        gUqL, gUqR, iface_helpers.quad_wts, iface_helpers.normals, Fq,
+        iface_helpers.quad_idx_L, iface_helpers.quad_idx_R, network.rank);
 
     Kokkos::MDRangePolicy<Kokkos::Rank<2>> 
         policy({0, 0}, {mesh.num_ifaces_part, nqf});
@@ -668,9 +619,11 @@ void Solver<dim>::get_interior_face_residuals(){
     // build fluxes, this overwrites in place the vUq and vgUq
     Kokkos::parallel_for("interior face fluxes", policy, functor);
     // printf("after face function\n");
-
+    flux.end_timer();
     // construct the fluxes per element with correct signs
+    Utils::Timer construct_flux("Construct flux takes");
     construct_flux_state(Fq, Fq_elem);
+    construct_flux.end_timer();
     // printf("after face construction\n");
 
 
@@ -692,8 +645,10 @@ void Solver<dim>::get_interior_face_residuals(){
     // network.print_3d_view(h_res);
     // }
     // GEMM to get the left residual contribution
+    Utils::Timer flux_res("Flux residual fnc takes");
     SolverTools::calculate_face_flux_integral(mesh.num_elems_part, 
         face_basis_val, Fq_elem, res);
+    flux_res.end_timer();
 
     // printf("after face residuals\n");
     // // Copy back to host (TODO: Remove after debugging)
