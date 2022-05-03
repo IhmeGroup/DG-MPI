@@ -479,8 +479,14 @@ inline void Mesh::partition() {
             // If they're not the same, increment the ghost faces
             if (left_rank != right_rank) { num_gfaces_part++; }
 
-            // Neighbors, reference face IDs, and orientations
-            for (unsigned j = 0; j < 3; j++) {
+            // Store local element neighbor ids
+            // On the left
+            h_interior_faces(counter, 1) = h_get_local_elem_ID(IF_to_elem[i][0]);
+            // On the right
+            h_interior_faces(counter, 5) = h_get_local_elem_ID(IF_to_elem[i][3]);
+
+            // Reference face IDs, and orientations
+            for (unsigned j = 1; j < 3; j++) {
                 // On the left
                 h_interior_faces(counter, j + 1) = IF_to_elem[i][j];
                 // On the right
