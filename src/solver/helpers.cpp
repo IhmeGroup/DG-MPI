@@ -414,12 +414,11 @@ void InteriorFaceHelperFunctor::precompute_normals(Mesh& mesh, Basis::Basis basi
         // or outward wrt the left element (i.e. -> we always use the left facing data)
         const unsigned face_ID_L = mesh.get_ref_face_idL(iface);
         const unsigned face_ID_R = mesh.get_ref_face_idR(iface);
-        // Get global element IDs on either side
-        const unsigned global_elemL = mesh.get_elemL(iface);
-        const unsigned global_elemR = mesh.get_elemR(iface);
-        // Convert to local
-        auto elemL = mesh.search_for_local_ID(global_elemL, mesh.local_to_global_elem_IDs);
-        auto elemR = mesh.search_for_local_ID(global_elemR, mesh.local_to_global_elem_IDs);
+        
+        // Get local element IDs on either side
+        const unsigned elemL = mesh.get_elemL(iface);
+        const unsigned elemR = mesh.get_elemR(iface);
+
         // get allocation from scratch memory
         scratch_view_1D_int face_node_idx(member.team_scratch( 1 ),
             num_nodes_per_face);
