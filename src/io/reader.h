@@ -5,8 +5,6 @@
 #include "memory/memory_network.h"
 #include "solver/base.h"
 
-//todo: replace rtype with rtype
-
 class Reader
 {
     public:

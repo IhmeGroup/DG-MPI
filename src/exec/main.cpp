@@ -109,7 +109,7 @@ void run_solver(toml::value& toml_input, MemoryNetwork& network) {
     solver.copy_from_device_to_host();
     int nb = solver.basis.get_num_basis_coeffs();
     int ns = solver.physics.get_NS();
-    auto writer = Writer(mesh, network, solver.h_Uc, nb, ns, solver.time);
+    auto writer = Writer("data.h5", mesh, network, solver.h_Uc, nb, ns, solver.time);
     printf("###################################################################\n");
     printf("Solution written to disk\n");
     printf("###################################################################\n");
