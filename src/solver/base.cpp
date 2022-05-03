@@ -326,6 +326,54 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     } // end loop over ranks
 }
 
+
+// TODO: This function works but is likely not the best way to do this 
+// because the various if statement may lead to some thread divergence.
+// A better way to do this would be to have a partitioned element to face ID.
+// You would then loop over elements and nfaces_per_elem and get the local
+// faceid and populate accordingly
+template<unsigned dim>
+void Solver<dim>::construct_face_states(const view_type_3D Uq, 
+    view_type_3D UqL, view_type_3D UqR){
+
+    const unsigned num_ifaces_part = mesh.num_ifaces_part;
+    const unsigned nqf = UqL.extent(1);
+    auto quad_idx_L = iface_helpers.quad_idx_L;
+    auto quad_idx_R = iface_helpers.quad_idx_R;
+    const unsigned NUM_STATE_VARS = physics.get_NS();
+
+    const unsigned rank = network.rank;
+    auto mesh_local = mesh;
+    Kokkos::parallel_for("construct face states", 
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0},
+        {num_ifaces_part, nqf}), KOKKOS_CLASS_LAMBDA(const int& iface,
+        const int& iq){
+
+        const unsigned rankL = mesh_local.get_rankL(iface);
+        const unsigned rankR = mesh_local.get_rankR(iface);
+
+        if (rank == rankL) {
+            const unsigned elemL = mesh_local.get_elemL(iface);
+            const unsigned face_ID_L = mesh_local.get_ref_face_idL(iface);
+            int startL = face_ID_L * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                UqL(iface, iq, is) = Uq(elemL, startL + quad_idx_L(iface, iq), is);
+            }
+        }
+
+        if (rank == rankR){
+            const unsigned elemR = mesh_local.get_elemR(iface);
+            const unsigned face_ID_R = mesh_local.get_ref_face_idR(iface);
+            int startR = face_ID_R * nqf;
+
+            for (long unsigned is = 0; is < NUM_STATE_VARS; is++){
+                UqR(iface, iq, is) = Uq(elemR, startR + quad_idx_R(iface, iq), is);
+            }
+        }
+    });
+}
+
 template<unsigned dim>
 void Solver<dim>::construct_flux_state(const view_type_3D Fq_face, 
     view_type_3D Fq_elem){
@@ -566,6 +614,10 @@ void Solver<dim>::get_interior_face_residuals(){
     // printf("after face state eval\n");
     eval_state.end_timer();
 
+    Utils::Timer construct_face("Construct face takes ");
+    construct_face_states(Uq, UqL, UqR);
+    construct_face.end_timer();
+
     Utils::Timer face_comms("Face comms takes ");
     // Face local and ghost states for network 
     auto Uq_local = new view_type_3D[mesh.num_neighbor_ranks];
@@ -609,7 +661,7 @@ void Solver<dim>::get_interior_face_residuals(){
     // Face flux function
     // declare the volume flux functor
     Utils::Timer flux("Flux function takes ");
-    FluxFunctors::InteriorFacesFluxFunctor<dim> functor(physics, mesh, Uq,
+    FluxFunctors::InteriorFacesFluxFunctor<dim> functor(physics, mesh, UqL, UqR,
         gUqL, gUqR, iface_helpers.quad_wts, iface_helpers.normals, Fq,
         iface_helpers.quad_idx_L, iface_helpers.quad_idx_R, network.rank);
 
