@@ -30,32 +30,32 @@ class Reader
         : file(filename, H5F_ACC_RDWR, true)
     {
         serialize = serialize_arg;
-        file.open_and_read_attribute_all("Number of Ranks", &num_ranks);
+        num_ranks = file.open_and_read_attribute_all<unsigned>("Number of Ranks");
 
-        if (file.mpi_size() != num_ranks)
+        if (file.get_mpi_size() != num_ranks)
         {
-            if (file.rank() == HDF5File::head_rank)
+            if (file.get_rank() == HDF5File::head_rank)
             {
                 std::cout<<"ERROR: must read file "<<filename<<" with "<<num_ranks<<" MPI rank "<<std::endl;
                 std::exit(EXIT_FAILURE);
             }
         }
 
-        file.open_and_read_attribute_all("Number of Dimensions", &dim);
-        file.open_and_read_attribute_all("Number of Elements", &num_elems);
-        file.open_and_read_attribute_all("Number of Nodes", &num_nodes);
-        file.open_and_read_attribute_all("Number of Nodes Per Elemen", &num_nodes_per_elem);
-        file.open_and_read_attribute_all("Number of Basis Functions", &nb);
-        file.open_and_read_attribute_all("Number of State Variables", &ns);
-        file.open_and_read_attribute_all("Solver Final Time", &time);
-        file.open_and_read_attribute_all("Stored Layout", &stored_layout);
+        dim                = file.open_and_read_attribute_all<unsigned>("Number of Dimensions");
+        num_elems          = file.open_and_read_attribute_all<unsigned>("Number of Elements");
+        num_nodes          = file.open_and_read_attribute_all<unsigned>("Number of Nodes");
+        num_nodes_per_elem = file.open_and_read_attribute_all<unsigned>("Number of Nodes Per Element");
+        nb                 = file.open_and_read_attribute_all<unsigned>("Number of Basis Functions");
+        ns                 = file.open_and_read_attribute_all<int>("Number of State Variables");
+        time               = file.open_and_read_attribute_all<double>("Solver Final Time");
+        stored_layout      = file.open_and_read_attribute_all<bool>("Stored Layout");
 
-        file.open_and_read_dataset_scatter_scalar("Number of Elements per Partition", &num_elems_part);
+        num_elems_part     = file.open_and_read_dataset_scatter_scalar<unsigned>("Number of Elements per Partition");
 
-        if (serialize && file.mpi_size() > 1)
+        if (serialize && file.get_mpi_size() > 1)
         {
             unsigned sum = 0;
-            MPI_Reduce(&num_elems_part, &sum, 1, MPITYPE<unsigned>, MPI_SUM, HDF5File::read_rank, file.comm());
+            MPI_Reduce(&num_elems_part, &sum, 1, MPITYPE<unsigned>, MPI_SUM, HDF5File::head_rank, file.get_comm());
             num_elems_part = sum;
         }
 
@@ -84,7 +84,7 @@ class Reader
     unsigned ns;
     rtype    time;
     bool     stored_layout;
-    unsigned num_elems_part
+    unsigned num_elems_part;
 
     parallel_dataset<rtype>    node_coords;
     parallel_dataset<unsigned> local_to_global_node_IDs;
@@ -108,47 +108,49 @@ class Reader
     {
         dataset.name = name;
         dataset.dimensions = file.read_dims_of_parallel_dataset(name);
-        hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+        hsize_t localSize = std::accumulate(std::cbegin(dataset.dimensions), std::cend(dataset.dimensions), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
         dataset.data.resize(localSize);
-        dataset.totalSize = read_total_size_of_parallel_dataset(name);
+        dataset.totalSize = file.read_total_size_of_parallel_dataset(name);
 
         file.open_and_read_parallel_dataset(name, dataset.data.data());
 
-        if (file.rank() == HDF5File::head_rank)
+        if (file.get_rank() == HDF5File::head_rank)
         {
-            dataset.offsets = file.open_and_read_dataset(name+"_offsets");
-            localSizes.resize(offsets.size());
-            for (std::size_t i=0; i<offsets.size()-1; ++i)
-                localSizes[i] = static_cast<int>(offsets[i+1] - offsets[i]);
-            localSizes.back() = totalSize - offsets.back();
+            dataset.offsets = file.open_and_read_dataset<hsize_t>(name+"_offsets");
+            dataset.localSizes.resize(dataset.offsets.size());
+            for (std::size_t i=0; i<dataset.offsets.size()-1; ++i)
+                dataset.localSizes[i] = static_cast<int>(dataset.offsets[i+1] - dataset.offsets[i]);
+            dataset.localSizes.back() = dataset.totalSize - dataset.offsets.back();
         }
 
-        if (serialize && file.mpi_size() > 1)
+        if (serialize && file.get_mpi_size() > 1)
         {
             std::vector<T> buffer;
             std::vector<hsize_t> dim;
             serialize_dataset(dataset, buffer, dim);
             dataset.data = buffer;
-            dataset.dimension = dim;
+            dataset.dimensions = dim;
         }
     }
 
     template<typename T>
-    void serialize_dataset(const parallel_dataset& local_data, std::vector<T>& buffer, std::vector<hsize_t>& dim_out)
+    void serialize_dataset(parallel_dataset<T>& local_data, std::vector<T>& buffer, std::vector<hsize_t>& dim_out)
     {
         buffer.clear();
         dim_out.clear();
 
-        if (file.rank() == HDF5File::head_rank)
+        if (file.get_rank() == HDF5File::head_rank)
         {
             // must be 'int' due to MPI interface
             std::vector<int> offsets_int(local_data.offsets.size());
             for (std::size_t i=0; i!=offsets_int.size(); ++i)
                 offsets_int[i] = static_cast<int>(local_data.offsets[i]);
 
-            MPI_Gatherv(data_in.data(), data_in.size(), MPITYPE<T>, buffer.data(), localSizes.data(), offsets.size(), MPITYPE<T>, HDF5File::head_rank, file.comm());
+            buffer.resize(local_data.totalSize);
 
-            dim_out.resize(dims_in.size());
+            MPI_Gatherv(local_data.data.data(), local_data.data.size(), MPITYPE<T>, buffer.data(), local_data.localSizes.data(), offsets_int.data(), MPITYPE<T>, HDF5File::head_rank, file.get_comm());
+
+            dim_out.resize(local_data.dimensions.size());
             dim_out[0] = local_data.totalSize;
             for (std::size_t i=1; i<dim_out.size(); ++i)
             {
@@ -157,7 +159,7 @@ class Reader
             }
         }
         else
-            MPI_Gatherv(data_in.data(), data_in.size(), MPITYPE<T>, nullptr, nullptr, offsets.size(), MPITYPE<T>, HDF5File::head_rank, file.commm());
+            MPI_Gatherv(local_data.data.data(), local_data.data.size(), MPITYPE<T>, nullptr, nullptr, nullptr, MPITYPE<T>, HDF5File::head_rank, file.get_comm());
     }
 
 };

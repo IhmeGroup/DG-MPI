@@ -5,7 +5,7 @@
 #include "memory/memory_network.h"
 #include "HDF5Wrapper.h"
 
-Writer::write() {};
+Writer::Writer() {};
 
 void Writer::write(
         const std::string& name,
@@ -24,7 +24,7 @@ void Writer::write(
         const unsigned* local_to_global_node_IDs,
         const std::vector<hsize_t>& local_to_global_node_IDs_dim,
         const unsigned* elem_to_node_IDs,
-        const std::vector<hsize_t>& elem_to_node_IDs,
+        const std::vector<hsize_t>& elem_to_node_IDs_dim,
         const unsigned* local_to_global_elem_IDs,
         const std::vector<hsize_t>& local_to_global_elem_IDs_dim,
         const double* Uc,
@@ -34,10 +34,12 @@ void Writer::write(
 {
 
     HDF5File file;
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
     if (parallel || mpi_rank == HDF5File::head_rank)
     {
-        file.open(file_name, H5F_ACC_TRUNC, parallel);
+        file.open(name, H5F_ACC_TRUNC, parallel);
 
         // Write some attributes to the file
         file.create_and_write_attribute("Number of Ranks", num_ranks);
@@ -116,11 +118,11 @@ Writer::Writer(const std::string& name, const Reader& reader, bool parallel)
         reader.time,
         reader.num_elems_part,
         reader.stored_layout,
-        reader.node_coords, reader.node_coords_dim,
-        reader.local_to_global_node_IDs, reader.local_to_global_node_IDs_dim,
-        reader.elem_to_node_IDs, reader.elem_to_node_IDs_dim,
-        reader.local_to_global_elem_IDs, reader.local_to_global_elem_IDs_dim,
-        reader.Uc, reader.Uc_dim,
+        reader.node_coords.data.data(), reader.node_coords.dimensions,
+        reader.local_to_global_node_IDs.data.data(), reader.local_to_global_node_IDs.dimensions,
+        reader.elem_to_node_IDs.data.data(), reader.elem_to_node_IDs.dimensions,
+        reader.local_to_global_elem_IDs.data.data(), reader.local_to_global_elem_IDs.dimensions,
+        reader.Uc.data.data(), reader.Uc.dimensions,
         parallel);
 
 }

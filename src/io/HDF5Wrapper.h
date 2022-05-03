@@ -46,9 +46,11 @@ class HDF5File
 {
     using managed_hid = std::shared_ptr<std::pair<hid_t,hid_t>>;
 
-    static constexpr int head_rank = 0;
 
     public:
+
+        static constexpr int head_rank = 0;
+
         HDF5File() : file(-1), parallel(false), comm(MPI_COMM_WORLD), info(MPI_INFO_NULL), mpi_size(1), mpi_rank(head_rank) {}
         HDF5File(const HDF5File&) = delete;
         HDF5File(HDF5File&& rhs) :
@@ -953,7 +955,7 @@ class HDF5File
         auto read_all_local_sizes_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
             std::vector<hsize_t> sizes(mpi_size);
-            auto localSize = read_local_size_of_parallel_dataset(const std::string& name);
+            auto localSize = read_local_size_of_parallel_dataset(name, destination);
             sizes[mpi_rank] = localSize;
             if (parallel)
             {
@@ -994,9 +996,9 @@ class HDF5File
             return offset;
         }
 
-        int rank()     const { return mpi_rank; }
-        int mpi_size() const { return mpi_size; }
-        MPIComm comm() const { return comm; }
+        int get_rank()     const { return mpi_rank; }
+        int get_mpi_size() const { return mpi_size; }
+        MPI_Comm get_comm() const { return comm; }
 
     private:
         hid_t file;

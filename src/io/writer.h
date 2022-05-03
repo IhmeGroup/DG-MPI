@@ -35,7 +35,7 @@ class Writer {
             const unsigned* local_to_global_node_IDs,
             const std::vector<hsize_t>& local_to_global_node_IDs_dim,
             const unsigned* elem_to_node_IDs,
-            const std::vector<hsize_t>& elem_to_node_IDs,
+            const std::vector<hsize_t>& elem_to_node_IDs_dim,
             const unsigned* local_to_global_elem_IDs,
             const std::vector<hsize_t>& local_to_global_elem_IDs_dim,
             const double* Uc,
