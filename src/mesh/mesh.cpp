@@ -79,23 +79,24 @@ inline void Mesh::finalize() {
 inline void Mesh::read_mesh(const string &mesh_file_name) {
         // todo: currently, each rank opens the file separately. Better to
         // only do this on the head rank
-        HDF5File file(mesh_file_name, H5F_ACC_RDONLY);
+        bool parallel = true;
+        HDF5File file(mesh_file_name, H5F_ACC_RDONLY, parallel);
 
         // number of spatial dimensions
-        file.open_and_read_dataset(DSET_DIM, &dim);
+        file.open_and_read_dataset_all(DSET_DIM, &dim);
         // geometric order of the mesh
-        file.open_and_read_dataset(DSET_QORDER, &order);
+        file.open_and_read_dataset_all(DSET_QORDER, &order);
         // number of elements
-        file.open_and_read_dataset(DSET_NELEM, &num_elems);
+        file.open_and_read_dataset_all(DSET_NELEM, &num_elems);
         // number of nodes
-        file.open_and_read_dataset(DSET_NNODE, &num_nodes);
+        file.open_and_read_dataset_all(DSET_NNODE, &num_nodes);
         // number of interior faces
-        file.open_and_read_dataset(DSET_NIFACE, &nIF);
+        file.open_and_read_dataset_all(DSET_NIFACE, &nIF);
         // number of nodes per element
-        file.open_and_read_dataset(DSET_NNODE_PER_ELEM, &num_nodes_per_elem);
+        file.open_and_read_dataset_all(DSET_NNODE_PER_ELEM, &num_nodes_per_elem);
         // number of nodes per faces
         if (file.link_exists(DSET_NNODE_PER_FACE)) {
-            file.open_and_read_dataset(DSET_NNODE_PER_FACE, &num_nodes_per_face);
+            file.open_and_read_dataset_all(DSET_NNODE_PER_FACE, &num_nodes_per_face);
         }
         else {
             /* This is used for METIS to determine how many nodes an element must shared to be
@@ -127,11 +128,10 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
 
         // fetch elemID -> nodeID
         // ordering (row-major): elemID X nodeID
-        file.open_and_read_dataset(DSET_ELEM_TO_NODES, eind.data());
+        eind = file.open_and_read_dataset_all<int>(DSET_ELEM_TO_NODES);
 
         // fetch node coordinates
-        vector<rtype> buff(dim * num_nodes, 0.);
-        file.open_and_read_dataset(DSET_NODE_COORD, buff.data());
+        auto buff = file.open_and_read_dataset_all<rtype>(DSET_NODE_COORD);
         // fill coordinates
         for (unsigned iNode = 0; iNode < num_nodes; iNode++) {
             coord[iNode].resize(dim);
@@ -141,9 +141,7 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         }
 
         // fetch IFace -> elem and IFace -> node
-        vector<int> buff_int;
-        buff_int.resize(nIF * 6);
-        file.open_and_read_dataset(DSET_IFACE_DATA, buff_int.data());
+        auto buff_int = file.open_and_read_dataset_all<int>(DSET_IFACE_DATA);
         vector<unordered_set<int> > already_created(num_elems);
         for (unsigned i = 0; i < nIF; i++) {
             IF_to_elem[i].resize(6);
@@ -177,20 +175,14 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
 
             for (string BFG_name: BFGnames) {
                 // fetch the number of faces in the current boundary face group
-                string dset_name = "BFG_" + BFG_name + "_nBFace";
                 int nBface_in_group = -1;
-                file.open_and_read_dataset(dset_name, &nBface_in_group);
+                file.open_and_read_dataset_all("BFG_" + BFG_name + "_nBFace", &nBface_in_group);
                 nBF += nBface_in_group;
                 BFG_to_nBF[BFG_name] = nBface_in_group;
                 BFG_to_data[BFG_name].resize(nBface_in_group);
 
                 // fetch the boundary data for this boundary face group
-                std::vector<hsize_t> dims(2); // buffer to store an HDF5 dataset dimensions
-                dims[0] = nBface_in_group;
-                dims[1] = 3;
-                dset_name = "BFG_" + BFG_name + "_BFaceData";
-                vector<int> buff_BC(dims[0] * dims[1], 0);
-                file.open_and_read_dataset(dset_name, buff_BC.data());
+                auto buff_BC = file.open_and_read_dataset_all<int>("BFG_" + BFG_name + "_BFaceData");
                 for (int i = 0; i < nBface_in_group; i++) {
                     BFG_to_data[BFG_name][i].resize(3);
                     BFG_to_data[BFG_name][i][0] = buff_BC[3 * i + 0];

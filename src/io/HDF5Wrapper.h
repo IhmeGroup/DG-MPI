@@ -18,7 +18,6 @@
 
 // todo: dataset read is currently limited to 2 GB of data per rank
 
-
 template<typename T> hid_t HDF5TYPE();
 template<> inline hid_t HDF5TYPE<int>() {return H5T_NATIVE_INT;}
 template<> inline hid_t HDF5TYPE<long int>() {return H5T_NATIVE_LONG;}
@@ -31,7 +30,7 @@ template<> inline hid_t HDF5TYPE<float>() {return H5T_NATIVE_FLOAT;}
 template<> inline hid_t HDF5TYPE<double>() {return H5T_NATIVE_DOUBLE;}
 
 using mpitype = decltype(MPI_DATATYPE_NULL);
-template<typename T> constexpr mpitype MPITYPE;
+template<typename T> constexpr mpitype MPITYPE = MPI_DATATYPE_NULL;
 template<> constexpr mpitype MPITYPE<int> = MPI_INT;
 template<> constexpr mpitype MPITYPE<char> = MPI_CHAR;
 template<> constexpr mpitype MPITYPE<unsigned int> = MPI_UNSIGNED;

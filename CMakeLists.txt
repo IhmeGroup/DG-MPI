@@ -32,7 +32,7 @@ endif()
 #    set(HDF5_ROOT "$ENV{HDF5_DIR}")
 #else()
 message(STATUS "HDF5 obtained via dg-mpi/externals folder")
-set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5-download/install/")
+set(HDF5_ROOT "${CMAKE_SOURCE_DIR}/externals/hdf5-download/install/" CACHE PATH "HDF5 root")
 message(STATUS "${CMAKE_SOURCE_DIR}/externals/hdf5_download/install")
 #endif()
 

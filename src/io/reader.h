@@ -61,39 +61,61 @@ class Reader
 
         read_parallel_datasets();
 
-        if (serialize)
+        if (serialize && file.get_rank() == HDF5File::head_rank && file.get_mpi_size() > 1)
         {
             num_ranks = 1;
 
             // todo: better do sorting in-place to safe memory?
-            std::vector<double> node_coords_copy(node_coords.data);
-            std::vector<unsigned> local_to_global_node_IDs_copy(local_to_global_node_IDs.data);
-            std::vector<unsigned> elem_to_node_IDs_copy(elem_to_node_IDs.data);
-            std::vector<double> Uc_copy(Uc.data);
-
-            auto node_coords_dim = node_coords.dimensions[1];
-            auto elem_to_node_IDs_dim = elem_to_node_IDs.dimensions[1];
-            auto Uc_dim = Uc.dimensions[1]*Uc.dimensions[2];
-
-            for (std::size_t i=0; i!=local_to_global_elem_IDs.data.size(); ++i)
+            // or do the datasets one-by-one to only have one copy at a time
             {
-                auto index = local_to_global_elem_IDs.data[i];
+                std::vector<unsigned> elem_to_node_IDs_copy(elem_to_node_IDs.data);
+                std::vector<double> Uc_copy(Uc.data);
 
-                local_to_global_elem_IDs.data[i] = i;
+                auto elem_to_node_IDs_dim = elem_to_node_IDs.dimensions[1];
+                auto Uc_dim = Uc.dimensions[1]*Uc.dimensions[2];
 
-                // todo: right way around?
-                local_to_global_node_IDs.data[index] = local_to_global_node_IDs_copy[i];
+                for (std::size_t i=0; i!=local_to_global_elem_IDs.data.size(); ++i)
+                {
+                    auto index = local_to_global_elem_IDs.data[i];
+
+                    local_to_global_elem_IDs.data[i] = i;
+
+                    /*
+                    for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
+                        elem_to_node_IDs.data[index*elem_to_node_IDs_dim + k] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
+                    */
+                    for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
+                        elem_to_node_IDs.data[index*elem_to_node_IDs_dim + k] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
+
+                    // todo: what about layout?
+                    for(std::size_t k=0; k!=Uc_dim; ++k)
+                        Uc.data[index*Uc_dim + k] = Uc_copy[i*Uc_dim + k];
+                }
+            } // release memory for *_copy buffers
+
+            // the node-based quantities require some more work to remove duplicate entries
+            auto unique_entries = 1 + *std::max_element(std::begin(local_to_global_node_IDs.data), std::end(local_to_global_node_IDs.data));
+            auto node_coords_dim = node_coords.dimensions[1];
+            std::vector<double> node_coords_copy(unique_entries * node_coords_dim);
+            node_coords.dimensions[0] = unique_entries;
+            local_to_global_node_IDs.dimensions[0] = unique_entries;
+
+            for (std::size_t i=0; i!=local_to_global_node_IDs.data.size(); ++i)
+            {
+                auto index = local_to_global_node_IDs.data[i];
+
+                local_to_global_node_IDs.data[i] = i;
 
                 for(std::size_t k=0; k!=node_coords_dim; ++k)
-                    node_coords.data[index*node_coords_dim] = node_coords_copy[i*node_coords_dim + k];
-
-                for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
-                    elem_to_node_IDs.data[index*elem_to_node_IDs_dim] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
-
-                // todo: what about layout?
-                for(std::size_t k=0; k!=Uc_dim; ++k)
-                    Uc.data[index*Uc_dim] = Uc_copy[i*Uc_dim + k];
+                    node_coords_copy[index*node_coords_dim + k] = node_coords.data[i*node_coords_dim + k];
             }
+            node_coords.data.swap(node_coords_copy);
+            node_coords.totalSize = node_coords.data.size();
+            node_coords.localSizes = {static_cast<int>(node_coords.data.size())};
+
+            local_to_global_node_IDs.data.resize(unique_entries);
+            local_to_global_node_IDs.totalSize = unique_entries;
+            local_to_global_node_IDs.localSizes = {static_cast<int>(unique_entries)};
         }
     }
 
@@ -160,6 +182,9 @@ class Reader
             serialize_dataset(dataset, buffer, dim);
             dataset.data = buffer;
             dataset.dimensions = dim;
+            dataset.offsets = {0};
+            dataset.totalSize = buffer.size();
+            dataset.localSizes = {static_cast<int>(dataset.totalSize)};
         }
     }
 
