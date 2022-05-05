@@ -84,15 +84,15 @@ Writer::Writer(const std::string& name, Mesh& mesh, MemoryNetwork& network, host
             mesh.num_elems_part,
             stored_layout,
             mesh.h_node_coords.data(),
-            {mesh.num_nodes_part, mesh.dim},
+            {static_cast<hsize_t>(mesh.num_nodes_part), static_cast<hsize_t>(mesh.dim)},
             mesh.h_local_to_global_node_IDs.data(),
-            {mesh.num_nodes_part},
+            {static_cast<hsize_t>(mesh.num_nodes_part)},
             mesh.h_elem_to_node_IDs.data(),
-            {mesh.num_elems_part, mesh.num_nodes_per_elem},
+            {static_cast<hsize_t>(mesh.num_elems_part), static_cast<hsize_t>(mesh.num_nodes_per_elem)},
             mesh.h_local_to_global_elem_IDs.data(),
-            {mesh.num_elems_part},
+            {static_cast<hsize_t>(mesh.num_elems_part)},
             h_Uc.data(),
-            {mesh.num_elems_part, nb, ns},
+            {static_cast<hsize_t>(mesh.num_elems_part), static_cast<hsize_t>(nb), static_cast<hsize_t>(ns)},
             parallel
         );
 }
