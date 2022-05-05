@@ -429,7 +429,7 @@ class HDF5File
                 std::exit(EXIT_FAILURE);
             }
 
-            std::vector<hsize_t> dims(nDims, -1);
+            std::vector<hsize_t> dims(nDims, static_cast<hsize_t>(-1));
             if (H5Sget_simple_extent_dims(dset->first, dims.data(), nullptr) < 0)
             {
                 std::cerr<<"ERROR: cannot get dimensions"<<std::endl;
@@ -445,7 +445,7 @@ class HDF5File
 
             if (parallel && mpi_rank != head_rank)
             {
-                hsize_t length = -1;
+                hsize_t length = static_cast<hsize_t>(-1);
                 MPI_Bcast(&length, 1, MPITYPE<hsize_t>, head_rank, comm);
                 dims.resize(length);
                 MPI_Bcast(dims.data(), length, MPITYPE<hsize_t>, head_rank, comm);
@@ -481,8 +481,8 @@ class HDF5File
         template<typename T>
         void read_dataset_all(const managed_hid& dset, T* data)
         {
-            auto dims = dataset_dimensions_all(dset);
-            hsize_t nElements = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            std::vector<hsize_t> dims = dataset_dimensions_all(dset);
+            hsize_t nElements = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
 
             if (parallel && mpi_rank != head_rank)
                 MPI_Bcast(data, nElements, MPITYPE<T>, head_rank, comm);
@@ -501,9 +501,9 @@ class HDF5File
         template<typename T>
         std::vector<T> read_dataset(const managed_hid& dset)
         {
-            auto dims = dataset_dimensions(dset);
+            std::vector<hsize_t> dims = dataset_dimensions(dset);
 
-            hsize_t nElements = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            hsize_t nElements = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
 
             std::vector<T> v(nElements);
 
@@ -517,9 +517,9 @@ class HDF5File
         std::vector<T> read_dataset_all(const managed_hid& dset)
         {
             // todo: dataset_dimensions_all includes a broadcast of dimensions, which is also done in read_dataset_all. Could be avoided later
-            auto dims = dataset_dimensions_all(dset);
+            std::vector<hsize_t> dims = dataset_dimensions_all(dset);
 
-            hsize_t nElements = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            hsize_t nElements = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
 
             std::vector<T> v(nElements);
 
@@ -699,8 +699,8 @@ class HDF5File
         template<typename T>
         std::tuple<std::vector<T>, std::vector<hsize_t>> open_and_read_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
-            auto dims = read_dims_of_parallel_dataset(name, destination);
-            hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            std::vector<hsize_t> dims = read_dims_of_parallel_dataset(name, destination);
+            hsize_t localSize = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
             std::vector<T> data(localSize);
             open_and_read_parallel_dataset(name, data.data(), destination);
             return {data, dims};
@@ -708,10 +708,10 @@ class HDF5File
 
 
         template<typename T>
-        auto open_and_read_parallel_dataset(const std::string& name, T* data, managed_hid destination = managed_hid())
+        std::vector<hsize_t> open_and_read_parallel_dataset(const std::string& name, T* data, managed_hid destination = managed_hid())
         {
-            auto dims = read_dims_of_parallel_dataset(name, destination);
-            hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            std::vector<hsize_t> dims = read_dims_of_parallel_dataset(name, destination);
+            hsize_t localSize = std::accumulate(dims.begin(), dims.begin(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
             hsize_t totalSize = read_total_size_of_parallel_dataset(name, destination);
             hsize_t offset = read_offset_of_parallel_dataset(name, destination);
 
@@ -781,7 +781,7 @@ class HDF5File
         {
             // ====== 1) create the dataspace and write the local data block in parallel ======
 
-            hsize_t localSize = std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            hsize_t localSize = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
             hsize_t totalSize = 0;
             if (parallel)
                 MPI_Allreduce(&localSize, &totalSize, 1, MPI_UINT64_T, MPI_SUM, comm);
@@ -906,7 +906,7 @@ class HDF5File
         }
 
         // read the dimensions of the local data block in the parallel dataset. must be called by all ranks
-        auto read_dims_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        std::vector<hsize_t> read_dims_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
 
             // check if the number or ranks reading the file is the same as the number of ranks that wrote the file
@@ -944,10 +944,10 @@ class HDF5File
         }
 
         // must be called by all ranks. returns the local number of elements in the parallel datasets for each local data blocks
-        auto read_local_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        hsize_t read_local_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
-            auto dims = read_dims_of_parallel_dataset(name, destination);
-            return std::accumulate(std::cbegin(dims), std::cend(dims), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            std::vector<hsize_t> dims = read_dims_of_parallel_dataset(name, destination);
+            return std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
         }
 
         // must be called by all ranks. returns a list of all rank local sizes 
@@ -966,7 +966,7 @@ class HDF5File
 
 
         // must be called by all ranks. returns the total number of elements in the parallel datasets across all local data blocks
-        auto read_total_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        hsize_t read_total_size_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
             auto d = open_dataset(name+"_offsets", destination);
             return open_and_read_attribute_all<hsize_t>("totalSize", d);
@@ -979,7 +979,7 @@ class HDF5File
         }
 
         // must be called by each rank. returns the offset for each individual rank
-        auto read_offset_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
+        hsize_t read_offset_of_parallel_dataset(const std::string& name, managed_hid destination = managed_hid())
         {
             hsize_t offset = 0;
             if (parallel)
