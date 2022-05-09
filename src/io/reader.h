@@ -80,10 +80,6 @@ class Reader
 
                     local_to_global_elem_IDs.data[i] = i;
 
-                    /*
-                    for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
-                        elem_to_node_IDs.data[index*elem_to_node_IDs_dim + k] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
-                    */
                     for(std::size_t k=0; k!=elem_to_node_IDs_dim; ++k)
                         elem_to_node_IDs.data[index*elem_to_node_IDs_dim + k] = elem_to_node_IDs_copy[i*elem_to_node_IDs_dim + k];
 
@@ -153,6 +149,23 @@ class Reader
         populate_parallel_dataset("Element Global Node IDs", elem_to_node_IDs);
         populate_parallel_dataset("Local to Global Element IDs", local_to_global_elem_IDs);
         populate_parallel_dataset("Solution Coefficients", Uc);
+
+        if (serialize && file.get_mpi_size() > 1)
+        {
+            std::vector<unsigned> elem_to_node_IDs_copy(elem_to_node_IDs.data.size());
+            for (std::size_t i=0; i!=elem_to_node_IDs.data.size(); ++i)
+                elem_to_node_IDs_copy[i] = local_to_global_node_IDs.data[elem_to_node_IDs.data[i]];
+            elem_to_node_IDs.data.swap(elem_to_node_IDs_copy);
+        }
+
+        if (serialize && file.get_mpi_size() > 1)
+        {
+            serialize_dataset(node_coords);
+            serialize_dataset(local_to_global_node_IDs);
+            serialize_dataset(elem_to_node_IDs);
+            serialize_dataset(local_to_global_elem_IDs);
+            serialize_dataset(Uc);
+        }
     }
 
     template<typename T>
@@ -174,9 +187,12 @@ class Reader
                 dataset.localSizes[i] = static_cast<int>(dataset.offsets[i+1] - dataset.offsets[i]);
             dataset.localSizes.back() = dataset.totalSize - dataset.offsets.back();
         }
+    }
 
-        if (serialize && file.get_mpi_size() > 1)
-        {
+
+    template<typename T>
+    void serialize_dataset(parallel_dataset<T>& dataset)
+    {
             std::vector<T> buffer;
             std::vector<hsize_t> dim;
             serialize_dataset(dataset, buffer, dim);
@@ -185,7 +201,6 @@ class Reader
             dataset.offsets = {0};
             dataset.totalSize = buffer.size();
             dataset.localSizes = {static_cast<int>(dataset.totalSize)};
-        }
     }
 
     template<typename T>

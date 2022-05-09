@@ -711,7 +711,7 @@ class HDF5File
         std::vector<hsize_t> open_and_read_parallel_dataset(const std::string& name, T* data, managed_hid destination = managed_hid())
         {
             std::vector<hsize_t> dims = read_dims_of_parallel_dataset(name, destination);
-            hsize_t localSize = std::accumulate(dims.begin(), dims.begin(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
+            hsize_t localSize = std::accumulate(dims.begin(), dims.end(), static_cast<hsize_t>(1), std::multiplies<hsize_t>());
             hsize_t totalSize = read_total_size_of_parallel_dataset(name, destination);
             hsize_t offset = read_offset_of_parallel_dataset(name, destination);
 
