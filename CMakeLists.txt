@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0074 NEW) # use <PackageName>_ROOT over <PackageName>_DIR
 # Set the default build type to be debug for now
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 # Set dynamic library name depending on operating system
 if(APPLE)
