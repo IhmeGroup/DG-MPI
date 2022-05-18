@@ -1,18 +1,13 @@
 # Installing Dependencies
 
-I am attempting to use Git submodules for (all?) the dependencies, in an attempt
-to:
-1. Streamline the compilation of this code to make it user-friendly
+These are some useful tips for installing various submodules that are used with the DG-MPI solver. It is important to note that the scripts located in [`src/other`](https://github.com/IhmeGroup/DG-MPI/tree/main/src/others) handle these dependencies implicitly and should be the primary tool for installation. 
+
+The goal of the external builds is to have a:
+1. Streamlined compilation of this code to make it user-friendly
 2. Rigorously track the versions of dependencies used for future regression
    tests
 
-First, download and initialize the submodules by running
-    git submodule update --init
-
-Ideally the compilation of submodules should be automated (probably into the
-main CMake pipeline) but for now, I will document the commands I used to
-compile everything. (feel free to add some -j4 to those make commands if you
-want, especially for HDF5).
+The compilation of submodules is automated (via the scripts described above). Here is a list of the extra dependencies:
 
  - TOML11 (markup language for reading input files): no compilation needed,
    since this is header-only.
@@ -25,15 +20,10 @@ want, especially for HDF5).
    - macOS users, use `brew install mpich`. Note: Make sure you have the right compilers prior to this. Use `brew install llvm` to get the correct compilers.
    - Yellowstone: use `module load mpich`
 
- - HDF5 (high-performance data formatting library): The cmake searches for the environment variable `HDF5_DIR` and if not found it uses the built in HDF5 located in DG-MPI/externals. If using the externals version of HDF5 continue with the following commands:
+ - HDF5 (high-performance data formatting library): This is automated with a Bash script.
     ```
-    cd hdf5
-    mkdir build
-    cd build
-    cmake CC=mpicc CXX=mpicxx -DCMAKE_INSTALL_PREFIX=./install -DHDF5_BUILD_CPP_LIB=1 -DBUILD_STATIC_LIBS=0 ..
-    make install
+    ./download_dependencies.sh
     ```
-    - Yellowstone: use `module load hdf5`
  - Kokkos:
     ```
       cd kokkos
