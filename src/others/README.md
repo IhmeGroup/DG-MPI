@@ -1,0 +1,1 @@
+The following set of scripts can be used for the build process. For each of these it is assumed that you have your own build of cmake since Kokkos requires a cmake version newer than the one provided on the Yellowstone cluster.
