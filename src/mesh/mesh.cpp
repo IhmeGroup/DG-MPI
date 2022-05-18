@@ -5,13 +5,12 @@
 #include <string>
 #include <unordered_set>
 #include <set>
-#include "H5Cpp.h"
+#include "io/HDF5Wrapper.h"
 #include "metis.h"
 #include "toml11/toml.hpp"
 #include "common/my_exceptions.h"
 
 using namespace std;
-using H5::PredType, H5::DataSpace, H5::DataSet;
 using std::cout, std::endl;
 
 // identifiers from Eric's pre-processing tool
@@ -78,44 +77,26 @@ inline void Mesh::finalize() {
 }
 
 inline void Mesh::read_mesh(const string &mesh_file_name) {
-    try {
-        H5::H5File file(mesh_file_name, H5F_ACC_RDONLY);
-        hsize_t dims[2]; // buffer to store an HDF5 dataset dimensions
-        unsigned rank; // the number of dimensions in a dataset
-
-        dims[0] = 1; // fetch all scalars first
-        rank = 1; // rank is the number of dimensions
-        DataSpace mspace(rank, dims);
+        // todo: currently, each rank opens the file separately. Better to
+        // only do this on the head rank
+        bool parallel = true;
+        HDF5File file(mesh_file_name, H5F_ACC_RDONLY, parallel);
 
         // number of spatial dimensions
-        DataSet dataset = file.openDataSet(DSET_DIM);
-        DataSpace dataspace = dataset.getSpace();
-        dataset.read(&dim, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_DIM, &dim);
         // geometric order of the mesh
-        dataset = file.openDataSet(DSET_QORDER);
-        dataspace = dataset.getSpace();
-        dataset.read(&order, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_QORDER, &order);
         // number of elements
-        dataset = file.openDataSet(DSET_NELEM);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_elems, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_NELEM, &num_elems);
         // number of nodes
-        dataset = file.openDataSet(DSET_NNODE);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_nodes, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_NNODE, &num_nodes);
         // number of interior faces
-        dataset = file.openDataSet(DSET_NIFACE);
-        dataspace = dataset.getSpace();
-        dataset.read(&nIF, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_NIFACE, &nIF);
         // number of nodes per element
-        dataset = file.openDataSet(DSET_NNODE_PER_ELEM);
-        dataspace = dataset.getSpace();
-        dataset.read(&num_nodes_per_elem, PredType::NATIVE_INT, mspace, dataspace);
+        file.open_and_read_dataset_all(DSET_NNODE_PER_ELEM, &num_nodes_per_elem);
         // number of nodes per faces
-        if (H5Lexists(file.getId(), DSET_NNODE_PER_FACE.c_str(), H5P_DEFAULT)) {
-            dataset = file.openDataSet(DSET_NNODE_PER_FACE);
-            dataspace = dataset.getSpace();
-            dataset.read(&num_nodes_per_face, PredType::NATIVE_INT, mspace, dataspace);
+        if (file.link_exists(DSET_NNODE_PER_FACE)) {
+            file.open_and_read_dataset_all(DSET_NNODE_PER_FACE, &num_nodes_per_face);
         }
         else {
             /* This is used for METIS to determine how many nodes an element must shared to be
@@ -144,26 +125,13 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         elem_partition.resize(num_elems);
         node_partition.resize(num_nodes);
 
+
         // fetch elemID -> nodeID
-        dims[0] = num_elems;
-        dims[1] = num_nodes_per_elem;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_ELEM_TO_NODES);
-        dataspace = dataset.getSpace();
         // ordering (row-major): elemID X nodeID
-        dataset.read(eind.data(), PredType::NATIVE_INT, mspace, dataspace);
+        eind = file.open_and_read_dataset_all<int>(DSET_ELEM_TO_NODES);
 
         // fetch node coordinates
-        vector<rtype> buff(dim * num_nodes, 0.);
-        dims[0] = num_nodes;
-        dims[1] = dim;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_NODE_COORD);
-        dataspace = dataset.getSpace();
-        // ordering (row-major): nodeID X coordinates
-        dataset.read(buff.data(), PredType::NATIVE_DOUBLE, mspace, dataspace);
+        auto buff = file.open_and_read_dataset_all<rtype>(DSET_NODE_COORD);
         // fill coordinates
         for (unsigned iNode = 0; iNode < num_nodes; iNode++) {
             coord[iNode].resize(dim);
@@ -173,15 +141,7 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
         }
 
         // fetch IFace -> elem and IFace -> node
-        vector<int> buff_int;
-        buff_int.resize(nIF * 6);
-        dims[0] = nIF;
-        dims[1] = 6;
-        rank = 2;
-        mspace = DataSpace(rank, dims);
-        dataset = file.openDataSet(DSET_IFACE_DATA);
-        dataspace = dataset.getSpace();
-        dataset.read(buff_int.data(), PredType::NATIVE_INT, mspace, dataspace);
+        auto buff_int = file.open_and_read_dataset_all<int>(DSET_IFACE_DATA);
         vector<unordered_set<int> > already_created(num_elems);
         for (unsigned i = 0; i < nIF; i++) {
             IF_to_elem[i].resize(6);
@@ -215,28 +175,14 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
 
             for (string BFG_name: BFGnames) {
                 // fetch the number of faces in the current boundary face group
-                string dset_name = "BFG_" + BFG_name + "_nBFace";
-                dataset = file.openDataSet(dset_name);
-                dataspace = dataset.getSpace();
-                dims[0] = 1;
-                rank = 1;
-                mspace = DataSpace(rank, dims);
                 int nBface_in_group = -1;
-                dataset.read(&nBface_in_group, PredType::NATIVE_INT, mspace, dataspace);
+                file.open_and_read_dataset_all("BFG_" + BFG_name + "_nBFace", &nBface_in_group);
                 nBF += nBface_in_group;
                 BFG_to_nBF[BFG_name] = nBface_in_group;
                 BFG_to_data[BFG_name].resize(nBface_in_group);
 
                 // fetch the boundary data for this boundary face group
-                dims[0] = nBface_in_group;
-                dims[1] = 3;
-                rank = 2;
-                mspace = DataSpace(rank, dims);
-                dset_name = "BFG_" + BFG_name + "_BFaceData";
-                dataset = file.openDataSet(dset_name);
-                dataspace = dataset.getSpace();
-                vector<int> buff_BC(dims[0] * dims[1], 0);
-                dataset.read(buff_BC.data(), PredType::NATIVE_INT, mspace, dataspace);
+                auto buff_BC = file.open_and_read_dataset_all<int>("BFG_" + BFG_name + "_BFaceData");
                 for (int i = 0; i < nBface_in_group; i++) {
                     BFG_to_data[BFG_name][i].resize(3);
                     BFG_to_data[BFG_name][i][0] = buff_BC[3 * i + 0];
@@ -255,20 +201,6 @@ inline void Mesh::read_mesh(const string &mesh_file_name) {
             nBFG = 0;
             nBF = 0;
         }
-    }
-
-    // catch failure caused by the H5File operations
-    catch (H5::FileIException &error) {
-        error.printErrorStack();
-    }
-    // catch failure caused by the DataSet operations
-    catch (H5::DataSetIException &error) {
-        error.printErrorStack();
-    }
-    // catch failure caused by the DataSpace operations
-    catch (H5::DataSpaceIException &error) {
-        error.printErrorStack();
-    }
 }
 
 //inline void Mesh::partition_manually() {

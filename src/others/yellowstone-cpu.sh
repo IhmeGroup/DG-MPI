@@ -11,8 +11,14 @@
 # Load necessary modules
 module purge
 module load gnu8/8.3.0
-module load hdf5/1.10.5
+#module load hdf5/1.10.5
 module load mpich/3.3.1
+
+if [[ -z "${cmake}" ]]; then
+    export cmake=`which cmake`
+fi
+
+set -e
 
 # move to the home dir
 cd ../../
@@ -21,7 +27,7 @@ git submodule update --init
 
 mkdir -p build_cpu/build_externals
 cd build_cpu/build_externals
-mkdir metis
+mkdir -p metis
 mkdir -p kokkos/build/install
 mkdir -p kokkos-kernels/build/install
 cd ../../
@@ -57,7 +63,6 @@ echo "================================"
 
 
 cd ../../../
-
 $cmake -DGPU_BUILD=0 ..
 make -j"${nthreads}"
 

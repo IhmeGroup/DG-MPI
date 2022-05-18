@@ -37,7 +37,9 @@ target_link_libraries(test_gtest_all
         gtest_main
 )
 
-target_link_libraries(test_gtest_all PUBLIC Kokkos::kokkoscore)
+target_link_libraries(test_gtest_all PUBLIC
+    PRIVATE ${HDF5_LIBRARIES}
+    Kokkos::kokkoscore)
 
 set_target_properties(test_gtest_all
     PROPERTIES
@@ -99,5 +101,6 @@ list(APPEND SANITY_SOURCES
 target_sources(test_my_sanity PRIVATE ${SANITY_SOURCES})
 
 target_link_libraries(test_my_sanity
+    PRIVATE ${HDF5_LIBRARIES}
     PUBLIC Kokkos::kokkoscore
 )

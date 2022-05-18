@@ -6,7 +6,7 @@
 #include "solver/flux_functors_impl.h"
 #include "utils/utils.h"
 
-#include "H5Cpp.h"
+#include "io/HDF5Wrapper.h"
 
 #include "common/defines.h"
 #include <iostream>
@@ -236,94 +236,46 @@ void Solver<dim>::read_in_coefficients(const std::string& filename){
     // hdf5 file. It detects whether the data is stored as 
     // column or row major prior to reading it in. 
 
-    // TODO: This implementation will likely change once we
-    //       begin using parallel hdf5
+    bool parallel = true;
+    HDF5File file(filename, H5F_ACC_RDONLY, parallel);
 
-    // loop over each rank
-    for (unsigned rank = 0; rank < network.num_ranks; rank++){
+    int num_elems_part = file.open_and_read_dataset_scatter_scalar<int>("Number of Elements per Partition");
 
-        network.barrier();
-        //Preform this in serial
-        if (rank == network.rank){  
+    int nb = file.open_and_read_attribute_all<int>("Number of Basis Functions");
+    int ns = file.open_and_read_attribute_all<int>("Number of State Variables");
+    rtype file_time = file.open_and_read_attribute_all<rtype>("Solver Final Time");
 
-            H5::H5File file(filename, H5F_ACC_RDONLY);
-            hsize_t dims[3]; // buffer to store an HDF5 dataset dimensions
+    // Row (LayoutRight) vs Column (LayoutLeft) Major Flag
+    // Note: Row = True Column = False
+    bool stored_layout = file.open_and_read_attribute_all<bool>("Stored Layout");
 
-            int num_elems_part;
-            int nb;
-            int ns;
-            rtype file_time;
-            bool stored_layout;
+    auto [buff, dims] = file.open_and_read_parallel_dataset<rtype>("Solution Coefficients");
 
-            // add head group with attributes
-            auto group = file.openGroup("/"); 
+    Kokkos::resize(Uc, num_elems_part, nb, ns);
+    host_view_type_3D h_Uc = Kokkos::create_mirror_view(Uc);
 
-            auto attr = group.openAttribute("Number of Basis Functions");
-            auto type = attr.getDataType();
-            attr.read(type, &nb);
-
-            attr = group.openAttribute("Number of State Variables");
-            attr.read(type, &ns);
-
-            attr = group.openAttribute("Solver Final Time");
-            auto type_rtype = attr.getDataType();
-            attr.read(type_rtype, &file_time);
-            time = file_time;
-
-            // read in solver coefficients
-            group = file.openGroup("Rank "+ std::to_string(network.rank));
-
-            // number of elements
-            attr = group.openAttribute("Number of Elements per Partition");
-            type = attr.getDataType();
-            attr.read(type, &num_elems_part);
-
-            // Row (LayoutRight) vs Column (LayoutLeft) Major Flag
-            // Note: Row = True Column = False
-            attr = group.openAttribute("Stored Layout");
-            type = attr.getDataType();
-            attr.read(type, &stored_layout);
-
-            vector<rtype> buff(num_elems_part * nb * ns);
-            dims[0] = num_elems_part;
-            dims[1] = nb;
-            dims[2] = ns;
-
-            DataSpace mspace(3, dims);
-
-            auto dataset = group.openDataSet("Solution Coefficients");
-            auto dataspace = dataset.getSpace();
-
-            dataset.read(buff.data(), PredType::NATIVE_DOUBLE, mspace, dataspace);
-
-            Kokkos::resize(Uc, num_elems_part, nb, ns);
-            host_view_type_3D h_Uc = Kokkos::create_mirror_view(Uc);
-
-            if (stored_layout == true){
-                // read in row major (LayoutRight)
-                for (unsigned i = 0; i < num_elems_part; i++){
-                    for (unsigned j = 0; j < nb; j++){
-                        for (unsigned k = 0; k < ns; k++){
-                            h_Uc(i, j, k) = buff[i * nb * ns + j * ns + k];
-                        }
-                    }
-                }
-            } else {
-                // read in column major (LayoutLeft)
-                for (unsigned i = 0; i < ns; i++){
-                    for (unsigned j = 0; j < nb; j++){
-                        for (unsigned k = 0; k < num_elems_part; k++){
-                            h_Uc(k, j, i) = buff[i * nb * num_elems_part + j * num_elems_part + k];
-                        }
-                    }
+    if (stored_layout == true){
+        // read in row major (LayoutRight)
+        for (unsigned i = 0; i < num_elems_part; i++){
+            for (unsigned j = 0; j < nb; j++){
+                for (unsigned k = 0; k < ns; k++){
+                    h_Uc(i, j, k) = buff[i * nb * ns + j * ns + k];
                 }
             }
+        }
+    } else {
+        // read in column major (LayoutLeft)
+        for (unsigned i = 0; i < ns; i++){
+            for (unsigned j = 0; j < nb; j++){
+                for (unsigned k = 0; k < num_elems_part; k++){
+                    h_Uc(k, j, i) = buff[i * nb * num_elems_part + j * num_elems_part + k];
+                }
+            }
+        }
+    }
 
-            Kokkos::deep_copy(Uc, h_Uc);
+    Kokkos::deep_copy(Uc, h_Uc);
 
-            file.close();
-        } // end if statement (rank == network.rank)
-    } // end loop over ranks
 }
 
 
