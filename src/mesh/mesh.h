@@ -139,11 +139,11 @@ class Mesh {
         inline
         unsigned get_rankR_host(const int& iface) const {return h_interior_faces(iface, 4);}
 
-        // Get the left element neighbor for an interior face
+        // Get the local left element neighbor for an interior face
         KOKKOS_INLINE_FUNCTION
         unsigned get_elemL(const int& iface) const {return interior_faces(iface, 1);}
 
-        // Get the right element neighbor for an interior face
+        // Get the local right element neighbor for an interior face
         KOKKOS_INLINE_FUNCTION
         unsigned get_elemR(const int& iface) const {return interior_faces(iface, 5);}
 
@@ -279,8 +279,8 @@ class Mesh {
         Kokkos::View<unsigned**> elem_to_node_IDs;
         // View containing the interior face information, of shape
         // [num_ifaces_part, 8], where the 8 pieces of data are:
-        // the rank, global element ID, ref. face ID, and orientation on the left, and
-        // the rank, global element ID, ref. face ID, and orientation on the right.
+        // the rank, local element ID, ref. face ID, and orientation on the left, and
+        // the rank, local element ID, ref. face ID, and orientation on the right.
         Kokkos::View<unsigned**> interior_faces;
 
         // These are the host mirror versions of the data structures

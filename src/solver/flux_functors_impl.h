@@ -3,6 +3,7 @@
 
 #include "common/defines.h"
 #include "physics/base/base.h"
+#include "mesh/mesh.h"
 #include <Kokkos_Core.hpp>
 
 
@@ -118,9 +119,10 @@ template<unsigned dim>
 struct InteriorFacesFluxFunctor {
 
 public:
-    InteriorFacesFluxFunctor(const Physics::Physics<dim> physics,
+    InteriorFacesFluxFunctor(const Physics::Physics<dim> physics, const Mesh mesh,
         view_type_3D UqL, view_type_3D UqR, view_type_4D gUqL, view_type_4D gUqR,
-        view_type_1D quad_wts, view_type_3D normals, view_type_3D Fq);
+        view_type_1D quad_wts, view_type_3D normals, view_type_3D Fq, Kokkos::View<int**> quad_idx_L,
+        Kokkos::View<int**> quad_idx_R, unsigned rank);
 
   KOKKOS_INLINE_FUNCTION
     void operator()(const int iface, const int iq) const;
@@ -129,7 +131,8 @@ private:
     // set as compile time constant -> see common/defines.h
     static constexpr int NS = GLOBAL_NUM_SPECIES + 1 + dim;
     const Physics::Physics<dim> physics;
-
+    const Mesh mesh;
+    // view_type_3D Uq;
     view_type_3D UqL;
     view_type_3D UqR;
     view_type_4D gUqL;
@@ -139,16 +142,26 @@ private:
     // view_type_2D djac;
     // view_type_4D ijac; 
     view_type_1D quad_wts;
+    Kokkos::View<int**> quad_idx_L;
+    Kokkos::View<int**> quad_idx_R;
+    unsigned rank;
     // bool need_state_grad;
 
 };
 
 template<unsigned dim>
 InteriorFacesFluxFunctor<dim>::InteriorFacesFluxFunctor(const Physics::Physics<dim> physics, 
-    view_type_3D UqL, view_type_3D UqR, view_type_4D gUqL, view_type_4D gUqR,
+    const Mesh mesh, view_type_3D UqL, view_type_3D UqR, view_type_4D gUqL, view_type_4D gUqR,
     view_type_1D quad_wts, 
     view_type_3D normals,
-    view_type_3D Fq) : physics{physics}, UqL{UqL}, UqR{UqR}, gUqL{gUqL}, gUqR{gUqR}, quad_wts{quad_wts}, normals{normals}, Fq{Fq}{
+    view_type_3D Fq,
+    Kokkos::View<int**> quad_idx_L,
+    Kokkos::View<int**> quad_idx_R,
+    unsigned rank) : physics{physics}, mesh{mesh}, 
+            UqL{UqL}, UqR{UqR}, gUqL{gUqL}, gUqR{gUqR}, 
+            quad_wts{quad_wts}, normals{normals}, 
+            Fq{Fq}, quad_idx_L{quad_idx_L}, quad_idx_R{quad_idx_R}, 
+            rank{rank}{
 }
 
 
@@ -163,6 +176,32 @@ void InteriorFacesFluxFunctor<dim>::operator()(
     rtype gUL[dim * NS] = {0};
     rtype gUR[dim * NS] = {0};
     rtype gU_tmp[dim * NS];
+
+    // const unsigned nqf = (unsigned)quad_wts.extent(0);
+    // const unsigned rankL = mesh.get_rankL(iface);
+    // const unsigned rankR = mesh.get_rankR(iface);
+
+    // if (rank == rankL) {
+    //     const unsigned elemL = mesh.get_elemL(iface);
+    //     const unsigned face_ID_L = mesh.get_ref_face_idL(iface);
+    //     // const unsigned elemL = mesh_local.get_local_elem_ID(elemL_global);
+    //     int startL = face_ID_L * nqf;
+
+    //     for (long unsigned is = 0; is < NS; is++){
+    //         UL[is] = Uq(elemL, startL + quad_idx_L(iface, iq), is);
+    //     }
+    // }
+
+    // if (rank == rankR){
+    //     const unsigned elemR = mesh.get_elemR(iface);
+    //     const unsigned face_ID_R = mesh.get_ref_face_idR(iface);
+    //     // const unsigned elemR = mesh_local.get_local_elem_ID(elemR_global);
+    //     int startR = face_ID_R * nqf;
+
+    //     for (long unsigned is = 0; is < NS; is++){
+    //         UR[is] = Uq(elemR, startR + quad_idx_R(iface, iq), is);
+    //     }
+    // }
 
     // read state from views
     for (unsigned idim = 0; idim < dim; idim++){
