@@ -9,8 +9,8 @@ github page (see below) and then run this command as follows:
 
 `cmake=<PATH_TO_CMAKE>/cmake-3.22.2/bin/cmake ./yellowstone-cpu.sh`
 
-
-IMPORTANT for Yellowstone Builds: Kokkos requires CMake >= 3.16. Yellowstone has version 3.15.4. Therefore, we need to install a local build of CMake. Use the following commands to accomplish this:
+## IMPORTANT! 
+For Yellowstone Builds: Kokkos requires CMake >= 3.16. Yellowstone has version 3.15.4. Therefore, we need to install a local build of CMake. Use the following commands to accomplish this:
 
          - Download the Unix/Linux source cmake file (I used version 3.22.2) `https://cmake.org/download/`
          - Send this to yellowstone using `rsync` or whatever your favorite file transfer tool is.
@@ -24,3 +24,9 @@ IMPORTANT for Yellowstone Builds: Kokkos requires CMake >= 3.16. Yellowstone has
          make install
          ```
          - Then when you go to use CMake with Kokkos you can either give the direct path to the new cmake command when executing the cmake command for Kokkos above or change your default CMake to the newly installed version (by changing the paths / unloading the module for CMake).
+
+## Some tips:
+On occasion it was noted that the `kokkos-kernels` build fails with an error of `Permission Denied` specifically in the GPU build of the code. Ways of dealing with this include trying to build again (sometimes it just works) or I have had success by doing the following:
+- `cd ../../build_gpu/externals/kokkos-kernels`
+- `make install`
+For some reason this tends to work, although it is slow. This should be revisited at a future date to figure out why the build is not consistent.
