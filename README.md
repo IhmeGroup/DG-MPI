@@ -21,7 +21,7 @@ In this section, we point users to each specific module in the code. In each mod
 5. [math](https://github.com/IhmeGroup/DG-MPI/tree/main/src/math)
 6. [memory](https://github.com/IhmeGroup/DG-MPI/tree/main/src/memory)
 7. [mesh](https://github.com/IhmeGroup/DG-MPI/tree/main/src/mesh)
-8. [numerics](https://github.com/IhmeGroup/DG-MPI/tree/main/src/exec)
+8. [numerics](https://github.com/IhmeGroup/DG-MPI/tree/main/src/numerics)
 9. [others](https://github.com/IhmeGroup/DG-MPI/tree/main/src/others)
 10. [physics](https://github.com/IhmeGroup/DG-MPI/tree/main/src/physics)
 11. [post](https://github.com/IhmeGroup/DG-MPI/tree/main/src/post)
