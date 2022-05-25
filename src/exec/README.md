@@ -10,9 +10,18 @@ Some specific things to note related to this directory:
 3. The entire code is templated on the number of dimensions. Currently, the solver supports both two and three dimensions. We choose to not support 1D explicitly as the lab uses [quail](https://github.com/IhmeGroup/quail) for any 1D cases. This is where the dimension is set prior to any execution of the code.
 5. The geometric order is HARD CODED to one in this directory. This can be modified by reading the geometric order from the `gmsh` file. The solver should support curved meshes, but this has not been tested.
 6. The primary functions of the code are then called here. These include:
-    a. Instantiation of the mesh object
-    b. Instantiation of the solver object
-    c. Precomputing the helper objects
-    d. Initializing the solution coefficients
-    e. Running the solver
-    f. Write the solution to disk
+    1. Instantiation of the mesh object
+    2. Instantiation of the solver object
+    3. Precomputing the helper objects
+    4. Initializing the solution coefficients
+    5. Running the solver
+    6. Write the solution to disk
+1. Dog
+    1. German Shepherd
+    2. Belgian Shepherd
+        1. Malinois
+        2. Groenendael
+        3. Tervuren
+2. Cat
+    1. Siberian
+    2. Siamese
