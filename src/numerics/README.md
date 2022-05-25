@@ -1,6 +1,6 @@
 # `numerics`
 
-The numerics module consists of three major submodules: The basis functions, the quadrature rules, and the time steppers.
+The numerics module consists of three major submodules: The basis functions, the quadrature rules, and the time steppers. This format follows a similar format to the teaching and prototyping tool [quail](https://github.com/IhmeGroup/quail/). Users are encouraged to look at quail for implementation details of specific numercs. 
 
 ## Basis
 
@@ -29,15 +29,32 @@ If a user wanted to implement a new basis function (lets call it `UserBasis`) th
 1. In `common/enums.h` they would need to add `UserBasis` to `enum BasisType` in `common/enums.h` as well as adding the corresponding string name of the basis type.
 2. In `numerics/basis.h` and `numerics/basis.cpp` they would need to add `get_values_userbasis` and a `get_grads_userbasis` functions. Users are encouraged to follow 
 the examples from both the Lagrange and Legendre basis functions.
-3. Add the construction of the new basis type in the `Basis` constructor function in `numerics/basis.cpp`. For example, the user could follow the exact template provied by Legendre polynomial basis fnctions:
+3. Add the construction of the new basis type in the `Basis` constructor function in `numerics/basis.cpp`. For example, the user could follow a template like this:
     ```
-    if (basis_type == BasisType::LegendreQuad){
-        get_values_pointer = get_values_legendrequad;
-        get_grads_pointer = get_grads_legendrequad;
-        name = "LegendreQuad";
-        shape = Shape(enum_from_string<ShapeType>("Quadrilateral"));
-        face_shape = Shape(enum_from_string<ShapeType>("Segment"));
-
+    if (basis_type == BasisType::UserBasis){
+        get_values_pointer = get_values_userbasis;
+        get_grads_pointer = get_grads_userbasis;
+        name = "UserBasis";
+        shape = Shape(enum_from_string<ShapeType>("<shape of user basis>"));
+        face_shape = Shape(enum_from_string<ShapeType>("<face shape of user basis>"));
     }
     ```
+### `shape.h`
+
+The shape file includes the definition of the shape object. This object is instantiated by the instantiation of the basis class. Therefore, if a user is uning a 2D Lagrange simulation, the shape that is instantiated will be the `Quadrilateral` shape. Currently, the following shapes are supported:
+
+1. Segment
+2. Quadrilateral
+3. Hexahedron
+
+Additional shapes can be added. For example, if a user wanted to add triangles they would follow a similar group of steps as the basis functions described above. Templates for constructing shapes exist in the `shape.h` file. A triangular basis would follow the same format as the others, but with specific functions for its shape. (one could use the definitions for a triangular shape [here](https://github.com/IhmeGroup/quail/blob/main/src/numerics/basis/basis.py)). 
+
+
+### `tools.h` 
+
+Anytime a "tools" file is named it means that there are stand alone functions that can be called by the objects. These functions are separated from the basis or shape files because they can be valid for multiple instantiations of the basis/shape classes. 
+
+## Quadrature
+
+The current solver only uses Gauss Legendre quadrature rules. These can be extended to Gauss Lobatto or Dunavant (for triangles) as the need arises. The enum file currently has enums for these other quadrature rules and their implementation can be facilitated through the namespaces provided for each shape. Quadrature is defined for each specific shape (i.e. segment, quadralateral, and hexahedron). The primary way to add additional quadrature rules would be to add them within each shape file in `quadrature/<shape_name>.h`.
 
