@@ -58,3 +58,15 @@ Anytime a "tools" file is named it means that there are stand alone functions th
 
 The current solver only uses Gauss Legendre quadrature rules. These can be extended to Gauss Lobatto or Dunavant (for triangles) as the need arises. The enum file currently has enums for these other quadrature rules and their implementation can be facilitated through the namespaces provided for each shape. Quadrature is defined for each specific shape (i.e. segment, quadralateral, and hexahedron). The primary way to add additional quadrature rules would be to add them within each shape file in `quadrature/<shape_name>.h`.
 
+## Timestepping
+
+The time steppers utilize inheritance to define new methods. Their functions exist outside of the GPU kernels. Their functions will often call solver object functions that operate on the kernels. Therefore, these methods can exist ouside of the implementation needs of the GPU. Currently we have the following time stepping schemes:
+
+1. Forward Euler
+2. 4th-order Runge-Kutta
+
+Adding new stepper classes would follow these steps:
+
+1. Add the stepper class name to `common/enums.h`.
+2. Add the new stepper class definition in `numerics/timestepping/stepper.h`. Users can directly follow one of the current examples list in this file. The most important function is `take_time_step`! 
+3. Add the stepper class to the StepperFactory. The stepper factory instantiates the stepper class directly on the heap. This then results in the use of a `shared_ptr` for the stepper class as an object stored in the `solver` object. 
