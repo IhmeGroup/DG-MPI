@@ -10,6 +10,10 @@ This repository is currently in development. As of 5/17/2022 the current capabil
 
 The build process is well defined for the Yellowstone HPC system at Stanford University. Users are directed to the following [`scripts`](https://github.com/IhmeGroup/DG-MPI/tree/main/src/others) for the build procedure.
 
+## Tutorial for the 3D Isentropic Vortex Case
+
+The primary test case for this solver is a [3D isentropic vortex case](https://github.com/IhmeGroup/DG-MPI/tree/main/examples/euler/3D/isentropic_vortex). This case can be used to verify the implementation of the DG solver for the Euler equations (via grid convergence with an L2-norm calculation) as well as provide useful node scaling testing. 
+
 ## Source code discussions / documentation
 
 In this section, we point users to each specific module in the code. In each module, there is a brief overview of the current tools in the module plus the design choices. These choices are discussed and details are provided for some next steps and how to use the module. Each module is a subdirectory under `src/`.
